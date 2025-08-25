@@ -302,6 +302,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 108. [ ] No unwrap() outside tests (or justify).
 109. [ ] Determinism test repeated run identical output.
 110. [ ] Validate no leftover TODO markers for MVP (or track in backlog list).
+111. [ ] Document and enforce dev workflow (fmt, clippy, nextest) (see Section 25).
 
 ---
 
@@ -399,5 +400,40 @@ Milestone 8 (Release v0.1.0): Tasks 116–120 + final checklist.
 Add new potential features to a BACKLOG.md with: ID, description, rationale, requested-by, complexity estimate.
 
 ---
+
+## 25. Developer Workflow / Quality Convenience
+
+Guidelines (non-functional tasks, but enforceable via CI/hooks):
+
+A. Pre-commit local checklist
+- [ ] cargo fmt --all (format code)  
+- [ ] cargo clippy --all-targets --all-features -- -D warnings  
+- [ ] cargo nextest run  
+- [ ] cargo test --doc (doc tests separately if any)  
+- [ ] cargo deny check (optional fast path)  
+
+B. Optional git hook (.git/hooks/pre-commit example) – add later to repo docs:
+```
+#!/usr/bin/env bash
+set -euo pipefail
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo nextest run
+```
+
+C. CI Enhancements (tie to tasks 106–111, 111–115):
+- Add clippy & fmt check steps before tests.  
+- Cache target to speed nextest.  
+- Future: coverage (tarpaulin) gate.  
+
+D. Fast feedback loop:
+- Use cargo watch -x 'clippy -- -D warnings' -x 'nextest run' for iterative dev.  
+
+E. Panics policy:
+- Outside tests: avoid unwrap/expect; map errors. (Tied to task 108).  
+
+F. Pending automation tasks:
+- [ ] Add Makefile or justfile with common recipes (make test, make lint).  
+- [ ] Add CONTRIBUTING.md referencing this section.  
 
 (End of tasks.md)
