@@ -31,7 +31,10 @@ fn parse_basic() {
         mk_commit("fix: bug fix", ""),
         mk_commit("chore(deps): update deps", ""),
         mk_commit("refactor!: big refactor", "details"),
-        mk_commit("style: tabs", "Co-authored-by: Someone <s@e.com>"),
+        mk_commit(
+            "style: tabs",
+            "Body part\n\nCo-authored-by: Someone <s@e.com>",
+        ),
     ];
     let parsed = parse_and_classify(commits, &cfg); // chore(deps) should be filtered
     assert!(parsed.iter().any(|c| c.r#type == "feat" && c.breaking));

@@ -71,6 +71,8 @@ use crate::repository as repo_mod; // binary crate re-exports via main, lib via 
 
 #[derive(Debug, Clone)]
 pub struct ResolvedConfig {
+    // Optional scope mapping (exact match) applied after parsing
+    pub scope_map: std::collections::BTreeMap<String, String>,
     pub types: Vec<TypeConfigResolved>,
     pub new_version: Option<Version>,
     pub warnings: Vec<String>,
@@ -227,6 +229,16 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     // Attempt repository detection (non-fatal)
     let repo = detect_repository(opts.cwd, &mut warnings);
 
+    // Merge scope_map layering later entries override earlier
+    let mut scope_map: BTreeMap<String, String> = BTreeMap::new();
+    for raw in &raw_stack {
+        if let Some(sm) = &raw.scope_map {
+            for (k, v) in sm {
+                scope_map.insert(k.clone(), v.clone());
+            }
+        }
+    }
+
     Ok(ResolvedConfig {
         types,
         new_version,
@@ -235,6 +247,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
         cwd: opts.cwd.to_path_buf(),
         source_file,
         repo,
+        scope_map,
     })
 }
 

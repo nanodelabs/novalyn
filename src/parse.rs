@@ -1,5 +1,6 @@
 use crate::config::{ResolvedConfig, SemverImpact, TypeConfigResolved};
 use crate::git::RawCommit;
+use git_conventional::Commit as ConventionalCommit;
 use regex::Regex;
 
 #[derive(Debug, Clone)]
@@ -50,12 +51,21 @@ pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<
     out
 }
 
+// Parse a single raw commit. Try git-conventional first for richer parsing, fallback to regex.
 fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
     let mut r#type = String::from("other");
     let mut scope = None;
     let mut description = rc.summary.clone();
     let mut breaking = false;
-    if let Some(caps) = rex.captures(&rc.summary) {
+    // Attempt conventional commit parse
+    if let Ok(cc) = ConventionalCommit::parse(&rc.summary) {
+        r#type = cc.type_().as_str().to_ascii_lowercase();
+        scope = cc.scope().map(|s| s.to_string());
+        description = cc.description().to_string();
+        if cc.breaking() {
+            breaking = true;
+        }
+    } else if let Some(caps) = rex.captures(&rc.summary) {
         r#type = caps.name("type").unwrap().as_str().to_ascii_lowercase();
         scope = caps.name("scope").map(|m| m.as_str().to_string());
         description = caps.name("desc").unwrap().as_str().to_string();
@@ -67,36 +77,73 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
     let mut footers: Vec<(String, String)> = Vec::new();
     if !body.is_empty() {
         let lines: Vec<&str> = body.lines().collect();
-        let mut footer_start = lines.len();
-        for i in (0..lines.len()).rev() {
-            let line = lines[i];
+        // Parse footers forward: find last blank line; everything after that that matches footer syntax.
+        let mut split_idx = None;
+        for (idx, line) in lines.iter().enumerate().rev() {
             if line.trim().is_empty() {
-                footer_start = i;
-                break;
-            }
-            if let Some((k, v)) = line.split_once(':') {
-                if k.chars()
-                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == ' ')
-                {
-                    footers.push((k.trim().to_string(), v.trim().to_string()));
-                } else {
-                    break;
-                }
-            } else {
+                split_idx = Some(idx);
                 break;
             }
         }
-        footers.reverse();
-        if footer_start < lines.len() {
-            body = lines[..footer_start].join("\n");
+        let start_footer = split_idx.map(|i| i + 1).unwrap_or(lines.len());
+        // Collect raw footer lines (with continuation support)
+        let mut cur_key: Option<String> = None;
+        let mut cur_val = String::new();
+        for &line in &lines[start_footer..] {
+            if let Some((k, v)) = line.split_once(':') {
+                let k_trim = k.trim();
+                if k_trim
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == ' ')
+                {
+                    // flush previous
+                    if let Some(k_existing) = cur_key.take() {
+                        footers.push((k_existing, cur_val.trim_end().to_string()));
+                        cur_val = String::new();
+                    }
+                    cur_key = Some(k_trim.to_string());
+                    cur_val.push_str(v.trim_start());
+                } else {
+                    // invalid footer key -> stop parsing further footers
+                    cur_key = None; // discard current
+                    break;
+                }
+            } else if (line.starts_with(' ') || line.starts_with('\t')) && cur_key.is_some() {
+                let trimmed = line.trim_start();
+                if !trimmed.is_empty() {
+                    if !cur_val.is_empty() {
+                        cur_val.push('\n');
+                    }
+                    cur_val.push_str(trimmed);
+                }
+            } else if line.trim().is_empty() {
+                // ignore extra blanks inside footer section
+                continue;
+            } else {
+                // Non-footer pattern terminates footer parsing
+                break;
+            }
+        }
+        if let Some(k) = cur_key.take() {
+            footers.push((k, cur_val.trim_end().to_string()));
+        }
+        if !footers.is_empty() {
+            body = if start_footer == lines.len() {
+                body
+            } else {
+                lines[..split_idx.unwrap()].join("\n")
+            };
         }
     }
     for (k, v) in &footers {
         if (k.eq_ignore_ascii_case("BREAKING CHANGE") || k.eq_ignore_ascii_case("BREAKING CHANGES"))
-            && (!v.is_empty() || !breaking) {
-                breaking = true;
-            }
+            && (!v.is_empty() || !breaking)
+        {
+            breaking = true;
+        }
     }
+    // If body ended up including trailing blank due to cut logic, trim newline artifacts
+    body = body.trim_end().to_string();
     let mut issues = collect_issue_numbers(&rc.summary);
     issues.extend(collect_issue_numbers(&body));
     for (k, v) in &footers {
@@ -126,6 +173,16 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
 }
 
 fn classify(pc: &mut ParsedCommit, cfg: &ResolvedConfig) {
+    // Apply scope_map if provided (exact match)
+    if let Some(sc) = &mut pc.scope {
+        if let Some(mapped) = cfg.scope_map.get(sc) {
+            if mapped.is_empty() {
+                pc.scope = None;
+            } else {
+                *sc = mapped.clone();
+            }
+        }
+    }
     if let Some(tc) = cfg.types.iter().find(|t| t.key == pc.r#type) {
         if tc.enabled {
             pc.type_cfg = Some(tc.clone());
@@ -139,20 +196,20 @@ fn should_keep(pc: &ParsedCommit) -> bool {
             return false;
         }
     }
-    if pc.r#type == "chore"
-        && pc
-            .raw
-            .summary
-            .to_ascii_lowercase()
-            .starts_with("chore(deps)")
-        && !pc.breaking
-    {
-        return false;
+    if pc.r#type == "chore" && !pc.breaking {
+        // Filter dependency update chores: chore(deps), chore(deps-dev), chore(deps-*) etc.
+        // Accept if not starting with chore(deps because there may be other chore scopes we keep
+        let lower = pc.raw.summary.to_ascii_lowercase();
+        if lower.starts_with("chore(deps") {
+            return false;
+        }
     }
     true
 }
 
 fn collect_issue_numbers(s: &str) -> Vec<u64> {
+    // Capture individual #123 plus grouped variants inside parentheses or separated by commas/spaces.
+    // Strategy: first find all #\d+ tokens.
     let mut v = Vec::new();
     static ISS_RE: once_cell::sync::Lazy<Regex> =
         once_cell::sync::Lazy::new(|| Regex::new(r"#(\d+)").unwrap());
@@ -214,8 +271,9 @@ pub fn infer_version(
             new.patch += 1;
         }
         None => {
+            // No impactful commits => still bump patch (default policy)
             new.patch += 1;
-            impact = Patch;
+            return (new, Patch);
         }
     }
     (new, impact)

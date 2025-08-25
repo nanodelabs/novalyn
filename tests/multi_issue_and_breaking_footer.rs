@@ -1,0 +1,43 @@
+use changelogen::config::LoadOptions;
+use changelogen::git::RawCommit;
+use changelogen::parse::parse_and_classify;
+
+fn mk(summary: &str, body: &str) -> RawCommit {
+    RawCommit {
+        id: "x".into(),
+        short_id: "x".into(),
+        summary: summary.into(),
+        body: body.into(),
+        author_name: "A".into(),
+        author_email: "a@b.c".into(),
+        timestamp: 0,
+    }
+}
+
+#[test]
+fn extracts_multiple_issues_grouped_and_body() {
+    let td = tempfile::tempdir().unwrap();
+    let cfg = changelogen::config::load_config(LoadOptions {
+        cwd: td.path(),
+        cli_overrides: None,
+    })
+    .unwrap();
+    let c = mk(
+        "fix(parser): handle edge (#12, #34)",
+        "Implements fix refs #56 #78\n\nFooter: note\nBREAKING CHANGE: behaviour changed significantly\n    Additional explanation line\nAnother: value",
+    );
+    let parsed = parse_and_classify(vec![c], &cfg);
+    assert_eq!(parsed[0].issues, vec![12, 34, 56, 78]);
+    assert!(parsed[0].breaking, "breaking change detected via footer");
+    // Multi-line not yet captured; just ensure footer exists for now
+    let breaking_footer = parsed[0]
+        .footers
+        .iter()
+        .find(|(k, _)| k.eq_ignore_ascii_case("BREAKING CHANGE"))
+        .unwrap();
+    assert!(breaking_footer.1.contains("behaviour changed"));
+    assert!(
+        breaking_footer.1.contains("Additional explanation line"),
+        "expects continuation line captured"
+    );
+}

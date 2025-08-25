@@ -87,7 +87,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 29. [x] Implement breaking footer detection (BREAKING CHANGE: / BREAKING-CHANGE:).
 30. [x] Implement issue / PR reference scanning (#\d+).
 31. [x] Implement Co-authored-by detection accumulating authors.
-32. [ ] Scope mapping via config.scopeMap. (Not yet implemented)
+32. [x] Scope mapping via config.scopeMap.
 33. [x] Normalize type to lowercase (§ commands/default.ts behavior).
 34. [x] Filter commits: remove disabled types; filter `chore(deps)` unless breaking (mirror JS logic).
 
