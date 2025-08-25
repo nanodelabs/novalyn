@@ -1,6 +1,6 @@
 use changelogen::git::*;
-use tempfile::TempDir;
 use std::fs;
+use tempfile::TempDir;
 
 fn init_repo() -> (TempDir, git2::Repository) {
     let td = TempDir::new().unwrap();
