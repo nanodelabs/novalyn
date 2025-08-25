@@ -263,35 +263,34 @@ fn extract_metadata_block(cargo_toml: &str, warnings: &mut Vec<String>) -> Optio
             return None;
         }
     };
-    if let Some(pkg) = doc.get("package") {
-        if let Some(meta) = pkg.get("metadata") {
-            if let Some(cl) = meta.get("changelogen") {
-                let cl_str = cl.to_string();
-                return match toml_edit::de::from_str::<RawConfig>(&format!("{cl_str}")) {
-                    Ok(rc) => {
-                        // ensure we deserialized a table
-                        if rc.types_override.is_none() && !cl.is_table() {
-                            warnings.push("metadata.changelogen not a table".into());
-                        }
-                        Some(rc)
-                    }
-                    Err(e) => {
-                        warnings.push(format!("Failed to parse metadata.changelogen: {e}"));
-                        None
-                    }
-                };
+    if let Some(pkg) = doc.get("package")
+        && let Some(meta) = pkg.get("metadata")
+        && let Some(cl) = meta.get("changelogen")
+    {
+        let cl_str = cl.to_string();
+        return match toml_edit::de::from_str::<RawConfig>(&cl_str.to_string()) {
+            Ok(rc) => {
+                // ensure we deserialized a table
+                if rc.types_override.is_none() && !cl.is_table() {
+                    warnings.push("metadata.changelogen not a table".into());
+                }
+                Some(rc)
             }
-        }
+            Err(e) => {
+                warnings.push(format!("Failed to parse metadata.changelogen: {e}"));
+                None
+            }
+        };
     }
     None
 }
 
 fn resolve_github_token() -> Option<String> {
     for key in ["CHANGELOGEN_TOKENS_GITHUB", "GITHUB_TOKEN", "GH_TOKEN"] {
-        if let Ok(v) = std::env::var(key) {
-            if !v.is_empty() {
-                return Some(v);
-            }
+        if let Ok(v) = std::env::var(key)
+            && !v.is_empty()
+        {
+            return Some(v);
         }
     }
     None
@@ -303,7 +302,8 @@ pub fn log_warnings(cfg: &ResolvedConfig) {
     }
 }
 
-fn detect_repository(cwd: &Path, warnings: &mut Vec<String>) -> Option<repo_mod::Repository> { // crate path valid when used as library
+fn detect_repository(cwd: &Path, warnings: &mut Vec<String>) -> Option<repo_mod::Repository> {
+    // crate path valid when used as library
     // Open git repo; if not a git repository, silently return None (git layer will handle hard error later)
     let repo = match git2::Repository::discover(cwd) {
         Ok(r) => r,
@@ -318,27 +318,23 @@ fn detect_repository(cwd: &Path, warnings: &mut Vec<String>) -> Option<repo_mod:
         }
     };
     let mut chosen: Option<String> = None;
-    if remotes.iter().any(|n| n == Some("origin")) {
-        if let Ok(remote) = repo.find_remote("origin") {
-            if let Some(url) = remote.url() {
-                chosen = Some(url.to_string());
-            }
-        }
+    if remotes.iter().any(|n| n == Some("origin"))
+        && let Ok(remote) = repo.find_remote("origin")
+        && let Some(url) = remote.url()
+    {
+        chosen = Some(url.to_string());
     }
     if chosen.is_none() {
         for name in remotes.iter().flatten() {
-            if let Ok(remote) = repo.find_remote(name) {
-                if let Some(url) = remote.url() {
-                    chosen = Some(url.to_string());
-                    break;
-                }
+            if let Ok(remote) = repo.find_remote(name)
+                && let Some(url) = remote.url()
+            {
+                chosen = Some(url.to_string());
+                break;
             }
         }
     }
-    let remote_url = match chosen {
-        Some(u) => u,
-        None => return None,
-    };
+    let remote_url = chosen?;
     match repo_mod::Repository::parse(&remote_url) {
         Some(r) => Some(r),
         None => {

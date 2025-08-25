@@ -3,7 +3,6 @@ use std::fs;
 use changelogen::config::{self, LoadOptions, RawConfig};
 use insta::assert_yaml_snapshot;
 
-
 fn temp_dir() -> tempfile::TempDir {
     tempfile::tempdir().unwrap()
 }
