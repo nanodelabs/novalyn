@@ -82,38 +82,38 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 4. Parsing & Classification (§7.4–7.7)
 
-27. [ ] Implement conventional header parsing: type, optional scope, optional !, description (case-insensitive type).
-28. [ ] Manual fallback if git-conventional crate unavailable.
-29. [ ] Implement breaking footer detection (BREAKING CHANGE: / BREAKING-CHANGE:).
-30. [ ] Implement issue / PR reference scanning (#\d+).
-31. [ ] Implement Co-authored-by detection accumulating authors.
-32. [ ] Scope mapping via config.scopeMap.
-33. [ ] Normalize type to lowercase (§ commands/default.ts behavior).
-34. [ ] Filter commits: remove disabled types; filter `chore(deps)` unless breaking (mirror JS logic).
+27. [x] Implement conventional header parsing: type, optional scope, optional !, description (case-insensitive type).
+28. [x] Manual fallback if git-conventional crate unavailable.
+29. [x] Implement breaking footer detection (BREAKING CHANGE: / BREAKING-CHANGE:).
+30. [x] Implement issue / PR reference scanning (#\d+).
+31. [x] Implement Co-authored-by detection accumulating authors.
+32. [ ] Scope mapping via config.scopeMap. (Not yet implemented)
+33. [x] Normalize type to lowercase (§ commands/default.ts behavior).
+34. [x] Filter commits: remove disabled types; filter `chore(deps)` unless breaking (mirror JS logic).
 
 🧪 Tests:
-- [ ] Header with scope + bang.
-- [ ] Footer-only breaking.
+- [x] Header with scope + bang.
+- [x] Footer-only breaking.
 - [ ] Multiple issue references.
-- [ ] Co-authored-by accumulation.
-- [ ] chore(deps) filtered when not breaking.
+- [x] Co-authored-by accumulation.
+- [x] chore(deps) filtered when not breaking.
 
 ---
 
 ## 5. Semver Inference & Version Bump (§4, §8)
 
-35. [ ] Determine major/minor/patch flags using type semver + breaking flag.
-36. [ ] Pre-1.0 adjustment: major→minor, minor→patch.
-37. [ ] Default to "patch" if zero bump-worthy changes (match JS `|| "patch"`).
-38. [ ] Apply explicit newVersion override if provided after inference.
+35. [x] Determine major/minor/patch flags using type semver + breaking flag.
+36. [x] Pre-1.0 adjustment: major→minor, minor→patch.
+37. [x] Default to "patch" if zero bump-worthy changes (match JS `|| "patch"").
+38. [x] Apply explicit newVersion override if provided after inference.
 39. [ ] Implement suffix logic (optional; confirm parity need).
-40. [ ] Implement Cargo.toml version bump via toml_edit (preserve formatting).
+40. [x] Implement Cargo.toml version bump via toml_edit (preserve formatting).
 
 🧪 Tests:
-- [ ] Major inference via breaking.
-- [ ] Minor inference via feat only.
-- [ ] Patch inference via fix only.
-- [ ] 0.x adjustments.
+- [x] Major inference via breaking.
+- [x] Minor inference via feat only.
+- [x] Patch inference via fix only.
+- [x] 0.x adjustments.
 - [ ] Explicit newVersion override.
 - [ ] Idempotent (same version returns false result).
 
@@ -121,15 +121,15 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 6. Interpolation (§6, §10)
 
-41. [ ] Implement simple token replacement for commitMessage/tagMessage/tagBody.
-42. [ ] Support tokens: {{newVersion}}, {{previousVersion}}, {{date}}.
-43. [ ] Unknown tokens remain as-is.
-44. [ ] Date format: YYYY-MM-DD (UTC).
+41. [x] Implement simple token replacement for commitMessage/tagMessage/tagBody.
+42. [x] Support tokens: {{newVersion}}, {{previousVersion}}, {{date}}.
+43. [x] Unknown tokens remain as-is.
+44. [x] Date format: YYYY-MM-DD (UTC).
 
 🧪 Tests:
-- [ ] All tokens replaced.
-- [ ] Unknown token retention.
-- [ ] Date stable formatting.
+- [x] All tokens replaced.
+- [x] Unknown token retention.
+- [ ] Date stable formatting. (Implicit in replacement test; can add explicit UTC test later.)
 
 ---
 

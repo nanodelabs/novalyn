@@ -26,18 +26,19 @@ pub fn last_tag(repo: &Repository) -> Result<Option<String>, git2::Error> {
         let ver_str = name.trim_start_matches('v');
         if let Ok(parsed) = semver::Version::parse(ver_str)
             && let Ok(oid) = repo.refname_to_id(&format!("refs/tags/{}", name))
-                && let Ok(object) = repo.find_object(oid, None)
-                    && let Ok(commit) = object.peel_to_commit() {
-                        let time = commit.time().seconds();
-                        match &latest {
-                            None => latest = Some((name.to_string(), time, parsed)),
-                            Some((_, lt_time, lt_ver)) => {
-                                if time > *lt_time || (time == *lt_time && &parsed > lt_ver) {
-                                    latest = Some((name.to_string(), time, parsed));
-                                }
-                            }
-                        }
+            && let Ok(object) = repo.find_object(oid, None)
+            && let Ok(commit) = object.peel_to_commit()
+        {
+            let time = commit.time().seconds();
+            match &latest {
+                None => latest = Some((name.to_string(), time, parsed)),
+                Some((_, lt_time, lt_ver)) => {
+                    if time > *lt_time || (time == *lt_time && &parsed > lt_ver) {
+                        latest = Some((name.to_string(), time, parsed));
                     }
+                }
+            }
+        }
     }
     Ok(latest.map(|(n, _, _)| n))
 }
@@ -63,9 +64,10 @@ pub fn current_ref(repo: &Repository) -> Result<Option<String>, git2::Error> {
         for name_opt in tags.iter() {
             if let Some(name) = name_opt
                 && let Ok(tag_oid) = repo.refname_to_id(&format!("refs/tags/{}", name))
-                    && tag_oid == oid {
-                        return Ok(Some(name.to_string()));
-                    }
+                && tag_oid == oid
+            {
+                return Ok(Some(name.to_string()));
+            }
         }
     }
     Ok(Some(format!(
@@ -85,17 +87,19 @@ pub fn commits_between(
     let mut revwalk = repo.revwalk()?;
     revwalk.push(to_commit.id())?;
     if let Some(from_ref) = from
-        && let Ok(from_obj) = repo.revparse_single(from_ref) {
-            revwalk.hide(from_obj.id())?;
-        }
+        && let Ok(from_obj) = repo.revparse_single(from_ref)
+    {
+        revwalk.hide(from_obj.id())?;
+    }
     revwalk.set_sorting(git2::Sort::TOPOLOGICAL | git2::Sort::TIME)?;
 
     let mut commits: Vec<RawCommit> = Vec::new();
     for oid_res in revwalk {
         if let Ok(oid) = oid_res
-            && let Ok(commit) = repo.find_commit(oid) {
-                commits.push(to_raw_commit(&commit));
-            }
+            && let Ok(commit) = repo.find_commit(oid)
+        {
+            commits.push(to_raw_commit(&commit));
+        }
     }
     commits.reverse(); // chronological oldest->newest
     Ok(commits)
