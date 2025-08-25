@@ -30,15 +30,15 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 1. Configuration Layer (§5, §6, §15)
 
-6. [ ] Implement defaults map exactly matching JS config.ts (types + emojis + semver).
-7. [ ] Support config file `changelogen.toml`.
-8. [ ] Support fallback `[package.metadata.changelogen]` in Cargo.toml.
-9. [ ] Implement environment token resolution precedence (CHANGELOGEN_TOKENS_GITHUB > GITHUB_TOKEN > GH_TOKEN).
-10. [ ] Implement overlay merge order: defaults < file(s) < CLI overrides.
-11. [ ] Support disabling a type via boolean false (TOML loader logic).
-12. [ ] Validate `newVersion` (semver parse).
-13. [ ] Warn on unknown keys (collect & log).
-14. [ ] Expose `ResolvedConfig` with normalized paths, resolved repo data (placeholder until repo module ready).
+6. [x] Implement defaults map exactly matching JS config.ts (types + emojis + semver).
+7. [~] Support config file `changelogen.toml`.
+8. [~] Support fallback `[package.metadata.changelogen]` in Cargo.toml.
+9. [x] Implement environment token resolution precedence (CHANGELOGEN_TOKENS_GITHUB > GITHUB_TOKEN > GH_TOKEN).
+10. [x] Implement overlay merge order: defaults < file(s) < CLI overrides.
+11. [x] Support disabling a type via boolean false (TOML loader logic).
+12. [x] Validate `newVersion` (semver parse).
+13. [~] Warn on unknown keys (collect & log).
+14. [x] Expose `ResolvedConfig` with normalized paths, resolved repo data (placeholder until repo module ready).
 
 🧪 Tests:
 - [ ] Default config equality snapshot.
