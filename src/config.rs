@@ -1,4 +1,8 @@
-use std::{collections::BTreeMap, fs, path::{Path, PathBuf}};
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Context, Result};
 use semver::Version;
@@ -29,17 +33,30 @@ pub struct TypeConfigResolved {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SemverImpact { Major, Minor, Patch, None }
+pub enum SemverImpact {
+    Major,
+    Minor,
+    Patch,
+    None,
+}
 
 impl SemverImpact {
-    fn from_str(s: &str) -> Option<Self> { match s { "major"=>Some(Self::Major), "minor"=>Some(Self::Minor), "patch"=>Some(Self::Patch), "none"=>Some(Self::None), _=>None } }
+    fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "major" => Some(Self::Major),
+            "minor" => Some(Self::Minor),
+            "patch" => Some(Self::Patch),
+            "none" => Some(Self::None),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
 pub struct RawConfig {
     pub new_version: Option<String>,
-    #[serde(rename="types")]
+    #[serde(rename = "types")]
     pub types_override: Option<BTreeMap<String, TypeToggleOrConfig>>, // allow disabling or overriding
     pub scope_map: Option<BTreeMap<String, String>>, // future
     pub hide_author_email: Option<bool>,
@@ -71,10 +88,21 @@ pub fn default_types() -> Vec<TypeConfigResolved> {
         ("chore", "Chores", "🧹", SemverImpact::None),
         ("revert", "Reverts", "⏪", SemverImpact::Patch),
     ];
-    data.iter().map(|(k,t,e,s)| TypeConfigResolved { key: (*k).into(), title: (*t).into(), emoji:(*e).into(), semver:*s, enabled:true}).collect()
+    data.iter()
+        .map(|(k, t, e, s)| TypeConfigResolved {
+            key: (*k).into(),
+            title: (*t).into(),
+            emoji: (*e).into(),
+            semver: *s,
+            enabled: true,
+        })
+        .collect()
 }
 
-pub struct LoadOptions<'a> { pub cwd: &'a Path, pub cli_overrides: Option<RawConfig> }
+pub struct LoadOptions<'a> {
+    pub cwd: &'a Path,
+    pub cli_overrides: Option<RawConfig>,
+}
 
 pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     let mut warnings = Vec::new();
@@ -83,33 +111,86 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
 
     // defaults placeholder (empty RawConfig means rely on default types below)
     // 1. changelogen.toml
-    if let Some(path) = find_file(opts.cwd, "changelogen.toml") { match load_file(&path) { Ok(rc)=>{ source_file = Some(path.clone()); raw_stack.push(rc); }, Err(e)=> warnings.push(format!("Failed to load changelogen.toml: {e}")), } }
+    if let Some(path) = find_file(opts.cwd, "changelogen.toml") {
+        match load_file(&path) {
+            Ok(rc) => {
+                source_file = Some(path.clone());
+                raw_stack.push(rc);
+            }
+            Err(e) => warnings.push(format!("Failed to load changelogen.toml: {e}")),
+        }
+    }
 
     // 2. Cargo.toml [package.metadata.changelogen]
-    if let Some(cargo_path) = find_file(opts.cwd, "Cargo.toml") { match fs::read_to_string(&cargo_path) { Ok(s)=> { if let Some(rc) = extract_metadata_block(&s, &mut warnings) { raw_stack.push(rc); } }, Err(e)=> warnings.push(format!("Failed to read Cargo.toml: {e}")), } }
+    if let Some(cargo_path) = find_file(opts.cwd, "Cargo.toml") {
+        match fs::read_to_string(&cargo_path) {
+            Ok(s) => {
+                if let Some(rc) = extract_metadata_block(&s, &mut warnings) {
+                    raw_stack.push(rc);
+                }
+            }
+            Err(e) => warnings.push(format!("Failed to read Cargo.toml: {e}")),
+        }
+    }
 
     // 3. CLI overrides last
-    if let Some(cli) = opts.cli_overrides { raw_stack.push(cli); }
+    if let Some(cli) = opts.cli_overrides {
+        raw_stack.push(cli);
+    }
 
     // Merge stack in order added (file(s) then CLI). Defaults applied separately.
     let mut types = default_types();
 
     for raw in &raw_stack {
         if let Some(map) = &raw.types_override {
-            for (k,v) in map {
+            for (k, v) in map {
                 // locate or append
                 let idx = types.iter().position(|t| &t.key == k);
                 match v {
                     TypeToggleOrConfig::Disabled(b) => {
-                        if !*b { // false disables
-                            if let Some(i) = idx { types[i].enabled = false; } else { // create disabled placeholder so later override could re-enable
-                                types.push(TypeConfigResolved { key: k.clone(), title: k.clone(), emoji: String::new(), semver: SemverImpact::None, enabled:false });
+                        if !*b {
+                            // false disables
+                            if let Some(i) = idx {
+                                types[i].enabled = false;
+                            } else {
+                                // create disabled placeholder so later override could re-enable
+                                types.push(TypeConfigResolved {
+                                    key: k.clone(),
+                                    title: k.clone(),
+                                    emoji: String::new(),
+                                    semver: SemverImpact::None,
+                                    enabled: false,
+                                });
                             }
                         }
                     }
                     TypeToggleOrConfig::Config(part) => {
-                        let semver = part.semver.as_deref().and_then(SemverImpact::from_str).unwrap_or_else(|| idx.map(|i| types[i].semver).unwrap_or(SemverImpact::None));
-                        if let Some(i) = idx { let t = &mut types[i]; if let Some(title)=&part.title { t.title = title.clone(); } if let Some(emoji)=&part.emoji { t.emoji = emoji.clone(); } t.semver = semver; t.enabled = true; } else { types.push(TypeConfigResolved { key: k.clone(), title: part.title.clone().unwrap_or_else(|| k.clone()), emoji: part.emoji.clone().unwrap_or_default(), semver, enabled: true }); }
+                        let semver = part
+                            .semver
+                            .as_deref()
+                            .and_then(SemverImpact::from_str)
+                            .unwrap_or_else(|| {
+                                idx.map(|i| types[i].semver).unwrap_or(SemverImpact::None)
+                            });
+                        if let Some(i) = idx {
+                            let t = &mut types[i];
+                            if let Some(title) = &part.title {
+                                t.title = title.clone();
+                            }
+                            if let Some(emoji) = &part.emoji {
+                                t.emoji = emoji.clone();
+                            }
+                            t.semver = semver;
+                            t.enabled = true;
+                        } else {
+                            types.push(TypeConfigResolved {
+                                key: k.clone(),
+                                title: part.title.clone().unwrap_or_else(|| k.clone()),
+                                emoji: part.emoji.clone().unwrap_or_default(),
+                                semver,
+                                enabled: true,
+                            });
+                        }
                     }
                 }
             }
@@ -118,30 +199,88 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
 
     // new_version validation (take last one provided)
     let mut new_version: Option<Version> = None;
-    for raw in &raw_stack { if let Some(vs) = &raw.new_version { match Version::parse(vs) { Ok(v)=> new_version = Some(v), Err(e)=> warnings.push(format!("Invalid new_version '{vs}': {e}")), } } }
+    for raw in &raw_stack {
+        if let Some(vs) = &raw.new_version {
+            match Version::parse(vs) {
+                Ok(v) => new_version = Some(v),
+                Err(e) => warnings.push(format!("Invalid new_version '{vs}': {e}")),
+            }
+        }
+    }
 
     let github_token = resolve_github_token();
 
-    Ok(ResolvedConfig { types, new_version, warnings, github_token, cwd: opts.cwd.to_path_buf(), source_file })
+    Ok(ResolvedConfig {
+        types,
+        new_version,
+        warnings,
+        github_token,
+        cwd: opts.cwd.to_path_buf(),
+        source_file,
+    })
 }
 
-fn load_file(path: &Path) -> Result<RawConfig> { let txt = fs::read_to_string(path).with_context(|| format!("Reading {path:?}"))?; let rc: RawConfig = toml_edit::de::from_str(&txt).with_context(|| format!("Parsing TOML {path:?}"))?; Ok(rc) }
+fn load_file(path: &Path) -> Result<RawConfig> {
+    let txt = fs::read_to_string(path).with_context(|| format!("Reading {path:?}"))?;
+    let rc: RawConfig =
+        toml_edit::de::from_str(&txt).with_context(|| format!("Parsing TOML {path:?}"))?;
+    Ok(rc)
+}
 
-fn find_file(cwd: &Path, name: &str) -> Option<PathBuf> { let candidate = cwd.join(name); if candidate.exists() { Some(candidate) } else { None } }
+fn find_file(cwd: &Path, name: &str) -> Option<PathBuf> {
+    let candidate = cwd.join(name);
+    if candidate.exists() {
+        Some(candidate)
+    } else {
+        None
+    }
+}
 
 fn extract_metadata_block(cargo_toml: &str, warnings: &mut Vec<String>) -> Option<RawConfig> {
     // parse using toml_edit to avoid losing formatting
-    let doc: toml_edit::DocumentMut = match cargo_toml.parse() { Ok(d)=>d, Err(e)=> { warnings.push(format!("Cargo.toml parse error: {e}")); return None; } };
-    if let Some(pkg) = doc.get("package") { if let Some(meta) = pkg.get("metadata") { if let Some(cl) = meta.get("changelogen") { let cl_str = cl.to_string(); return match toml_edit::de::from_str::<RawConfig>(&format!("{cl_str}")) { Ok(mut rc)=> { // ensure we deserialized a table
-                        if rc.types_override.is_none() && !cl.is_table() { warnings.push("metadata.changelogen not a table".into()); }
+    let doc: toml_edit::DocumentMut = match cargo_toml.parse() {
+        Ok(d) => d,
+        Err(e) => {
+            warnings.push(format!("Cargo.toml parse error: {e}"));
+            return None;
+        }
+    };
+    if let Some(pkg) = doc.get("package") {
+        if let Some(meta) = pkg.get("metadata") {
+            if let Some(cl) = meta.get("changelogen") {
+                let cl_str = cl.to_string();
+                return match toml_edit::de::from_str::<RawConfig>(&format!("{cl_str}")) {
+                    Ok(mut rc) => {
+                        // ensure we deserialized a table
+                        if rc.types_override.is_none() && !cl.is_table() {
+                            warnings.push("metadata.changelogen not a table".into());
+                        }
                         Some(rc)
-                    }, Err(e)=> { warnings.push(format!("Failed to parse metadata.changelogen: {e}")); None } }; } } }
+                    }
+                    Err(e) => {
+                        warnings.push(format!("Failed to parse metadata.changelogen: {e}"));
+                        None
+                    }
+                };
+            }
+        }
+    }
     None
 }
 
 fn resolve_github_token() -> Option<String> {
-    for key in ["CHANGELOGEN_TOKENS_GITHUB", "GITHUB_TOKEN", "GH_TOKEN"] { if let Ok(v) = std::env::var(key) { if !v.is_empty() { return Some(v); } } }
+    for key in ["CHANGELOGEN_TOKENS_GITHUB", "GITHUB_TOKEN", "GH_TOKEN"] {
+        if let Ok(v) = std::env::var(key) {
+            if !v.is_empty() {
+                return Some(v);
+            }
+        }
+    }
     None
 }
 
-pub fn log_warnings(cfg: &ResolvedConfig) { for w in &cfg.warnings { warn!(target="changelogen::config", "{w}"); } }
+pub fn log_warnings(cfg: &ResolvedConfig) {
+    for w in &cfg.warnings {
+        warn!(target = "changelogen::config", "{w}");
+    }
+}
