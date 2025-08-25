@@ -1,4 +1,4 @@
-mod config;
+pub mod config;
 
 fn main() {
     let cwd = std::env::current_dir().expect("cwd");

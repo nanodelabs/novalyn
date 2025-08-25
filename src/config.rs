@@ -52,7 +52,7 @@ impl SemverImpact {
     }
 }
 
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Default)]
 #[serde(default)]
 pub struct RawConfig {
     pub new_version: Option<String>,
@@ -61,6 +61,9 @@ pub struct RawConfig {
     pub scope_map: Option<BTreeMap<String, String>>, // future
     pub hide_author_email: Option<bool>,
     pub no_authors: Option<bool>,
+    // capture unknown keys (flatten) for warning emission
+    #[serde(flatten)]
+    pub _unknown: BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone)]
@@ -209,6 +212,13 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     }
 
     let github_token = resolve_github_token();
+
+    // accumulate unknown keys warnings (after all layers so later layers can override earlier ones silently)
+    for raw in &raw_stack {
+        for k in raw._unknown.keys() {
+            warnings.push(format!("Unknown config key: {k}"));
+        }
+    }
 
     Ok(ResolvedConfig {
         types,
