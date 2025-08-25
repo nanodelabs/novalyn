@@ -17,6 +17,13 @@ pub struct Repository {
     pub original: String,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ReferenceKind {
+    PullRequest,
+    Issue,
+    Hash,
+}
+
 impl Repository {
     pub fn parse(remote: &str) -> Option<Self> {
         // Try SSH: git@host:owner/name(.git)
@@ -139,6 +146,52 @@ impl Repository {
             Provider::Other => String::new(),
         }
     }
+}
+
+pub fn format_reference(repo: Option<&Repository>, kind: ReferenceKind, raw: &str) -> String {
+    let Some(r) = repo else {
+        return raw.to_string();
+    };
+    let (segment, display) = match kind {
+        ReferenceKind::PullRequest => match r.provider {
+            Provider::GitHub => ("pull", raw.trim_start_matches('#')),
+            Provider::GitLab => ("merge_requests", raw.trim_start_matches('#')),
+            Provider::Bitbucket => ("pull-requests", raw.trim_start_matches('#')),
+            Provider::Other => return raw.to_string(),
+        },
+        ReferenceKind::Issue => ("issues", raw.trim_start_matches('#')),
+        ReferenceKind::Hash => match r.provider {
+            Provider::GitHub | Provider::GitLab => ("commit", raw),
+            Provider::Bitbucket => ("commits", raw),
+            Provider::Other => return raw.to_string(),
+        },
+    };
+    format!(
+        "[{}](https://{}/{}/{}/{}/{})",
+        raw, r.host, r.owner, r.name, segment, display
+    )
+}
+
+pub fn format_compare_changes(
+    v: Option<&str>,
+    from: &str,
+    to: &str,
+    repo: Option<&Repository>,
+) -> Option<String> {
+    let r = repo?;
+    let head = v.unwrap_or(to);
+    let url = match r.provider {
+        Provider::GitHub | Provider::GitLab => format!(
+            "https://{}/{}/{}/compare/{}...{}",
+            r.host, r.owner, r.name, from, head
+        ),
+        Provider::Bitbucket => format!(
+            "https://{}/{}/{}/branches/compare/{}..{}",
+            r.host, r.owner, r.name, head, from
+        ),
+        Provider::Other => return None,
+    };
+    Some(format!("[compare changes]({})", url))
 }
 
 impl fmt::Display for Repository {

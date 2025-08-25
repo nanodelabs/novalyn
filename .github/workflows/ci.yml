@@ -31,7 +31,10 @@ jobs:
       - name: Build
         run: cargo build --all --locked
 
-      - name: Tests
-        run: cargo test --all --locked --no-fail-fast
+      - name: Install nextest
+        run: cargo install cargo-nextest --locked --version ^0.9 || echo "nextest already installed"
 
-      # Placeholder for cargo-deny / nextest integration in later stages
+      - name: Tests (nextest)
+        run: cargo nextest run --all --locked --profile ci
+
+      # Placeholder for cargo-deny integration in later stages

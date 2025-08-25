@@ -54,7 +54,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 16. [x] Infer provider + domain from origin; fallback to config override.
 17. [x] Implement reference URL mapping spec (commit/issue/pull).
 18. [x] Implement compare link function (provider differences).
-19. [ ] Add formatting helpers: `format_reference`, `format_compare_link` (pending final integration into rendering pipeline).
+19. [x] Add formatting helpers: `format_reference`, `format_compare_link` (implemented + tests; integrate during rendering phase).
 
 🧪 Tests:
 - [x] Parse SSH style URL.
@@ -310,7 +310,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 111. [ ] Add matrix (linux, macOS, windows).
 112. [ ] Add MSRV job.
 113. [ ] Add cache (actions-rs or dtolnay/rust-toolchain + Swatinem/rust-cache).
-114. [ ] Add test coverage (grcov or cargo-llvm-cov optional).
+114. [ ] Add test coverage (cargo-tarpaulin).
 115. [ ] Optional scheduled dependency audit.
 
 ---
