@@ -65,18 +65,18 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 3. Git Layer (§7)
 
-20. [ ] Implement repo detection + error if not a git repo.
-21. [ ] Implement last tag discovery (semver tags; accept both vX.Y.Z and X.Y.Z; prefer latest by commit date).
-22. [ ] Implement current ref (tag or branch HEAD).
-23. [ ] Commit enumeration between (from, to].
-24. [ ] Provide RawCommit struct (id, short_id, summary, body, author, timestamp).
-25. [ ] Dirty working tree detection.
-26. [ ] Utility: add & commit, create annotated/signed tag (shell fallback for signed).
+20. [x] Implement repo detection + error if not a git repo.
+21. [x] Implement last tag discovery (semver tags; accept both vX.Y.Z and X.Y.Z; prefer latest by commit date).
+22. [x] Implement current ref (tag or branch HEAD).
+23. [x] Commit enumeration between (from, to].
+24. [x] Provide RawCommit struct (id, short_id, summary, body, author, timestamp).
+25. [x] Dirty working tree detection.
+26. [x] Utility: add & commit, create annotated/signed tag (shell fallback for signed).
 
 🧪 Tests:
-- [ ] No tags scenario.
-- [ ] Single tag detection.
-- [ ] Dirty tree detection.
+- [x] No tags scenario.
+- [x] Single tag detection.
+- [x] Dirty tree detection.
 
 ---
 
