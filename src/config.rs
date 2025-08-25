@@ -66,6 +66,9 @@ pub struct RawConfig {
     pub _unknown: BTreeMap<String, serde_json::Value>,
 }
 
+// Access repository module via crate root (this crate)
+use crate::repository as repo_mod; // binary crate re-exports via main, lib via lib.rs
+
 #[derive(Debug, Clone)]
 pub struct ResolvedConfig {
     pub types: Vec<TypeConfigResolved>,
@@ -74,6 +77,7 @@ pub struct ResolvedConfig {
     pub github_token: Option<String>,
     pub cwd: PathBuf,
     pub source_file: Option<PathBuf>,
+    pub repo: Option<repo_mod::Repository>, // set by detection (best-effort)
 }
 
 pub fn default_types() -> Vec<TypeConfigResolved> {
@@ -220,6 +224,9 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
         }
     }
 
+    // Attempt repository detection (non-fatal)
+    let repo = detect_repository(opts.cwd, &mut warnings);
+
     Ok(ResolvedConfig {
         types,
         new_version,
@@ -227,6 +234,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
         github_token,
         cwd: opts.cwd.to_path_buf(),
         source_file,
+        repo,
     })
 }
 
@@ -260,7 +268,7 @@ fn extract_metadata_block(cargo_toml: &str, warnings: &mut Vec<String>) -> Optio
             if let Some(cl) = meta.get("changelogen") {
                 let cl_str = cl.to_string();
                 return match toml_edit::de::from_str::<RawConfig>(&format!("{cl_str}")) {
-                    Ok(mut rc) => {
+                    Ok(rc) => {
                         // ensure we deserialized a table
                         if rc.types_override.is_none() && !cl.is_table() {
                             warnings.push("metadata.changelogen not a table".into());
@@ -292,5 +300,50 @@ fn resolve_github_token() -> Option<String> {
 pub fn log_warnings(cfg: &ResolvedConfig) {
     for w in &cfg.warnings {
         warn!(target = "changelogen::config", "{w}");
+    }
+}
+
+fn detect_repository(cwd: &Path, warnings: &mut Vec<String>) -> Option<repo_mod::Repository> { // crate path valid when used as library
+    // Open git repo; if not a git repository, silently return None (git layer will handle hard error later)
+    let repo = match git2::Repository::discover(cwd) {
+        Ok(r) => r,
+        Err(_) => return None,
+    };
+    // Preferred remote: origin, else first
+    let remotes = match repo.remotes() {
+        Ok(r) => r,
+        Err(e) => {
+            warnings.push(format!("Failed to list git remotes: {e}"));
+            return None;
+        }
+    };
+    let mut chosen: Option<String> = None;
+    if remotes.iter().any(|n| n == Some("origin")) {
+        if let Ok(remote) = repo.find_remote("origin") {
+            if let Some(url) = remote.url() {
+                chosen = Some(url.to_string());
+            }
+        }
+    }
+    if chosen.is_none() {
+        for name in remotes.iter().flatten() {
+            if let Ok(remote) = repo.find_remote(name) {
+                if let Some(url) = remote.url() {
+                    chosen = Some(url.to_string());
+                    break;
+                }
+            }
+        }
+    }
+    let remote_url = match chosen {
+        Some(u) => u,
+        None => return None,
+    };
+    match repo_mod::Repository::parse(&remote_url) {
+        Some(r) => Some(r),
+        None => {
+            warnings.push(format!("Unrecognized remote URL format: {remote_url}"));
+            None
+        }
     }
 }

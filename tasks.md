@@ -50,16 +50,16 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 2. Repo & Provider Resolution (§3.5, §5.1.4, §9)
 
-15. [ ] Implement remote URL parsing (GitHub/GitLab/Bitbucket patterns).
-16. [ ] Infer provider + domain from origin; fallback to config override.
-17. [ ] Implement reference URL mapping spec (commit/issue/pull).
-18. [ ] Implement compare link function (provider differences).
-19. [ ] Add formatting helpers: `format_reference`, `format_compare_link`.
+15. [x] Implement remote URL parsing (GitHub/GitLab/Bitbucket patterns).
+16. [x] Infer provider + domain from origin; fallback to config override.
+17. [x] Implement reference URL mapping spec (commit/issue/pull).
+18. [x] Implement compare link function (provider differences).
+19. [ ] Add formatting helpers: `format_reference`, `format_compare_link` (pending final integration into rendering pipeline).
 
 🧪 Tests:
-- [ ] Parse SSH style URL.
-- [ ] Parse HTTPS URL with .git suffix.
-- [ ] Compare link generation per provider.
+- [x] Parse SSH style URL.
+- [x] Parse HTTPS URL with .git suffix.
+- [x] Compare link generation per provider.
 
 ---
 
