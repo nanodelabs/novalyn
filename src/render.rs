@@ -95,7 +95,7 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> String {
 mod tests {
     use super::*;
     use crate::{
-        config::{LoadOptions, ResolvedConfig, default_types},
+        config::{ResolvedConfig, default_types},
         git::RawCommit,
         parse::ParsedCommit,
     };

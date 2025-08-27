@@ -75,7 +75,7 @@ pub fn run() -> Result<()> {
     let cwd = cli
         .cwd
         .as_ref()
-        .map(|s| std::path::PathBuf::from(s))
+        .map(std::path::PathBuf::from)
         .unwrap_or(std::env::current_dir()?);
     let exit = match cli.command {
         Commands::Show {

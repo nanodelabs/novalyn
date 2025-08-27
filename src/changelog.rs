@@ -15,11 +15,9 @@ pub fn write_or_update_changelog(path: &Path, new_block: &str) -> std::io::Resul
         }
     }
     // Direct quick check: if existing (after possible title) already begins with normalized_new
-    let existing_after_title = if existing.starts_with("# Changelog\n") {
-        &existing["# Changelog\n".len()..]
-    } else {
-        &existing
-    };
+    let existing_after_title = existing
+        .strip_prefix("# Changelog\n")
+        .unwrap_or(existing.as_str());
     if existing_after_title.starts_with(&normalized_new) {
         return Ok(false);
     }
@@ -45,7 +43,7 @@ fn extract_top_block(existing: &str) -> Option<String> {
     }
     let mut collected = Vec::new();
     let mut in_block = false;
-    while let Some(line) = lines.next() {
+    for line in lines {
         if line.starts_with("## ") {
             if in_block {
                 break;
