@@ -168,14 +168,22 @@ mod tests {
     #[test]
     fn exclusion_and_hide_email() {
         let commits = vec![mk_commit("Ålice", "alice@example.com", &[])];
-        let mut opts = AuthorOptions::default();
-        opts.exclude.push("Ålice".into());
-        let a = Authors::collect(&commits, &opts);
+        let a = Authors::collect(
+            &commits,
+            &AuthorOptions {
+                exclude: vec!["Ålice".into()],
+                ..Default::default()
+            },
+        );
         assert!(a.list.is_empty());
         let commits = vec![mk_commit("Dana", "dana@example.com", &[])];
-        let mut opts2 = AuthorOptions::default();
-        opts2.hide_author_email = true;
-        let a2 = Authors::collect(&commits, &opts2);
+        let a2 = Authors::collect(
+            &commits,
+            &AuthorOptions {
+                hide_author_email: true,
+                ..Default::default()
+            },
+        );
         assert_eq!(a2.list[0].email, None);
     }
 }
