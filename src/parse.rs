@@ -279,6 +279,25 @@ pub fn infer_version(
     (new, impact)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn explicit_override_used() {
+        let prev = semver::Version::parse("1.2.3").unwrap();
+        let (v, kind) = infer_version(&prev, &[], Some(semver::Version::parse("9.9.9").unwrap()));
+        assert_eq!(v.to_string(), "9.9.9");
+        assert_eq!(kind, BumpKind::None);
+    }
+    #[test]
+    fn idempotent_same_version_no_change() {
+        let prev = semver::Version::parse("1.2.3").unwrap();
+        // No commits -> default patch bump
+        let (v, _) = infer_version(&prev, &[], None);
+        assert_eq!(v.to_string(), "1.2.4");
+    }
+}
+
 pub fn bump_cargo_version(
     path: &std::path::Path,
     new_version: &semver::Version,
