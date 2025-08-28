@@ -361,9 +361,9 @@ mod tests {
     #[test]
     fn idempotent_same_version_no_change() {
         let prev = semver::Version::parse("1.2.3").unwrap();
-    // No commits -> same version (no change)
-    let (v, kind) = infer_version(&prev, &[], None);
-    assert_eq!(v.to_string(), "1.2.3");
-    assert_eq!(kind, BumpKind::None);
+        // No commits -> same version (no change)
+        let (v, kind) = infer_version(&prev, &[], None);
+        assert_eq!(v.to_string(), "1.2.3");
+        assert_eq!(kind, BumpKind::None);
     }
 }

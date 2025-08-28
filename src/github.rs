@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tracing::{debug, warn, instrument};
+use tracing::{debug, instrument, warn};
 
 use crate::repository::Repository;
 
