@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tracing::{debug, warn};
+use tracing::{debug, warn, instrument};
 
 use crate::repository::Repository;
 
@@ -26,6 +26,7 @@ pub enum GithubError {
 
 /// Sync release with GitHub: get existing by tag, create or update.
 /// Returns ReleaseInfo even on fallback path (manual URL) with skipped=true.
+#[instrument(skip(token, body), fields(tag = %tag))]
 pub async fn sync_release(
     repo: &Repository,
     token: Option<&str>,

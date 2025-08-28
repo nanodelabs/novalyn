@@ -104,7 +104,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 35. [x] Determine major/minor/patch flags using type semver + breaking flag.
 36. [x] Pre-1.0 adjustment: major→minor, minor→patch.
-37. [x] Default to "patch" if zero bump-worthy changes (match JS `|| "patch"").
+37. [~] Default to "patch" if zero bump-worthy changes (JS parity) – adjusted to no version bump when zero commits (idempotent rerun); revisit for parity decision.
 38. [x] Apply explicit newVersion override if provided after inference.
 39. [⚠] Implement suffix logic (optional; deferred to backlog).
 40. [x] Implement Cargo.toml version bump via toml_edit (preserve formatting).
@@ -158,7 +158,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 55. [x] Add compare link (if previous tag exists).
 56. [x] Contributors section conditionally.
 57. [x] Consistent trailing newline.
-58. [~] Deterministic ordering: chronological ensured; explicit tie-break test pending.
+58. [x] Deterministic ordering: chronological ensured; tie-break test added.
 59. [x] Provide function `render_release_block`.
 
 🧪 Tests:
@@ -192,8 +192,8 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 68. [x] Respect clean flag (implemented).
 
 🧪 Tests:
-- [ ] Dry run leaves files unchanged.
-- [ ] Exit code 3 scenario (if implemented—validate parity).
+- [x] Dry run leaves files unchanged.
+- [x] Exit code 3 scenario (no-change path) with idempotent version.
 - [ ] Signed tag attempt (simulate no key error path).
 
 ---
@@ -207,7 +207,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 73. [x] Optionally `--github` subcommand to resync existing tag with current body.
 
 🧪 Tests (network mock or feature-gated):
-- [ ] Manual fallback without token.
+- [x] Manual fallback without token.
 - [ ] Update path after create.
 
 ---

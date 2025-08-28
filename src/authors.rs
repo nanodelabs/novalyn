@@ -140,6 +140,7 @@ mod tests {
             issues: vec![],
             co_authors: co.iter().map(|s| s.to_string()).collect(),
             type_cfg: None,
+            index: 0,
         }
     }
 

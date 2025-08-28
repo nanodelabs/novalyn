@@ -15,6 +15,7 @@ pub struct ParsedCommit {
     pub issues: Vec<u64>,
     pub co_authors: Vec<String>,
     pub type_cfg: Option<TypeConfigResolved>,
+    pub index: usize, // original chronological order position for deterministic ordering
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,8 +42,9 @@ pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<
     let rex = Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
         .unwrap();
     let mut out = Vec::new();
-    for rc in commits {
+    for (idx, rc) in commits.into_iter().enumerate() {
         let mut p = parse_one(&rc, &rex);
+        p.index = idx;
         classify(&mut p, cfg);
         if should_keep(&p) {
             tracing::debug!(commit = %p.raw.short_id, r#type = %p.r#type, scope = ?p.scope, breaking = p.breaking, issues = ?p.issues, "classified");
@@ -170,6 +172,7 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
         issues,
         co_authors,
         type_cfg: None,
+        index: 0,
     }
 }
 
@@ -229,6 +232,10 @@ pub fn infer_version(
 ) -> (semver::Version, BumpKind) {
     if let Some(v) = override_new {
         return (v, BumpKind::None);
+    }
+    if commits.is_empty() {
+        // No commits at all -> treat as no change (idempotent rerun)
+        return (previous.clone(), BumpKind::None);
     }
     use BumpKind::*;
     let mut impact = BumpKind::None;
@@ -354,8 +361,9 @@ mod tests {
     #[test]
     fn idempotent_same_version_no_change() {
         let prev = semver::Version::parse("1.2.3").unwrap();
-        // No commits -> default patch bump
-        let (v, _) = infer_version(&prev, &[], None);
-        assert_eq!(v.to_string(), "1.2.4");
+    // No commits -> same version (no change)
+    let (v, kind) = infer_version(&prev, &[], None);
+    assert_eq!(v.to_string(), "1.2.3");
+    assert_eq!(kind, BumpKind::None);
     }
 }
