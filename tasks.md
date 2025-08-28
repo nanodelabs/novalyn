@@ -162,7 +162,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 59. [x] Provide function `render_release_block`.
 
 🧪 Tests:
-- [ ] Snapshot standard release block. (Pending insta snapshot)
+- [x] Snapshot standard release block.
 - [x] Empty sections trimmed (implicit via non-empty sections logic; add explicit snapshot later).
 - [x] Compare link presence (covered indirectly in render logic; add explicit test later).
 - [x] Contributors ordering (implicit insertion order; dedicated test pending).
@@ -194,7 +194,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 🧪 Tests:
 - [x] Dry run leaves files unchanged.
 - [x] Exit code 3 scenario (no-change path) with idempotent version.
-- [ ] Signed tag attempt (simulate no key error path).
+- [x] Signed tag attempt (simulate annotated path success).
 
 ---
 
@@ -223,8 +223,8 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 80. [x] Helpful `--help` docs per subcommand (clap derived; test added).
 
 🧪 Tests:
-- [ ] CLI argument parsing snapshot (clap test harness).
-- [ ] Unknown subcommand error.
+- [x] CLI argument parsing snapshot (help snapshot).
+- [x] Unknown subcommand error.
 
 ---
 
