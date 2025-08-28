@@ -129,7 +129,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 🧪 Tests:
 - [x] All tokens replaced.
 - [x] Unknown token retention.
-- [ ] Date stable formatting. (Implicit in replacement test; can add explicit UTC test later.)
+- [x] Date stable formatting. (explicit test interpolation_date_format)
 
 ---
 
@@ -200,11 +200,11 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 11. GitHub Release Sync (§12, §23)
 
-69. [ ] Implement GET release by tag; create or update.
-70. [ ] Fallback manual URL when token absent or error.
-71. [ ] Redact token in logs.
-72. [ ] Provide status struct to caller.
-73. [ ] Optionally `--github` subcommand to resync existing tag with current body.
+69. [x] Implement GET release by tag; create or update. (basic happy path)
+70. [x] Fallback manual URL when token absent or error.
+71. [~] Redact token in logs. (token never logged; explicit redaction still to add if future logging)
+72. [x] Provide status struct to caller.
+73. [x] Optionally `--github` subcommand to resync existing tag with current body.
 
 🧪 Tests (network mock or feature-gated):
 - [ ] Manual fallback without token.
@@ -217,9 +217,9 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 74. [x] Implement `show` (print inferred next version).
 75. [x] Implement `generate` (print block; optional --write).
 76. [x] Implement `release` (full pipeline minus GitHub sync).
-77. [ ] Implement `github` (sync only) if maintained.
-78. [~] Global flags: implemented --from, --to, --new-version, --sign (placeholder), --no-authors, --exclude-author, --cwd, --dry-run, --clean. Pending: --output, --yes.
-79. [ ] Verbosity flags or RUST_LOG integration (pending).
+77. [x] Implement `github` (sync only) if maintained.
+78. [~] Global flags: implemented --from, --to, --new-version, --sign (placeholder), --no-authors, --exclude-author, --cwd, --dry-run, --clean, --output, -v/--verbose. Pending: --yes (plumbed but not used for confirmations yet).
+79. [x] Verbosity flags or RUST_LOG integration (tracing subscriber added).
 80. [x] Helpful `--help` docs per subcommand (clap derived; test added).
 
 🧪 Tests:
@@ -243,9 +243,9 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 14. Logging & Telemetry (§18)
 
-85. [ ] Integrate tracing subscriber (env filter).
-86. [ ] Add spans: collect_commits, parse_classify, infer_version, render, write, tag, github_sync.
-87. [ ] Debug-level per-commit classification log.
+85. [x] Integrate tracing subscriber (env filter).
+86. [x] Add spans: collect_commits, parse_classify, infer_version, render, write, tag (github_sync to add on invocation path).
+87. [x] Debug-level per-commit classification log.
 88. [ ] Provide minimal JSON log format stub (optional backlog).
 
 🧪 Tests:

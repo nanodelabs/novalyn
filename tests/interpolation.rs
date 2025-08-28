@@ -24,3 +24,13 @@ fn interpolation_unknown() {
     let out = interpolate("X {{unknown}} Y", &prev, &new, &date);
     assert_eq!(out, "X {{unknown}} Y");
 }
+
+#[test]
+fn interpolation_date_format() {
+    let prev = Version::parse("0.1.0").unwrap();
+    let new = Version::parse("0.2.0").unwrap();
+    // Leading zeros for month/day enforced
+    let date = Date::new(2025, 1, 5).unwrap();
+    let out = interpolate("{{date}}", &prev, &new, &date);
+    assert_eq!(out, "2025-01-05");
+}

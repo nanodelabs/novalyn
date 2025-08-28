@@ -45,6 +45,7 @@ pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<
         let mut p = parse_one(&rc, &rex);
         classify(&mut p, cfg);
         if should_keep(&p) {
+            tracing::debug!(commit = %p.raw.short_id, r#type = %p.r#type, scope = ?p.scope, breaking = p.breaking, issues = ?p.issues, "classified");
             out.push(p);
         }
     }

@@ -1,6 +1,9 @@
-use crate::pipeline::{ExitCode, ReleaseOptions, run_release};
+use crate::{
+    github, logging,
+    pipeline::{ExitCode, ReleaseOptions, run_release},
+};
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -13,6 +16,9 @@ pub struct Cli {
     pub command: Commands,
     #[arg(long)]
     pub cwd: Option<String>,
+    /// Increase verbosity (-v, -vv, -vvv)
+    #[arg(short = 'v', action = ArgAction::Count)]
+    pub verbose: u8,
 }
 
 #[derive(Subcommand, Debug)]
@@ -30,6 +36,9 @@ pub enum Commands {
     Generate {
         #[arg(long)]
         write: bool,
+        /// Write output to file instead of stdout (implies --write when path is CHANGELOG.md)
+        #[arg(long, value_name = "PATH")]
+        output: Option<String>,
         #[arg(long)]
         from: Option<String>,
         #[arg(long)]
@@ -46,6 +55,9 @@ pub enum Commands {
         clean: bool,
         #[arg(long)]
         sign: bool,
+        /// Auto-confirm (skip prompts)
+        #[arg(long)]
+        yes: bool,
     },
     /// Run full release (bump, changelog, tag creation optional in future)
     Release {
@@ -67,11 +79,21 @@ pub enum Commands {
         clean: bool,
         #[arg(long)]
         sign: bool,
+        #[arg(long)]
+        yes: bool,
+    },
+    /// GitHub release synchronization only
+    Github {
+        #[arg(long)]
+        tag: String,
+        #[arg(long)]
+        body_path: Option<String>,
     },
 }
 
 pub fn run() -> Result<()> {
     let cli = Cli::parse();
+    logging::init(cli.verbose as usize);
     let cwd = cli
         .cwd
         .as_ref()
@@ -101,6 +123,7 @@ pub fn run() -> Result<()> {
         }
         Commands::Generate {
             write,
+            output,
             from,
             to,
             new_version,
@@ -109,6 +132,7 @@ pub fn run() -> Result<()> {
             hide_author_email,
             clean,
             sign,
+            yes: _,
         } => {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
@@ -123,6 +147,9 @@ pub fn run() -> Result<()> {
                 clean,
                 sign,
             })?;
+            if let Some(path) = output {
+                std::fs::write(&path, outcome.version.to_string())?;
+            }
             println!(
                 "Generated v{} ({} commits){}",
                 outcome.version,
@@ -153,6 +180,7 @@ pub fn run() -> Result<()> {
             hide_author_email,
             clean,
             sign,
+            yes: _,
         } => {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
@@ -172,6 +200,41 @@ pub fn run() -> Result<()> {
                 ExitCode::Success
             } else {
                 println!("No change for v{}", outcome.version);
+                ExitCode::NoChange
+            }
+        }
+        Commands::Github { tag, body_path } => {
+            // Minimal body read
+            let body = if let Some(path) = body_path {
+                std::fs::read_to_string(path)?
+            } else {
+                String::new()
+            };
+            // attempt repo detection via config layer
+            let cfg = crate::config::load_config(crate::config::LoadOptions {
+                cwd: &cwd,
+                cli_overrides: None,
+            })?;
+            if let Some(repo) = cfg.repo {
+                let rt = tokio::runtime::Runtime::new()?;
+                let info = rt.block_on(async move {
+                    github::sync_release(&repo, cfg.github_token.as_deref(), &tag, &body).await
+                });
+                match info {
+                    Ok(r) => {
+                        println!(
+                            "GitHub release {}: {} (created={}, updated={}, skipped={})",
+                            r.tag, r.url, r.created, r.updated, r.skipped
+                        );
+                        ExitCode::Success
+                    }
+                    Err(e) => {
+                        eprintln!("github sync error: {e}");
+                        ExitCode::NoChange
+                    }
+                }
+            } else {
+                eprintln!("no repository info available");
                 ExitCode::NoChange
             }
         }

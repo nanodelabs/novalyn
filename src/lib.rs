@@ -4,6 +4,8 @@ pub mod cli;
 pub mod config;
 pub mod error;
 pub mod git;
+pub mod github;
+pub mod logging;
 pub mod parse;
 pub mod pipeline;
 pub mod render;

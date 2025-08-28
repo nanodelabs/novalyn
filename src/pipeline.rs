@@ -7,6 +7,7 @@ use crate::{
 };
 
 use anyhow::Result;
+use tracing::{debug, info, instrument};
 
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -37,12 +38,14 @@ pub struct ReleaseOutcome {
     pub exit: ExitCode,
 }
 
+#[instrument(skip_all, fields(cwd = %opts.cwd.display()))]
 pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     // 1. Load config (inject CLI overrides for new_version & author flags in future)
     let cfg = config::load_config(LoadOptions {
         cwd: &opts.cwd,
         cli_overrides: None,
     })?;
+    debug!(types = cfg.types.len(), "config_loaded");
 
     // 2. Detect git repo & current ref
     let repo = git::detect_repo(&opts.cwd)?;
@@ -55,18 +58,29 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     let prev_tag = git::last_tag(&repo)?; // Option<String>
 
     // 4. Collect commits between prev_tag and head
-    let raw = git::commits_between(&repo, prev_tag.as_deref(), &head)?;
+    let raw = {
+        let _span = tracing::span!(tracing::Level::DEBUG, "collect_commits").entered();
+        git::commits_between(&repo, prev_tag.as_deref(), &head)?
+    };
+    debug!(count = raw.len(), "commits_collected");
 
     // 5. Parse & classify
-    let parsed = parse::parse_and_classify(raw, &cfg);
+    let parsed = {
+        let _span = tracing::span!(tracing::Level::DEBUG, "parse_classify").entered();
+        parse::parse_and_classify(raw, &cfg)
+    };
+    debug!(count = parsed.len(), "commits_parsed");
 
     // 6. Version inference: use 0.0.0 if no prev tag
     let previous_version = prev_tag
         .as_ref()
         .and_then(|t| semver::Version::parse(t.trim_start_matches('v')).ok())
         .unwrap_or_else(|| semver::Version::parse("0.0.0").unwrap());
-    let (next_version, _bump) =
-        parse::infer_version(&previous_version, &parsed, opts.new_version.clone());
+    let (next_version, _bump) = {
+        let _span = tracing::span!(tracing::Level::DEBUG, "infer_version").entered();
+        parse::infer_version(&previous_version, &parsed, opts.new_version.clone())
+    };
+    info!(version = %next_version, "version_inferred");
 
     // 7. Authors
     let authors = if opts.no_authors {
@@ -93,19 +107,26 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
         previous_tag: prev_tag.as_deref(),
         current_ref: &head,
     };
-    let block = render_release_block(&rc);
+    let block = {
+        let _span = tracing::span!(tracing::Level::DEBUG, "render").entered();
+        render_release_block(&rc)
+    };
 
     // 9. Update changelog & tag
     let changed = if opts.dry_run {
         false
     } else {
+        let _span = tracing::span!(tracing::Level::DEBUG, "write_changelog").entered();
         changelog::write_or_update_changelog(&opts.cwd, &block)?
     };
     if changed && !opts.dry_run {
         // create tag (annotated optionally sign placeholder)
         let tag_name = format!("v{}", next_version);
         let tag_msg = format!("v{}", next_version);
-        let _ = git::create_tag(&repo, &tag_name, &tag_msg, true);
+        let _ = {
+            let _span = tracing::span!(tracing::Level::DEBUG, "tag").entered();
+            git::create_tag(&repo, &tag_name, &tag_msg, true)
+        };
     }
 
     let exit = if changed {
