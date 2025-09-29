@@ -424,10 +424,11 @@ Add new potential features to a BACKLOG.md with: ID, description, rationale, req
 Guidelines (non-functional tasks, but enforceable via CI/hooks):
 
 A. Pre-commit local checklist
+
 - [x] cargo fmt --all (format code)  
-- [x] cargo clippy --all-targets --all-features -- -D warnings  
-- [ ] cargo nextest run  
-- [ ] cargo test --doc (doc tests separately if any)  
+- [x] cargo clippy --all-targets --all-features -- -D warnings    
+- [x] cargo nextest run  
+- [x] cargo test --doc (doc tests separately if any)  
 - [ ] cargo deny check (optional fast path)  
 
 B. Optional git hook (.git/hooks/pre-commit example) – add later to repo docs:
