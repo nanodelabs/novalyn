@@ -1,8 +1,8 @@
 use changelogen::config::{load_config, LoadOptions};
 use changelogen::git::RawCommit;
 use changelogen::parse::parse_and_classify;
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
-use std::{env, hint::black_box};
+use divan::Bencher;
+use std::env;
 use tempfile::TempDir;
 
 fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
@@ -36,82 +36,67 @@ fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
         .collect()
 }
 
-fn bench_parse_sequential_vs_parallel(c: &mut Criterion) {
+#[divan::bench(args = [10, 50, 100, 500])]
+fn parse_sequential(bencher: Bencher, size: usize) {
+    let td = TempDir::new().unwrap();
+    let cfg = load_config(LoadOptions {
+        cwd: td.path(),
+        cli_overrides: None,
+    }).unwrap();
+    
+    let commits = generate_synthetic_commits(size);
+    
+    bencher
+        .with_inputs(|| {
+            unsafe { env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10000"); } // Force sequential
+            commits.clone()
+        })
+        .bench_values(|commits| {
+            parse_and_classify(commits, &cfg)
+        });
+}
+
+#[divan::bench(args = [50, 100, 500])]
+fn parse_parallel(bencher: Bencher, size: usize) {
+    let td = TempDir::new().unwrap();
+    let cfg = load_config(LoadOptions {
+        cwd: td.path(),
+        cli_overrides: None,
+    }).unwrap();
+    
+    let commits = generate_synthetic_commits(size);
+    
+    bencher
+        .with_inputs(|| {
+            unsafe { env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10"); } // Force parallel
+            commits.clone()
+        })
+        .bench_values(|commits| {
+            parse_and_classify(commits, &cfg)
+        });
+}
+
+#[divan::bench(args = [10, 50, 100, 500])]
+fn version_inference(bencher: Bencher, size: usize) {
     let td = TempDir::new().unwrap();
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
     }).unwrap();
 
-    let mut group = c.benchmark_group("parse_sequential_vs_parallel");
+    let commits = generate_synthetic_commits(size);
+    let parsed = parse_and_classify(commits, &cfg);
+    let previous_version = semver::Version::new(1, 0, 0);
     
-    for size in [10, 50, 100, 500].iter() {
-        let commits = generate_synthetic_commits(*size);
-        
-        // Sequential benchmark
-        group.bench_with_input(
-            BenchmarkId::new("sequential", size), 
-            size, 
-            |b, &_size| {
-                unsafe { env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10000"); } // Force sequential
-                b.iter(|| {
-                    parse_and_classify(black_box(commits.clone()), black_box(&cfg))
-                });
-            }
-        );
-        
-        // Parallel benchmark (only for larger sizes)
-        if *size >= 50 {
-            group.bench_with_input(
-                BenchmarkId::new("parallel", size), 
-                size, 
-                |b, &_size| {
-                    unsafe { env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10"); } // Force parallel
-                    b.iter(|| {
-                        parse_and_classify(black_box(commits.clone()), black_box(&cfg))
-                    });
-                }
-            );
-        }
-    }
-    
-    group.finish();
-    unsafe { env::remove_var("CHANGELOGEN_PARALLEL_THRESHOLD"); }
+    bencher
+        .with_inputs(|| (previous_version.clone(), parsed.clone()))
+        .bench_values(|(prev_version, parsed_commits)| {
+            changelogen::parse::infer_version(&prev_version, &parsed_commits, None)
+        });
 }
 
-fn bench_version_inference(c: &mut Criterion) {
-    let td = TempDir::new().unwrap();
-    let cfg = load_config(LoadOptions {
-        cwd: td.path(),
-        cli_overrides: None,
-    }).unwrap();
-
-    let mut group = c.benchmark_group("version_inference");
-    
-    for size in [10, 50, 100, 500].iter() {
-        let commits = generate_synthetic_commits(*size);
-        let parsed = parse_and_classify(commits, &cfg);
-        let previous_version = semver::Version::new(1, 0, 0);
-        
-        group.bench_with_input(
-            BenchmarkId::new("version_bump", size), 
-            size, 
-            |b, &_size| {
-                b.iter(|| {
-                    changelogen::parse::infer_version(
-                        black_box(&previous_version), 
-                        black_box(&parsed), 
-                        None
-                    )
-                });
-            }
-        );
-    }
-    
-    group.finish();
-}
-
-fn bench_render_block(c: &mut Criterion) {
+#[divan::bench(args = [10, 50, 100, 500])]
+fn render_block(bencher: Bencher, size: usize) {
     let td = TempDir::new().unwrap();
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
@@ -121,35 +106,27 @@ fn bench_render_block(c: &mut Criterion) {
     let current_version = semver::Version::new(1, 0, 0);
     let previous_version = semver::Version::new(0, 9, 0);
 
-    let mut group = c.benchmark_group("render_block");
+    let commits = generate_synthetic_commits(size);
+    let parsed = parse_and_classify(commits, &cfg);
     
-    for size in [10, 50, 100, 500].iter() {
-        let commits = generate_synthetic_commits(*size);
-        let parsed = parse_and_classify(commits, &cfg);
-        
-        group.bench_with_input(
-            BenchmarkId::new("render", size), 
-            size, 
-            |b, &_size| {
-                b.iter(|| {
-                    let rc = changelogen::render::RenderContext {
-                        commits: black_box(&parsed),
-                        version: black_box(&current_version),
-                        previous_version: Some(black_box(&previous_version)),
-                        authors: None, // Skip authors for benchmark
-                        repo: None,    // Skip repo for benchmark
-                        cfg: black_box(&cfg),
-                        previous_tag: Some("v0.9.0"),
-                        current_ref: "HEAD",
-                    };
-                    changelogen::render::render_release_block(black_box(&rc))
-                });
+    bencher
+        .with_inputs(|| {
+            changelogen::render::RenderContext {
+                commits: &parsed,
+                version: &current_version,
+                previous_version: Some(&previous_version),
+                authors: None, // Skip authors for benchmark
+                repo: None,    // Skip repo for benchmark
+                cfg: &cfg,
+                previous_tag: Some("v0.9.0"),
+                current_ref: "HEAD",
             }
-        );
-    }
-    
-    group.finish();
+        })
+        .bench_values(|rc| {
+            changelogen::render::render_release_block(&rc)
+        });
 }
 
-criterion_group!(benches, bench_parse_sequential_vs_parallel, bench_version_inference, bench_render_block);
-criterion_main!(benches);
+fn main() {
+    divan::main();
+}
