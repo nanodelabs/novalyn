@@ -27,6 +27,7 @@ fn dry_run_leaves_changelog_untouched() {
         hide_author_email: false,
         clean: false,
         sign: false,
+        yes: true,
     })
     .unwrap();
     assert_eq!(outcome.exit as i32, ExitCode::NoChange as i32); // dry run reports no change (wrote=false)
@@ -50,6 +51,7 @@ fn exit_code_no_change() {
         hide_author_email: false,
         clean: false,
         sign: false,
+        yes: true,
     })
     .unwrap();
     assert!(outcome1.wrote);
@@ -66,6 +68,7 @@ fn exit_code_no_change() {
         hide_author_email: false,
         clean: false,
         sign: false,
+        yes: true,
     })
     .unwrap();
     assert!(!outcome2.wrote);

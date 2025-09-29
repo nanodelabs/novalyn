@@ -1,6 +1,7 @@
 use crate::config::{ResolvedConfig, SemverImpact, TypeConfigResolved};
 use crate::git::RawCommit;
 use git_conventional::Commit as ConventionalCommit;
+use rayon::prelude::*;
 use regex::Regex;
 
 #[derive(Debug, Clone)]
@@ -39,6 +40,20 @@ impl BumpKind {
 }
 
 pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<ParsedCommit> {
+    let threshold = std::env::var("CHANGELOGEN_PARALLEL_THRESHOLD")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(50);
+    
+    if commits.len() >= threshold {
+        parse_and_classify_parallel(commits, cfg)
+    } else {
+        parse_and_classify_sequential(commits, cfg)
+    }
+}
+
+fn parse_and_classify_sequential(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<ParsedCommit> {
+    tracing::debug!(count = commits.len(), mode = "sequential", "parsing_commits");
     let rex = Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
         .unwrap();
     let mut out = Vec::new();
@@ -52,6 +67,36 @@ pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<
         }
     }
     out
+}
+
+fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<ParsedCommit> {
+    tracing::debug!(count = commits.len(), mode = "parallel", "parsing_commits");
+    let rex = Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
+        .unwrap();
+    
+    // Create indexed commits to preserve original order
+    let indexed_commits: Vec<(usize, RawCommit)> = commits.into_iter().enumerate().collect();
+    
+    // Process in parallel while maintaining original index
+    let mut parsed: Vec<ParsedCommit> = indexed_commits
+        .par_iter()
+        .map(|(idx, rc)| {
+            let mut p = parse_one(rc, &rex);
+            p.index = *idx;
+            classify(&mut p, cfg);
+            p
+        })
+        .filter(should_keep)
+        .collect();
+    
+    // Log the classified commits (in parallel processing, order may be different in logs)
+    for p in &parsed {
+        tracing::debug!(commit = %p.raw.short_id, r#type = %p.r#type, scope = ?p.scope, breaking = p.breaking, issues = ?p.issues, "classified");
+    }
+    
+    // Sort back to original chronological order
+    parsed.sort_by_key(|p| p.index);
+    parsed
 }
 
 // Parse a single raw commit. Try git-conventional first for richer parsing, fallback to regex.

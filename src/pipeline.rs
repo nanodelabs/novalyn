@@ -27,6 +27,7 @@ pub struct ReleaseOptions {
     pub hide_author_email: bool,
     pub clean: bool,
     pub sign: bool,
+    pub yes: bool,
 }
 
 pub struct ReleaseOutcome {

@@ -18,6 +18,9 @@ keywords = [
 ]
 categories = ["command-line-utilities", "development-tools"]
 
+[features]
+default = []
+
 [lib]
 name = "changelogen"
 path = "src/lib.rs"
@@ -31,7 +34,7 @@ git2 = "0.20"
 git-conventional = "0.12"
 jiff = "0.2"
 once_cell = "1"
-rayon = { version = "1", optional = true }
+rayon = "1"
 regex = "1"
 reqwest = { version = "0.12", default-features = false, features = [
   "http2",
