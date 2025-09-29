@@ -409,7 +409,7 @@ A. Pre-commit local checklist
 - [ ] cargo fmt --all (format code)  
 - [ ] cargo clippy --all-targets --all-features -- -D warnings  
 - [ ] cargo nextest run  
-- [ ] cargo test --doc (doc tests separately if any)  
+- [x] cargo test --doc (doc tests separately if any)  
 - [ ] cargo deny check (optional fast path)  
 
 B. Optional git hook (.git/hooks/pre-commit example) – add later to repo docs:
