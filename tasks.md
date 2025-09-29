@@ -408,7 +408,7 @@ Guidelines (non-functional tasks, but enforceable via CI/hooks):
 A. Pre-commit local checklist
 - [ ] cargo fmt --all (format code)  
 - [ ] cargo clippy --all-targets --all-features -- -D warnings  
-- [ ] cargo nextest run  
+- [x] cargo nextest run  
 - [x] cargo test --doc (doc tests separately if any)  
 - [ ] cargo deny check (optional fast path)  
 
