@@ -1,4 +1,4 @@
-use changelogen::config::{load_config, LoadOptions};
+use changelogen::config::{LoadOptions, load_config};
 use changelogen::git::RawCommit;
 use changelogen::parse::parse_and_classify;
 use divan::Bencher;
@@ -8,17 +8,16 @@ use tempfile::TempDir;
 fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
     let commit_types = ["feat", "fix", "docs", "style", "refactor", "test", "chore"];
     let scopes = ["api", "ui", "core", "auth", "db"];
-    
+
     (0..count)
         .map(|i| {
             let commit_type = commit_types[i % commit_types.len()];
-            let scope = if i % 3 == 0 { 
-                format!("({})", scopes[i % scopes.len()]) 
-            } else { 
-                String::new() 
+            let scope = if i % 3 == 0 {
+                format!("({})", scopes[i % scopes.len()])
+            } else {
+                String::new()
             };
             let breaking = if i % 20 == 0 { "!" } else { "" };
-            
             RawCommit {
                 id: format!("commit{:06}", i),
                 short_id: format!("c{:06x}", i),
@@ -42,18 +41,19 @@ fn parse_sequential(bencher: Bencher, size: usize) {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = generate_synthetic_commits(size);
-    
+
     bencher
         .with_inputs(|| {
-            unsafe { env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10000"); } // Force sequential
+            unsafe {
+                env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10000");
+            } // Force sequential
             commits.clone()
         })
-        .bench_values(|commits| {
-            parse_and_classify(commits, &cfg)
-        });
+        .bench_values(|commits| parse_and_classify(commits, &cfg));
 }
 
 #[divan::bench(args = [50, 100, 500])]
@@ -62,18 +62,19 @@ fn parse_parallel(bencher: Bencher, size: usize) {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = generate_synthetic_commits(size);
-    
+
     bencher
         .with_inputs(|| {
-            unsafe { env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10"); } // Force parallel
+            unsafe {
+                env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10");
+            } // Force parallel
             commits.clone()
         })
-        .bench_values(|commits| {
-            parse_and_classify(commits, &cfg)
-        });
+        .bench_values(|commits| parse_and_classify(commits, &cfg));
 }
 
 #[divan::bench(args = [10, 50, 100, 500])]
@@ -82,12 +83,13 @@ fn version_inference(bencher: Bencher, size: usize) {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
+    })
+    .unwrap();
 
     let commits = generate_synthetic_commits(size);
     let parsed = parse_and_classify(commits, &cfg);
     let previous_version = semver::Version::new(1, 0, 0);
-    
+
     bencher
         .with_inputs(|| (previous_version.clone(), parsed.clone()))
         .bench_values(|(prev_version, parsed_commits)| {
@@ -101,14 +103,15 @@ fn render_block(bencher: Bencher, size: usize) {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
+    })
+    .unwrap();
 
     let current_version = semver::Version::new(1, 0, 0);
     let previous_version = semver::Version::new(0, 9, 0);
 
     let commits = generate_synthetic_commits(size);
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     bencher
         .with_inputs(|| {
             changelogen::render::RenderContext {
@@ -122,9 +125,7 @@ fn render_block(bencher: Bencher, size: usize) {
                 current_ref: "HEAD",
             }
         })
-        .bench_values(|rc| {
-            changelogen::render::render_release_block(&rc)
-        });
+        .bench_values(|rc| changelogen::render::render_release_block(&rc));
 }
 
 fn main() {

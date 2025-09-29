@@ -15,7 +15,7 @@ fn confirm_action(message: &str, yes_flag: bool) -> Result<bool> {
         tracing::debug!("Auto-confirming: {}", message);
         return Ok(true);
     }
-    
+
     // For now, just log and return true. In a full implementation,
     // this would use the `demand` crate to show interactive prompts.
     tracing::info!("Would prompt: {} (assuming yes for now)", message);
@@ -131,11 +131,8 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
         false
     } else {
         // Confirm changelog update unless --yes was specified
-        let should_write = confirm_action(
-            "Update CHANGELOG.md?",
-            opts.yes
-        )?;
-        
+        let should_write = confirm_action("Update CHANGELOG.md?", opts.yes)?;
+
         if should_write {
             let _span = tracing::span!(tracing::Level::DEBUG, "write_changelog").entered();
             changelog::write_or_update_changelog(&opts.cwd, &block)?
@@ -145,11 +142,8 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     };
     if changed && !opts.dry_run {
         // Confirm tag creation unless --yes was specified
-        let should_tag = confirm_action(
-            &format!("Create git tag v{}?", next_version),
-            opts.yes
-        )?;
-        
+        let should_tag = confirm_action(&format!("Create git tag v{}?", next_version), opts.yes)?;
+
         if should_tag {
             // create tag (annotated optionally sign placeholder)
             let tag_name = format!("v{}", next_version);

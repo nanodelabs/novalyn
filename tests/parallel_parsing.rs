@@ -1,4 +1,4 @@
-use changelogen::config::{load_config, LoadOptions};
+use changelogen::config::{LoadOptions, load_config};
 use changelogen::git::RawCommit;
 use changelogen::parse::parse_and_classify;
 use std::env;
@@ -38,7 +38,7 @@ fn parallel_vs_sequential_identical_output() {
     }
     let sequential_result = parse_and_classify(commits.clone(), &cfg);
 
-    // Test parallel processing  
+    // Test parallel processing
     unsafe {
         env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "50"); // Force parallel
     }
@@ -46,7 +46,7 @@ fn parallel_vs_sequential_identical_output() {
 
     // Results should be identical
     assert_eq!(sequential_result.len(), parallel_result.len());
-    
+
     // Check that ordering is preserved (by index)
     for (seq, par) in sequential_result.iter().zip(parallel_result.iter()) {
         assert_eq!(seq.index, par.index);
@@ -75,7 +75,7 @@ fn parallel_threshold_respected() {
     }
     let commits = create_test_commits(10);
     let result = parse_and_classify(commits, &cfg);
-    
+
     // Should process without issues regardless of mode
     assert!(result.len() <= 10); // Some commits might be filtered
 

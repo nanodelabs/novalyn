@@ -218,7 +218,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 75. [x] Implement `generate` (print block; optional --write).
 76. [x] Implement `release` (full pipeline minus GitHub sync).
 77. [x] Implement `github` (sync only) if maintained.
-78. [~] Global flags: implemented --from, --to, --new-version, --sign (placeholder), --no-authors, --exclude-author, --cwd, --dry-run, --clean, --output, -v/--verbose. Pending: --yes (plumbed but not used for confirmations yet).
+78. [x] Global flags: implemented --from, --to, --new-version, --sign (placeholder), --no-authors, --exclude-author, --cwd, --dry-run, --clean, --output, -v/--verbose, --yes (with confirmation prompts).
 79. [x] Verbosity flags or RUST_LOG integration (tracing subscriber added).
 80. [x] Helpful `--help` docs per subcommand (clap derived; test added).
 
@@ -247,14 +247,14 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 13. Parallel Parsing (§17)
 
-81. [ ] Implement threshold env override & CLI override (optional).
-82. [ ] Use rayon for parse/classify only when commit_count >= threshold.
-83. [ ] Maintain original index for stable ordering.
-84. [ ] Provide debug logs indicating mode.
+81. [x] Implement threshold env override & CLI override (optional).
+82. [x] Use rayon for parse/classify only when commit_count >= threshold.
+83. [x] Maintain original index for stable ordering.
+84. [x] Provide debug logs indicating mode.
 
 🧪 Tests:
-- [ ] Output identical sequential vs parallel (snapshot diff).
-- [ ] Force parallel with small set (env var) still identical.
+- [x] Output identical sequential vs parallel (snapshot diff).
+- [x] Force parallel with small set (env var) still identical.
 
 ---
 
@@ -273,14 +273,14 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 15. Error Handling (§18, §21)
 
-89. [ ] Define Error enum (Config, Git, Network, IO, Semantic).
-90. [ ] Map to exit codes.
-91. [ ] Wrap CLI main with error -> stderr formatted line.
-92. [ ] Avoid panics outside unrecoverable invariants.
+89. [x] Define Error enum (Config, Git, Network, IO, Semantic).
+90. [x] Map to exit codes.
+91. [x] Wrap CLI main with error -> stderr formatted line.
+92. [x] Avoid panics outside unrecoverable invariants.
 
 🧪 Tests:
-- [ ] Config parse failure case.
-- [ ] No git repo detection.
+- [x] Config parse failure case.
+- [x] No git repo detection.
 
 ---
 
@@ -314,12 +314,12 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 19. Quality Gates (§24, §28, §34)
 
-106. [ ] Clippy: deny(warnings).
+106. [x] Clippy: deny(warnings).
 107. [ ] cargo-deny: license & advisories clean.
 108. [ ] No unwrap() outside tests (or justify).
 109. [ ] Determinism test repeated run identical output.
 110. [ ] Validate no leftover TODO markers for MVP (or track in backlog list).
-111. [ ] Document and enforce dev workflow (fmt, clippy, nextest) (see Section 25).
+111. [x] Document and enforce dev workflow (fmt, clippy, nextest) (see Section 25).
 
 ---
 
@@ -424,8 +424,8 @@ Add new potential features to a BACKLOG.md with: ID, description, rationale, req
 Guidelines (non-functional tasks, but enforceable via CI/hooks):
 
 A. Pre-commit local checklist
-- [ ] cargo fmt --all (format code)  
-- [ ] cargo clippy --all-targets --all-features -- -D warnings  
+- [x] cargo fmt --all (format code)  
+- [x] cargo clippy --all-targets --all-features -- -D warnings  
 - [ ] cargo nextest run  
 - [ ] cargo test --doc (doc tests separately if any)  
 - [ ] cargo deny check (optional fast path)  

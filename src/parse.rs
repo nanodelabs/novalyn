@@ -44,7 +44,7 @@ pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(50);
-    
+
     if commits.len() >= threshold {
         parse_and_classify_parallel(commits, cfg)
     } else {
@@ -52,8 +52,15 @@ pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<
     }
 }
 
-fn parse_and_classify_sequential(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<ParsedCommit> {
-    tracing::debug!(count = commits.len(), mode = "sequential", "parsing_commits");
+fn parse_and_classify_sequential(
+    commits: Vec<RawCommit>,
+    cfg: &ResolvedConfig,
+) -> Vec<ParsedCommit> {
+    tracing::debug!(
+        count = commits.len(),
+        mode = "sequential",
+        "parsing_commits"
+    );
     let rex = Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
         .unwrap();
     let mut out = Vec::new();
@@ -73,10 +80,10 @@ fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) ->
     tracing::debug!(count = commits.len(), mode = "parallel", "parsing_commits");
     let rex = Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
         .unwrap();
-    
+
     // Create indexed commits to preserve original order
     let indexed_commits: Vec<(usize, RawCommit)> = commits.into_iter().enumerate().collect();
-    
+
     // Process in parallel while maintaining original index
     let mut parsed: Vec<ParsedCommit> = indexed_commits
         .par_iter()
@@ -88,12 +95,12 @@ fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) ->
         })
         .filter(should_keep)
         .collect();
-    
+
     // Log the classified commits (in parallel processing, order may be different in logs)
     for p in &parsed {
         tracing::debug!(commit = %p.raw.short_id, r#type = %p.r#type, scope = ?p.scope, breaking = p.breaking, issues = ?p.issues, "classified");
     }
-    
+
     // Sort back to original chronological order
     parsed.sort_by_key(|p| p.index);
     parsed
