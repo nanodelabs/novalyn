@@ -1,7 +1,6 @@
 [package]
 name = "changelogen"
 version = "0.0.0"
-authors = ["Muntasir Mahmud <muntasir.joypurhat@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
 description = "💅 Beautiful Changelogs using Conventional Commits"
