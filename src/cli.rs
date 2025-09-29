@@ -91,7 +91,7 @@ pub enum Commands {
     },
 }
 
-pub fn run() -> Result<()> {
+pub fn run() -> Result<ExitCode> {
     let cli = Cli::parse();
     logging::init(cli.verbose as usize);
     let cwd = cli
@@ -117,6 +117,7 @@ pub fn run() -> Result<()> {
                 hide_author_email: false,
                 clean: false,
                 sign: false,
+                yes: true, // Show command doesn't need confirmation
             })?;
             println!("{}", outcome.version);
             ExitCode::Success
@@ -132,7 +133,7 @@ pub fn run() -> Result<()> {
             hide_author_email,
             clean,
             sign,
-            yes: _,
+            yes,
         } => {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
@@ -146,6 +147,7 @@ pub fn run() -> Result<()> {
                 hide_author_email,
                 clean,
                 sign,
+                yes,
             })?;
             if let Some(path) = output {
                 std::fs::write(&path, outcome.version.to_string())?;
@@ -180,7 +182,7 @@ pub fn run() -> Result<()> {
             hide_author_email,
             clean,
             sign,
-            yes: _,
+            yes,
         } => {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
@@ -194,6 +196,7 @@ pub fn run() -> Result<()> {
                 hide_author_email,
                 clean,
                 sign,
+                yes,
             })?;
             if outcome.wrote {
                 println!("Released v{}", outcome.version);
@@ -239,7 +242,7 @@ pub fn run() -> Result<()> {
             }
         }
     };
-    std::process::exit(exit as i32);
+    Ok(exit)
 }
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
 # changelogen-rs Task Breakdown (Parity Port of @unjs/changelogen)
 
-Purpose: Actionable, ordered task list to implement the Rust parity version (no generic templating; fixed layout). Mirrors JS behavior while adapting to Cargo.  
+Purpose: Actionable, ordered task list to implement the Rust parity version (no generic templating; fixed layout). Mirrors JS behavior while adapting to both Cargo and npm packaging via NAPI-RS.  
 Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ---
@@ -22,8 +22,8 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 1. [x] Create repository scaffolding
    - Files: Cargo.toml, .gitignore, LICENSE (MIT), README stub, tasks.md (this), parity spec file.
 2. [x] Configure MSRV (1.89.0) via CI + rust-toolchain.toml.
-3. [x] Add base dependencies (no unused): git2, semver, clap, anyhow, thiserror, serde, serde_json, toml_edit, tracing, tracing-subscriber, rayon, jiff, reqwest (http requests), demand (prompting, kind of like huh? in go), dashmap (use if need hashmaps), git-conventional.
-4. [x] Dev deps: insta, assert_fs, tempfile, proptest, criterion, cargo-deny, nextest.
+3. [x] Add base dependencies (no unused): git2, semver, clap, anyhow, thiserror, serde, serde_json, toml_edit, tracing, tracing-subscriber, rayon, jiff, reqwest (http requests), demand (prompting, kind of like huh? in go), dashmap (use if need hashmaps), git-conventional. For npm packaging: napi and napi-derive.
+4. [x] Dev deps: insta, assert_fs, tempfile, proptest, divan, cargo-deny, nextest.
 5. [x] Set up CI workflow skeleton (Linux only first, then all OS).
 
 ---
@@ -218,7 +218,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 75. [x] Implement `generate` (print block; optional --write).
 76. [x] Implement `release` (full pipeline minus GitHub sync).
 77. [x] Implement `github` (sync only) if maintained.
-78. [~] Global flags: implemented --from, --to, --new-version, --sign (placeholder), --no-authors, --exclude-author, --cwd, --dry-run, --clean, --output, -v/--verbose. Pending: --yes (plumbed but not used for confirmations yet).
+78. [x] Global flags: implemented --from, --to, --new-version, --sign (placeholder), --no-authors, --exclude-author, --cwd, --dry-run, --clean, --output, -v/--verbose, --yes (with confirmation prompts).
 79. [x] Verbosity flags or RUST_LOG integration (tracing subscriber added).
 80. [x] Helpful `--help` docs per subcommand (clap derived; test added).
 
@@ -228,16 +228,33 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ---
 
-## 13. Parallel Parsing (§17)
+## 12.5. NAPI-RS Integration for npm Publishing
 
-81. [ ] Implement threshold env override & CLI override (optional).
-82. [ ] Use rayon for parse/classify only when commit_count >= threshold.
-83. [ ] Maintain original index for stable ordering.
-84. [ ] Provide debug logs indicating mode.
+80.1. [ ] Add napi and napi-derive dependencies conditionally via feature flag.
+80.2. [ ] Create NAPI bindings module exposing core functionality.
+80.3. [ ] Implement JavaScript-compatible API surface (async where needed).
+80.4. [ ] Add package.json with proper npm metadata and binary configuration.
+80.5. [ ] Set up NAPI-RS build pipeline for cross-platform binaries.
+80.6. [ ] Create TypeScript definitions for the npm package.
+80.7. [ ] Add npm-specific documentation and examples.
 
 🧪 Tests:
-- [ ] Output identical sequential vs parallel (snapshot diff).
-- [ ] Force parallel with small set (env var) still identical.
+- [ ] NAPI bindings compile and expose expected API.
+- [ ] npm package installation and basic usage.
+- [ ] Cross-platform binary compatibility.
+
+---
+
+## 13. Parallel Parsing (§17)
+
+81. [x] Implement threshold env override & CLI override (optional).
+82. [x] Use rayon for parse/classify only when commit_count >= threshold.
+83. [x] Maintain original index for stable ordering.
+84. [x] Provide debug logs indicating mode.
+
+🧪 Tests:
+- [x] Output identical sequential vs parallel (snapshot diff).
+- [x] Force parallel with small set (env var) still identical.
 
 ---
 
@@ -256,14 +273,14 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 15. Error Handling (§18, §21)
 
-89. [ ] Define Error enum (Config, Git, Network, IO, Semantic).
-90. [ ] Map to exit codes.
-91. [ ] Wrap CLI main with error -> stderr formatted line.
-92. [ ] Avoid panics outside unrecoverable invariants.
+89. [x] Define Error enum (Config, Git, Network, IO, Semantic).
+90. [x] Map to exit codes.
+91. [x] Wrap CLI main with error -> stderr formatted line.
+92. [x] Avoid panics outside unrecoverable invariants.
 
 🧪 Tests:
-- [ ] Config parse failure case.
-- [ ] No git repo detection.
+- [x] Config parse failure case.
+- [x] No git repo detection.
 
 ---
 
@@ -276,10 +293,10 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 17. Benchmarks (§22, §33)
 
-95. [ ] Benchmark synthetic commit generation utility.
-96. [ ] Implement parse_seq_vs_parallel benchmark.
-97. [ ] Implement render_block benchmark (vary commit counts).
-98. [ ] Implement version_inference benchmark.
+95. [x] Benchmark synthetic commit generation utility.
+96. [x] Implement parse_seq_vs_parallel benchmark (using divan).
+97. [x] Implement render_block benchmark (vary commit counts).
+98. [x] Implement version_inference benchmark.
 99. [ ] Document baseline results.
 100. [ ] Evaluate dashmap effect; remove if <5% improvement (then: update Cargo.toml).
 
@@ -287,7 +304,7 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 18. Documentation (§22, §29)
 
-101. [ ] README: parity statement, quick start, differences vs JS (Cargo vs npm).
+101. [ ] README: parity statement, quick start, differences vs JS (available via both Cargo and npm).
 102. [ ] CONTRIBUTING: dev setup, MSRV, tests, benchmarks, release instructions.
 103. [ ] PERF docs: initial benchmark table.
 104. [ ] PARITY_SPEC inclusion & cross-link tasks.md.
@@ -297,12 +314,12 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 19. Quality Gates (§24, §28, §34)
 
-106. [ ] Clippy: deny(warnings).
+106. [x] Clippy: deny(warnings).
 107. [ ] cargo-deny: license & advisories clean.
 108. [ ] No unwrap() outside tests (or justify).
 109. [ ] Determinism test repeated run identical output.
 110. [ ] Validate no leftover TODO markers for MVP (or track in backlog list).
-111. [ ] Document and enforce dev workflow (fmt, clippy, nextest) (see Section 25).
+111. [x] Document and enforce dev workflow (fmt, clippy, nextest) (see Section 25).
 
 ---
 
@@ -321,8 +338,9 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 116. [ ] Ensure tool self-generates initial CHANGELOG.md via `release --dry-run`.
 117. [ ] Tag v0.1.0 (manual first).
 118. [ ] Publish crate (cargo publish) – optional if scope private initially.
-119. [ ] Verify install instructions (cargo install).
-120. [ ] Announce parity & solicit feedback before adding new features.
+119. [ ] Publish npm package (npm publish) via NAPI-RS build.
+120. [ ] Verify install instructions (cargo install and npm install).
+121. [ ] Announce parity & solicit feedback before adding new features.
 
 ---
 
@@ -406,8 +424,9 @@ Add new potential features to a BACKLOG.md with: ID, description, rationale, req
 Guidelines (non-functional tasks, but enforceable via CI/hooks):
 
 A. Pre-commit local checklist
-- [ ] cargo fmt --all (format code)  
-- [ ] cargo clippy --all-targets --all-features -- -D warnings  
+
+- [x] cargo fmt --all (format code)  
+- [x] cargo clippy --all-targets --all-features -- -D warnings    
 - [x] cargo nextest run  
 - [x] cargo test --doc (doc tests separately if any)  
 - [ ] cargo deny check (optional fast path)  

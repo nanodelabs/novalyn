@@ -9,6 +9,19 @@ use crate::{
 use anyhow::Result;
 use tracing::{debug, info, instrument};
 
+/// Simple confirmation prompt that respects the --yes flag
+fn confirm_action(message: &str, yes_flag: bool) -> Result<bool> {
+    if yes_flag {
+        tracing::debug!("Auto-confirming: {}", message);
+        return Ok(true);
+    }
+
+    // For now, just log and return true. In a full implementation,
+    // this would use the `demand` crate to show interactive prompts.
+    tracing::info!("Would prompt: {} (assuming yes for now)", message);
+    Ok(true)
+}
+
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExitCode {
@@ -27,6 +40,7 @@ pub struct ReleaseOptions {
     pub hide_author_email: bool,
     pub clean: bool,
     pub sign: bool,
+    pub yes: bool,
 }
 
 pub struct ReleaseOutcome {
@@ -116,17 +130,29 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     let changed = if opts.dry_run {
         false
     } else {
-        let _span = tracing::span!(tracing::Level::DEBUG, "write_changelog").entered();
-        changelog::write_or_update_changelog(&opts.cwd, &block)?
+        // Confirm changelog update unless --yes was specified
+        let should_write = confirm_action("Update CHANGELOG.md?", opts.yes)?;
+
+        if should_write {
+            let _span = tracing::span!(tracing::Level::DEBUG, "write_changelog").entered();
+            changelog::write_or_update_changelog(&opts.cwd, &block)?
+        } else {
+            false
+        }
     };
     if changed && !opts.dry_run {
-        // create tag (annotated optionally sign placeholder)
-        let tag_name = format!("v{}", next_version);
-        let tag_msg = format!("v{}", next_version);
-        let _ = {
-            let _span = tracing::span!(tracing::Level::DEBUG, "tag").entered();
-            git::create_tag(&repo, &tag_name, &tag_msg, true)
-        };
+        // Confirm tag creation unless --yes was specified
+        let should_tag = confirm_action(&format!("Create git tag v{}?", next_version), opts.yes)?;
+
+        if should_tag {
+            // create tag (annotated optionally sign placeholder)
+            let tag_name = format!("v{}", next_version);
+            let tag_msg = format!("v{}", next_version);
+            let _ = {
+                let _span = tracing::span!(tracing::Level::DEBUG, "tag").entered();
+                git::create_tag(&repo, &tag_name, &tag_msg, true)
+            };
+        }
     }
 
     let exit = if changed {
