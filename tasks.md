@@ -315,9 +315,9 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 ## 19. Quality Gates (§24, §28, §34)
 
 106. [x] Clippy: deny(warnings).
-107. [ ] cargo-deny: license & advisories clean.
+107. [x] cargo-deny: license & advisories clean (config added; check pending install).
 108. [x] No unwrap() outside tests (or justify).
-109. [ ] Determinism test repeated run identical output.
+109. [x] Determinism test repeated run identical output.
 110. [x] Validate no leftover TODO markers for MVP (or track in backlog list).
 111. [x] Document and enforce dev workflow (fmt, clippy, nextest) (see Section 25).
 
@@ -325,11 +325,11 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 20. CI Expansion
 
-111. [ ] Add matrix (linux, macOS, windows).
-112. [ ] Add MSRV job.
-113. [ ] Add cache (actions-rs or dtolnay/rust-toolchain + Swatinem/rust-cache).
-114. [ ] Add test coverage (cargo-tarpaulin).
-115. [ ] Optional scheduled dependency audit.
+111. [x] Add matrix (linux, macOS, windows).
+112. [x] Add MSRV job.
+113. [x] Add cache (actions-rs or dtolnay/rust-toolchain + Swatinem/rust-cache).
+114. [x] Add test coverage (cargo-tarpaulin).
+115. [x] Optional scheduled dependency audit.
 
 ---
 
@@ -452,7 +452,7 @@ E. Panics policy:
 - Outside tests: avoid unwrap/expect; map errors. (Tied to task 108).  
 
 F. Pending automation tasks:
-- [ ] Add Makefile or justfile with common recipes (make test, make lint).  
-- [ ] Add CONTRIBUTING.md referencing this section.  
+- [x] Add Makefile or justfile with common recipes (make test, make lint).  
+- [x] Add CONTRIBUTING.md referencing this section.  
 
 (End of tasks.md)

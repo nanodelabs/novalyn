@@ -1,11 +1,76 @@
 name: CI
+
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  schedule:
+    # Run weekly dependency audit on Sundays at 00:00 UTC
+    - cron: '0 0 * * 0'
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
 jobs:
-  build-test:
+  # Format check
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  # Linting
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  # Build and test matrix
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --all --locked
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+      - name: Run tests
+        run: |
+          cargo nextest run --all-features --all-targets --locked
+          cargo test --doc --locked
+
+  # MSRV (Minimum Supported Rust Version) check
+  msrv:
+    name: MSRV (1.90.0)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -14,20 +79,49 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.90.0
-          components: clippy,rustfmt
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
-      - name: Format check
-        run: cargo fmt -- --check
-      - name: Clippy
-        run: cargo clippy -- -D warnings
-      - name: Build
+      - name: Build with MSRV
         run: cargo build --all --locked
-      - name: Install nextest
-        run: cargo install cargo-nextest --locked --version ^0.9 || echo "nextest already installed"
-      - name: Tests (nextest)
-        run: |
-          cargo nextest run --all-features --all-targets --locked
-          cargo test --doc --locked
+      - name: Test with MSRV
+        run: cargo test --all --locked
 
-# Placeholder for cargo-deny integration in later stages
+  # Security audit
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    # Run on schedule and push to main, but not on PRs
+    if: github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@cargo-deny
+      - name: Run cargo-deny
+        run: cargo deny check
+
+  # Code coverage (optional, runs on main pushes)
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Install tarpaulin
+        uses: taiki-e/install-action@cargo-tarpaulin
+      - name: Generate coverage
+        run: cargo tarpaulin --out Xml --engine llvm
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./cobertura.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+

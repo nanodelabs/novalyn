@@ -123,7 +123,7 @@ fn repeated_render_identical() {
 fn repeated_full_pipeline_identical() {
     let td = TempDir::new().unwrap();
     let repo = git2::Repository::init(td.path()).unwrap();
-    
+
     // Set up git config
     let mut cfg = repo.config().unwrap();
     cfg.set_str("user.name", "Test").unwrap();
@@ -156,7 +156,7 @@ fn repeated_full_pipeline_identical() {
         sign: false,
         yes: true,
     };
-    
+
     let opts2 = ReleaseOptions {
         cwd: td.path().to_path_buf(),
         from: None,
@@ -170,7 +170,7 @@ fn repeated_full_pipeline_identical() {
         sign: false,
         yes: true,
     };
-    
+
     let opts3 = ReleaseOptions {
         cwd: td.path().to_path_buf(),
         from: None,
@@ -195,4 +195,3 @@ fn repeated_full_pipeline_identical() {
     assert_eq!(outcome1.commit_count, outcome2.commit_count);
     assert_eq!(outcome1.commit_count, outcome3.commit_count);
 }
-

@@ -11,9 +11,8 @@ static COMMIT_HEADER_RE: Lazy<Regex> = Lazy::new(|| {
         .expect("Invalid regex pattern for commit header")
 });
 
-static ISSUE_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"#(\d+)").expect("Invalid regex pattern for issues")
-});
+static ISSUE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"#(\d+)").expect("Invalid regex pattern for issues"));
 
 #[derive(Debug, Clone)]
 pub struct ParsedCommit {
