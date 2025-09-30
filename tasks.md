@@ -366,14 +366,14 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 ## 24. Final Verification Checklist (All Must Pass)
 
 - [ ] Matches JS output for a sampled repository (diff = empty).
-- [ ] Parallel vs sequential identical.
+- [x] Parallel vs sequential identical.
 - [ ] Signed tag path error messaging clear (if GPG absent).
-- [ ] New version bump logic conforms to 0.x rules & explicit override.
-- [ ] Idempotent rerun no duplication.
-- [ ] Contributors section correctness (exclusions, email hiding).
-- [ ] Compare link correct for GitHub & GitLab test remotes.
-- [ ] All tests green on all CI platforms.
-- [ ] No extraneous dependencies.
+- [x] New version bump logic conforms to 0.x rules & explicit override.
+- [x] Idempotent rerun no duplication.
+- [x] Contributors section correctness (exclusions, email hiding).
+- [x] Compare link correct for GitHub & GitLab test remotes.
+- [x] All tests green on all CI platforms.
+- [ ] No extraneous dependencies (review needed).
 
 ---
 
