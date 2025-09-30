@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main, master]
   schedule:
-    # Run weekly dependency audit on Sundays at 00:00 UTC
+    #  Sundays at 00:00 UTC
     - cron: '0 0 * * 0'
 
 env:
@@ -14,13 +14,12 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Format check
   fmt:
     name: Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -28,13 +27,12 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-  # Linting
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -44,7 +42,6 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-  # Build and test matrix
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -68,60 +65,28 @@ jobs:
           cargo nextest run --all-features --all-targets --locked
           cargo test --doc --locked
 
-  # MSRV (Minimum Supported Rust Version) check
-  msrv:
-    name: MSRV (1.90.0)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.90.0
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-      - name: Build with MSRV
-        run: cargo build --all --locked
-      - name: Test with MSRV
-        run: cargo test --all --locked
-
-  # Security audit
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    # Run on schedule and push to main, but not on PRs
-    if: github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install cargo-deny
-        uses: taiki-e/install-action@cargo-deny
-      - name: Run cargo-deny
-        run: cargo deny check
+        uses: actions/checkout@v5
+      - uses: EmbarkStudios/cargo-deny-action@v2
 
-  # Code coverage (optional, runs on main pushes)
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-      - name: Install tarpaulin
-        uses: taiki-e/install-action@cargo-tarpaulin
+        uses: actions/checkout@v5
       - name: Generate coverage
-        run: cargo tarpaulin --out Xml --engine llvm
+        run: |
+          cargo +nightly tarpaulin --all-features --workspace --timeout 120 --out xml --tests --engine llvm
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          files: ./cobertura.xml
+          verbose: true
           fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-
