@@ -89,7 +89,7 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     let previous_version = prev_tag
         .as_ref()
         .and_then(|t| semver::Version::parse(t.trim_start_matches('v')).ok())
-        .unwrap_or_else(|| semver::Version::parse("0.0.0").unwrap());
+        .unwrap_or_else(|| semver::Version::new(0, 0, 0));
     let (next_version, _bump) = {
         let _span = tracing::span!(tracing::Level::DEBUG, "infer_version").entered();
         parse::infer_version(&previous_version, &parsed, opts.new_version.clone())

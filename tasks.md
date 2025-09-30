@@ -316,9 +316,9 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 106. [x] Clippy: deny(warnings).
 107. [ ] cargo-deny: license & advisories clean.
-108. [ ] No unwrap() outside tests (or justify).
+108. [x] No unwrap() outside tests (or justify).
 109. [ ] Determinism test repeated run identical output.
-110. [ ] Validate no leftover TODO markers for MVP (or track in backlog list).
+110. [x] Validate no leftover TODO markers for MVP (or track in backlog list).
 111. [x] Document and enforce dev workflow (fmt, clippy, nextest) (see Section 25).
 
 ---
