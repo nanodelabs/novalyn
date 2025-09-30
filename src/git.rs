@@ -187,7 +187,7 @@ pub fn create_tag(
     if annotated {
         repo.tag(name, commit.as_object(), &sig, message, false)
     } else {
-        repo.reference(&format!("refs/tags/{}", name), commit.id(), false, message)
-            .map(|r| r.target().unwrap())
+        repo.reference(&format!("refs/tags/{}", name), commit.id(), false, message)?;
+        Ok(commit.id())
     }
 }

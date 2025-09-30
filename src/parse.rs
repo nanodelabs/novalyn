@@ -1,8 +1,18 @@
 use crate::config::{ResolvedConfig, SemverImpact, TypeConfigResolved};
 use crate::git::RawCommit;
 use git_conventional::Commit as ConventionalCommit;
+use once_cell::sync::Lazy;
 use rayon::prelude::*;
 use regex::Regex;
+
+// Compile-time regex patterns
+static COMMIT_HEADER_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
+        .expect("Invalid regex pattern for commit header")
+});
+
+static ISSUE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"#(\d+)").expect("Invalid regex pattern for issues"));
 
 #[derive(Debug, Clone)]
 pub struct ParsedCommit {
@@ -61,11 +71,9 @@ fn parse_and_classify_sequential(
         mode = "sequential",
         "parsing_commits"
     );
-    let rex = Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
-        .unwrap();
     let mut out = Vec::new();
     for (idx, rc) in commits.into_iter().enumerate() {
-        let mut p = parse_one(&rc, &rex);
+        let mut p = parse_one(&rc, &COMMIT_HEADER_RE);
         p.index = idx;
         classify(&mut p, cfg);
         if should_keep(&p) {
@@ -78,8 +86,6 @@ fn parse_and_classify_sequential(
 
 fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<ParsedCommit> {
     tracing::debug!(count = commits.len(), mode = "parallel", "parsing_commits");
-    let rex = Regex::new(r"^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<bang>!)?: (?P<desc>.+)$")
-        .unwrap();
 
     // Create indexed commits to preserve original order
     let indexed_commits: Vec<(usize, RawCommit)> = commits.into_iter().enumerate().collect();
@@ -88,7 +94,7 @@ fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) ->
     let mut parsed: Vec<ParsedCommit> = indexed_commits
         .par_iter()
         .map(|(idx, rc)| {
-            let mut p = parse_one(rc, &rex);
+            let mut p = parse_one(rc, &COMMIT_HEADER_RE);
             p.index = *idx;
             classify(&mut p, cfg);
             p
@@ -121,9 +127,16 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
             breaking = true;
         }
     } else if let Some(caps) = rex.captures(&rc.summary) {
-        r#type = caps.name("type").unwrap().as_str().to_ascii_lowercase();
+        // These unwraps are safe because capture groups are guaranteed by successful regex match
+        r#type = caps
+            .name("type")
+            .map(|m| m.as_str().to_ascii_lowercase())
+            .unwrap_or_else(|| "other".to_string());
         scope = caps.name("scope").map(|m| m.as_str().to_string());
-        description = caps.name("desc").unwrap().as_str().to_string();
+        description = caps
+            .name("desc")
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_else(|| rc.summary.clone());
         if caps.name("bang").is_some() {
             breaking = true;
         }
@@ -185,8 +198,12 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
         if !footers.is_empty() {
             body = if start_footer == lines.len() {
                 body
+            } else if let Some(idx) = split_idx {
+                lines[..idx].join("\n")
             } else {
-                lines[..split_idx.unwrap()].join("\n")
+                // This branch should not be reached given the logic above,
+                // but we handle it gracefully
+                body
             };
         }
     }
@@ -267,9 +284,7 @@ fn collect_issue_numbers(s: &str) -> Vec<u64> {
     // Capture individual #123 plus grouped variants inside parentheses or separated by commas/spaces.
     // Strategy: first find all #\d+ tokens.
     let mut v = Vec::new();
-    static ISS_RE: once_cell::sync::Lazy<Regex> =
-        once_cell::sync::Lazy::new(|| Regex::new(r"#(\d+)").unwrap());
-    for cap in ISS_RE.captures_iter(s) {
+    for cap in ISSUE_RE.captures_iter(s) {
         if let Ok(num) = cap[1].parse() {
             v.push(num);
         }
