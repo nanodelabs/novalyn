@@ -20,12 +20,15 @@ This is changelogen-rs, a Rust implementation of the `@unjs/changelogen` JavaScr
 
 ### Pre-commit Checklist
 Always run these commands before committing:
+
 ```bash
 cargo fmt --all
 cargo clippy --all-targets --all-features -- -D warnings
 cargo nextest run
 cargo test --doc
 ```
+
+Make sure it follows the conventional commits specification at https://www.conventionalcommits.org/.
 
 ### Quality Gates
 - **No `unwrap()`** outside of tests (use proper error handling)
