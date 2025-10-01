@@ -4,7 +4,11 @@ This document tracks the performance characteristics of changelogen-rs and provi
 
 ## Benchmark Suite
 
-The project uses [divan](https://github.com/nvzqz/divan) for microbenchmarking. Benchmarks are located in `benches/parse_performance.rs`.
+The project uses [CodSpeed](https://codspeed.io/) for continuous benchmarking via the `codspeed-divan-compat` package. This provides a divan-compatible API with CodSpeed's instrumentation capabilities.
+
+**Benchmark location**: `benches/parse_performance.rs`
+
+**Framework**: `codspeed-divan-compat` (CodSpeed-instrumented divan API)
 
 ### Available Benchmarks
 
@@ -27,25 +31,43 @@ The project uses [divan](https://github.com/nvzqz/divan) for microbenchmarking. 
    - Includes section grouping, formatting, and reference linking
    - Tested with 10, 50, 100, and 500 commits
 
-### Running Benchmarks
+### Running Benchmarks Locally
+
+The project uses CodSpeed for benchmarking. To run benchmarks locally, you need the `cargo-codspeed` CLI:
 
 ```bash
+# Install cargo-codspeed (first time only)
+cargo install cargo-codspeed
+
+# Build benchmarks
+cargo codspeed build
+
 # Run all benchmarks
-cargo bench
+cargo codspeed run
 
 # Run specific benchmark
-cargo bench parse_sequential
+cargo codspeed run parse_sequential
 
-# Run with specific size
-cargo bench -- 100
-
-# Save results for comparison
-cargo bench -- --save-baseline main
+# Run with specific arguments (sizes)
+cargo codspeed run -- --bench 100
 ```
+
+**Note**: CodSpeed provides instrumentation-based measurements that are more accurate and consistent than wall-clock timing. Results are tracked over time in the CodSpeed dashboard when run in CI.
+
+### CI Integration
+
+Benchmarks run automatically on every PR and push to main via GitHub Actions (`.github/workflows/benches.yml`). The workflow:
+
+1. Uses `moonrepo/setup-rust@v1` to install Rust and `cargo-codspeed`
+2. Builds benchmarks with `cargo codspeed build`
+3. Runs benchmarks with `cargo codspeed run` via `CodSpeedHQ/action@v4`
+4. Results are uploaded to CodSpeed dashboard for tracking
+
+**View results**: Check the CodSpeed dashboard linked in PR checks or at [codspeed.io](https://codspeed.io).
 
 ## Baseline Results
 
-> **Note**: Baseline results will be updated after initial release. Run `cargo bench` locally to see performance on your hardware.
+> **Note**: Benchmark results are tracked continuously via CodSpeed. Historical data and trends are available in the CodSpeed dashboard. Run `cargo codspeed run` locally to see performance on your hardware.
 
 Benchmark results depend heavily on:
 - CPU architecture and core count
@@ -139,11 +161,19 @@ For large repositories (10,000+ commits):
 For detailed profiling:
 
 ```bash
-# CPU profiling with flamegraph
+# Install cargo-codspeed if not already installed
+cargo install cargo-codspeed
+
+# Run benchmarks with CodSpeed instrumentation
+cargo codspeed build
+cargo codspeed run
+
+# CPU profiling with flamegraph (alternative to CodSpeed)
+cargo install flamegraph
 cargo flamegraph --bench parse_performance
 
 # Memory profiling (requires valgrind)
-cargo build --release --bench parse_performance
+cargo codspeed build
 valgrind --tool=massif target/release/deps/parse_performance-*
 
 # Time profiling
@@ -153,12 +183,18 @@ time ./target/release/changelogen release --dry-run
 
 ## CI Performance Tracking
 
-Benchmark results are not currently tracked in CI but can be added using:
-- `cargo-criterion` for regression detection
-- GitHub Actions artifacts for result history
-- Automated alerts on >10% performance regression
+Benchmark results are automatically tracked in CI using CodSpeed:
 
-See issue/PR for CI integration: TBD
+- **Workflow**: `.github/workflows/benches.yml`
+- **Runs on**: Every PR and push to main
+- **Dashboard**: Results available at [codspeed.io](https://codspeed.io)
+- **Features**:
+  - Automated regression detection
+  - Historical performance tracking
+  - Per-PR performance comparison
+  - Visual performance graphs
+
+CodSpeed provides instrumentation-based benchmarking that is more accurate than wall-clock timing and less susceptible to noise from CI environment variations.
 
 ## Contributing Performance Improvements
 
@@ -172,7 +208,8 @@ When submitting performance optimizations:
 
 ## Resources
 
-- [divan benchmark framework](https://github.com/nvzqz/divan)
+- [CodSpeed - Continuous Benchmarking Platform](https://codspeed.io/)
+- [codspeed-divan-compat](https://crates.io/crates/codspeed-divan-compat) - CodSpeed-instrumented divan API
+- [cargo-codspeed CLI](https://github.com/CodSpeedHQ/codspeed-rust)
 - [The Rust Performance Book](https://nnethercote.github.io/perf-book/)
 - [cargo-flamegraph](https://github.com/flamegraph-rs/flamegraph)
-- [Criterion.rs](https://github.com/bheisler/criterion.rs) (alternative to divan)

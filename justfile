@@ -1,6 +1,6 @@
 # justfile for changelogen-rs development
 
-tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch"
+tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-codspeed"
 
 # Default recipe (shows help)
 default:
@@ -39,9 +39,10 @@ test:
 test-fast:
     cargo nextest run --all-features --locked
 
-# Run benchmarks
+# Run benchmarks (uses CodSpeed)
 bench:
-    cargo bench
+    cargo codspeed build
+    cargo codspeed run
 
 # Generate documentation
 doc:

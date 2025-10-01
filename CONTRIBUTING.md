@@ -146,27 +146,38 @@ cargo test -- --nocapture
 
 ### Benchmarks
 
+The project uses [CodSpeed](https://codspeed.io/) for continuous benchmarking. Install the CLI tool first:
+
 ```bash
-# Run all benchmarks
-cargo bench
-
-# Run specific benchmark
-cargo bench parse_sequential
-
-# Save baseline for comparison
-cargo bench -- --save-baseline main
-
-# Compare against baseline
-cargo bench -- --baseline main
+# Install cargo-codspeed (first time only)
+cargo install cargo-codspeed
 ```
 
-Benchmarks are in `benches/` and use the `divan` framework. See [PERF.md](PERF.md) for detailed performance documentation.
+Then run benchmarks:
+
+```bash
+# Build benchmarks
+cargo codspeed build
+
+# Run all benchmarks
+cargo codspeed run
+
+# Run specific benchmark
+cargo codspeed run parse_sequential
+
+# Run with specific arguments
+cargo codspeed run -- --bench 100
+```
+
+Benchmarks are in `benches/` and use the `codspeed-divan-compat` framework (CodSpeed-instrumented divan API). See [PERF.md](PERF.md) for detailed performance documentation.
 
 **Available benchmarks**:
-- `parse_sequential`: Baseline single-threaded parsing
-- `parse_parallel`: Multi-threaded parsing with rayon
-- `version_inference`: Semver bump calculation
-- `render_block`: Markdown changelog generation
+- `parse_sequential`: Baseline single-threaded parsing (10, 50, 100, 500 commits)
+- `parse_parallel`: Multi-threaded parsing with rayon (50, 100, 500 commits)
+- `version_inference`: Semver bump calculation (10, 50, 100, 500 commits)
+- `render_block`: Markdown changelog generation (10, 50, 100, 500 commits)
+
+**CI Integration**: Benchmarks run automatically on every PR via `.github/workflows/benches.yml` and results are tracked in the CodSpeed dashboard.
 
 ## Pull Request Process
 
@@ -250,7 +261,7 @@ This project aims for **output parity** with [`@unjs/changelogen`](https://githu
 Before cutting a release:
 
 1. **All tests pass**: `just check`
-2. **Benchmarks run**: `cargo bench` (document any regressions)
+2. **Benchmarks run**: `cargo codspeed build && cargo codspeed run` (document any regressions)
 3. **Documentation updated**: README, CHANGELOG, version numbers
 4. **MSRV validated**: CI passes on minimum Rust version
 5. **No clippy warnings**: `cargo clippy -- -D warnings`
