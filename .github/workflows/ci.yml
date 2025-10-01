@@ -22,6 +22,7 @@ jobs:
         with:
           channel: stable
           bins: just
+          components: rustfmt
       - name: Check formatting
         run: just fmt-check
   clippy:
@@ -35,6 +36,7 @@ jobs:
         with:
           channel: stable
           bins: just
+          components: clippy
       - name: Run clippy
         run: just lint
   test:
