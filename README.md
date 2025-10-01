@@ -6,9 +6,13 @@
 
 ## Status
 
-🚧 **Early Development** - Implementing core features from the JS version with Rust performance and safety.
+✨ **MVP Complete** - Core features implemented with parity to the JavaScript version.
 
-See `tasks.md` for the detailed roadmap and current progress.
+**Parity Achieved**: This Rust implementation aims for output parity with [@unjs/changelogen](https://github.com/unjs/changelogen). Commit classification, version inference, and markdown output should match the JavaScript version exactly. See [PARITY_SPEC.md](PARITY_SPEC.md) for detailed requirements.
+
+**Distribution**: Currently available via Cargo. npm package distribution via NAPI-RS is planned for a future release.
+
+See [tasks.md](tasks.md) for detailed roadmap and implementation status.
 
 ## Features
 
@@ -65,11 +69,28 @@ Or use `[package.metadata.changelogen]` in `Cargo.toml`.
 
 ## Differences from JS Version
 
-- **Performance**: Rust implementation with optional parallel processing
-- **Configuration**: TOML-based instead of JS/JSON configuration  
-- **Dependencies**: Minimal dependency footprint optimized for Rust ecosystem
-- **Packaging**: Available via Cargo (npm packaging planned via NAPI-RS)
-- **Safety**: No unwrap() in library code, comprehensive error handling
+### Intentional Differences
+
+| Feature | JavaScript Version | Rust Version | Notes |
+|---------|-------------------|--------------|-------|
+| **Configuration** | JSON/JS files | TOML files | Rust ecosystem standard |
+| **Config location** | `package.json` or `.changelogrc` | `changelogen.toml` or `Cargo.toml` | Cargo integration |
+| **Parallel processing** | Single-threaded | Optional multi-threaded (rayon) | Performance optimization for large repos |
+| **Package distribution** | npm | Cargo (npm via NAPI-RS planned) | Native Rust tooling |
+| **Binary size** | Node.js required (~50MB+) | Static binary (~5MB) | No runtime dependency |
+
+### Parity Guarantees
+
+These behaviors match the JavaScript version **exactly**:
+
+- ✅ **Commit classification**: Type detection, scope parsing, breaking change identification
+- ✅ **Version inference**: Semver rules including pre-1.0 adjustments  
+- ✅ **Markdown output**: Format, section ordering, reference linking
+- ✅ **Filtering rules**: Disabled types, `chore(deps)` handling
+- ✅ **Contributors**: Deduplication, co-author detection, ordering
+- ✅ **Idempotence**: Safe to rerun without duplication
+
+See [PARITY_SPEC.md](PARITY_SPEC.md) for comprehensive parity documentation and verification strategy.
 
 ## Development
 
