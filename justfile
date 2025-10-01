@@ -1,9 +1,12 @@
 # justfile for changelogen-rs development
-# Requires: cargo, cargo-nextest (optional)
+# Requires: cargo, just
+
+# Default recipe (shows help)
+default:
+    @just --list
 
 # Show this help message
 help:
-    @echo "Available recipes:"
     @just --list
 
 # Format code with rustfmt
@@ -26,24 +29,14 @@ build:
 build-release:
     cargo build --all --locked --release
 
-# Run tests (uses nextest if available, falls back to cargo test)
+# Run tests with nextest
 test:
-    #!/usr/bin/env bash
-    if command -v cargo-nextest >/dev/null 2>&1; then
-        cargo nextest run --all-features --all-targets --locked
-        cargo test --doc --locked
-    else
-        cargo test --all --locked
-    fi
+    cargo nextest run --all-features --locked
+    cargo test --doc --locked
 
 # Run tests without doc tests
 test-fast:
-    #!/usr/bin/env bash
-    if command -v cargo-nextest >/dev/null 2>&1; then
-        cargo nextest run --all-features --all-targets --locked
-    else
-        cargo test --lib --tests --locked
-    fi
+    cargo nextest run --all-features --locked
 
 # Run benchmarks
 bench:
@@ -62,25 +55,16 @@ pre-commit: fmt lint test
 
 # Run cargo-deny checks
 deny:
-    #!/usr/bin/env bash
-    if command -v cargo-deny >/dev/null 2>&1; then
-        cargo deny check
-    else
-        echo "cargo-deny not installed. Install with: cargo install cargo-deny"
-        exit 1
-    fi
+    cargo deny check
 
 # Run security audit
 audit:
     cargo audit
 
-# Install development tools
+# Install development tools using cargo-binstall (fallback to cargo install)
 install-tools:
     @echo "Installing development tools..."
-    cargo install cargo-nextest --locked
-    cargo install cargo-deny --locked
-    cargo install cargo-audit --locked
-    cargo install cargo-tarpaulin --locked
+    cargo binstall -y cargo-nextest cargo-deny cargo-audit cargo-tarpaulin || cargo install cargo-nextest cargo-deny cargo-audit cargo-tarpaulin --locked
     @echo "Tools installed!"
 
 # Clean build artifacts
@@ -89,13 +73,7 @@ clean:
 
 # Watch for changes and run tests (requires cargo-watch)
 watch:
-    #!/usr/bin/env bash
-    if command -v cargo-watch >/dev/null 2>&1; then
-        cargo watch -x 'clippy -- -D warnings' -x 'nextest run'
-    else
-        echo "cargo-watch not installed. Install with: cargo install cargo-watch"
-        exit 1
-    fi
+    cargo watch -x 'clippy -- -D warnings' -x 'nextest run'
 
 # Create a release build and run the binary
 release:

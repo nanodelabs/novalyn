@@ -24,8 +24,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
+      - name: Install just
+        uses: taiki-e/install-action@just
       - name: Check formatting
-        run: cargo fmt --all -- --check
+        run: just fmt-check
 
   clippy:
     name: Clippy
@@ -39,8 +41,10 @@ jobs:
           components: clippy
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+      - name: Install just
+        uses: taiki-e/install-action@just
       - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: just lint
 
   test:
     name: Test (${{ matrix.os }})
@@ -56,14 +60,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
-      - name: Build
-        run: cargo build --all --locked
+      - name: Install just
+        uses: taiki-e/install-action@just
       - name: Install nextest
         uses: taiki-e/install-action@nextest
+      - name: Build
+        run: just build
       - name: Run tests
-        run: |
-          cargo nextest run --all-features --all-targets --locked
-          cargo test --doc --locked
+        run: just test
 
   audit:
     name: Security Audit
