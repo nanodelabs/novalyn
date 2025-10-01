@@ -452,7 +452,7 @@ E. Panics policy:
 - Outside tests: avoid unwrap/expect; map errors. (Tied to task 108).  
 
 F. Pending automation tasks:
-- [x] Add Makefile or justfile with common recipes (make test, make lint).  
+- [x] Add justfile with common recipes (just test, just lint).  
 - [x] Add CONTRIBUTING.md referencing this section.  
 
 (End of tasks.md)

@@ -33,22 +33,22 @@ cargo build --all --locked
 Run the test suite to ensure everything works:
 
 ```bash
-make test
+just test
 # or
 cargo test
 ```
 
 ## Development Workflow
 
-### Quick Start with Makefile
+### Quick Start with just
 
-We provide a Makefile with common development tasks:
+We provide a justfile with common development tasks:
 
 ```bash
-make help           # Show all available commands
-make check          # Run all checks (format, lint, test)
-make pre-commit     # Run pre-commit checks
-make watch          # Watch for changes and run tests
+just help           # Show all available commands
+just check          # Run all checks (format, lint, test)
+just pre-commit     # Run pre-commit checks
+just watch          # Watch for changes and run tests
 ```
 
 ### Pre-commit Checklist
@@ -56,7 +56,7 @@ make watch          # Watch for changes and run tests
 Before committing, always run:
 
 ```bash
-make pre-commit
+just pre-commit
 ```
 
 This runs:
@@ -118,13 +118,13 @@ cargo watch -x 'clippy -- -D warnings' -x 'nextest run'
 
 ```bash
 # All tests
-make test
+just test
 # or
 cargo nextest run
 cargo test --doc
 
 # Fast tests (skip doc tests)
-make test-fast
+just test-fast
 
 # Specific test file
 cargo test --test determinism
@@ -162,9 +162,9 @@ Benchmarks are in `benches/` and use the `divan` framework.
 
 ### PR Requirements
 
-- [ ] Code is formatted (`make fmt`)
-- [ ] Clippy passes with no warnings (`make lint`)
-- [ ] All tests pass (`make test`)
+- [ ] Code is formatted (`just fmt`)
+- [ ] Clippy passes with no warnings (`just lint`)
+- [ ] All tests pass (`just test`)
 - [ ] New features have tests
 - [ ] Public APIs have documentation
 - [ ] Changes are described in PR description
