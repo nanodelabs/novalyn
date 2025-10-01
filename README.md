@@ -10,9 +10,29 @@
 
 **Parity Achieved**: This Rust implementation aims for output parity with [@unjs/changelogen](https://github.com/unjs/changelogen). Commit classification, version inference, and markdown output should match the JavaScript version exactly. See [PARITY_SPEC.md](PARITY_SPEC.md) for detailed requirements.
 
-**Distribution**: Currently available via Cargo. npm package distribution via NAPI-RS is planned for a future release.
+**Distribution**: Available via both Cargo (for Rust projects) and npm (for JavaScript/Node.js projects via NAPI-RS bindings). See [NPM_INTEGRATION.md](NPM_INTEGRATION.md) for npm package details.
 
 See [tasks.md](tasks.md) for detailed roadmap and implementation status.
+
+## Installation
+
+### Rust (via Cargo)
+
+```bash
+cargo install changelogen
+```
+
+### JavaScript/Node.js (via npm)
+
+```bash
+npm install changelogen
+# or
+yarn add changelogen
+# or
+pnpm add changelogen
+```
+
+See [README-NPM.md](README-NPM.md) for npm-specific documentation.
 
 ## Features
 
@@ -24,8 +44,11 @@ See [tasks.md](tasks.md) for detailed roadmap and implementation status.
 - ✅ **Semantic Versioning** - Automatic version bumping based on changes
 - ✅ **Idempotent Operation** - Safe to rerun without duplicating entries
 - ✅ **Clean Code Quality** - No unwrap() outside tests, clippy clean, comprehensive test coverage
+- ✅ **npm Package** - JavaScript/Node.js bindings via NAPI-RS
 
 ## Quick Start
+
+### CLI Usage (Rust)
 
 ```bash
 # Install from source (cargo publish pending)
@@ -40,6 +63,35 @@ changelogen generate --write        # Update CHANGELOG.md
 changelogen release                 # Full release pipeline (tag + changelog)
 changelogen --help                  # See all options
 ```
+
+### JavaScript/Node.js API
+
+```javascript
+import { generate, release, showVersion } from 'changelogen';
+
+// Generate changelog
+const result = await generate({
+  from: 'v1.0.0',
+  to: 'HEAD',
+  write: true
+});
+
+console.log(`Generated changelog with ${result.commits} commits`);
+
+// Perform release
+const releaseResult = await release({
+  dryRun: true,
+  yes: true
+});
+
+console.log(`Release ${releaseResult.newVersion}`);
+
+// Show next version
+const version = await showVersion();
+console.log(`Next version: ${version}`);
+```
+
+See [README-NPM.md](README-NPM.md) for full npm API documentation and [examples/](examples/) directory for more examples.
 
 ## Configuration
 
