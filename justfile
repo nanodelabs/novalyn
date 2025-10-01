@@ -1,5 +1,6 @@
 # justfile for changelogen-rs development
-# Requires: cargo, just
+
+tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch"
 
 # Default recipe (shows help)
 default:
@@ -61,17 +62,17 @@ deny:
 audit:
     cargo audit
 
-# Install development tools using cargo-binstall (fallback to cargo install)
+# Install development tools using cargo-binstall
 install-tools:
     @echo "Installing development tools..."
-    cargo binstall -y cargo-nextest cargo-deny cargo-audit cargo-tarpaulin || cargo install cargo-nextest cargo-deny cargo-audit cargo-tarpaulin --locked
+    cargo binstall -y {{tools}} || cargo install cargo-binstall && cargo binstall -y {{tools}}
     @echo "Tools installed!"
 
 # Clean build artifacts
 clean:
     cargo clean
 
-# Watch for changes and run tests (requires cargo-watch)
+# Watch for changes and run tests
 watch:
     cargo watch -x 'clippy -- -D warnings' -x 'nextest run'
 
