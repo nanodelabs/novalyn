@@ -78,11 +78,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 ### Quick Commands
 
 ```bash
-# Using Makefile (recommended)
-make check          # Run all checks (format, lint, test)
-make test           # Run tests
-make lint           # Run clippy
-make fmt            # Format code
+# Using just (recommended)
+just check          # Run all checks (format, lint, test)
+just test           # Run tests
+just lint           # Run clippy
+just fmt            # Format code
 
 # Manual commands
 cargo build

@@ -1,19 +1,6 @@
 [profile.default]
-# Fail fast disabled to see all failures
 fail-fast = false
-# Re-run failed tests once to mitigate flakiness (should be rare)
 retries = 1
-# Status output
-# status-level removed (using default)
 
-# Example of marking slow tests threshold (adjust later if needed)
 [profile.default.junit]
-path = "target/nextest/junit-default.xml"
-
-[profile.ci]
-# CI-specific: no retries to surface instability, and junit output path
-fail-fast = false
-retries = 0
-
-[profile.ci.junit]
-path = "target/nextest/junit.xml"
+path = "junit.xml"
