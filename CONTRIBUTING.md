@@ -360,14 +360,62 @@ changelogen github v1.2.3
 Once NAPI-RS integration is complete:
 
 ```bash
-# Build native modules for all platforms
-npm run build:napi
+# Prerequisites
+npm install -g @napi-rs/cli
 
-# Publish to npm
+# Build native modules for all platforms
+npm run build
+
+# Or build for specific platform
+napi build --platform --release --features napi
+
+# Run tests (once implemented)
+npm test
+
+# Publish to npm (requires NPM_TOKEN)
 npm publish
 ```
 
-See task 80 (Section 12.5) in [tasks.md](tasks.md) for NAPI-RS integration status.
+#### Cross-platform Builds
+
+For cross-platform releases, use GitHub Actions with the NAPI-RS workflow:
+
+```yaml
+# .github/workflows/release-npm.yml
+name: Release NPM Package
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  build:
+    strategy:
+      matrix:
+        settings:
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - host: macos-latest
+            target: x86_64-apple-darwin
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install -g @napi-rs/cli
+      - run: napi build --platform --release --features napi
+      - run: napi artifacts
+```
+
+See [NAPI-RS Documentation](https://napi.rs/) for detailed setup instructions.
+
+**Current Status**: Core bindings implemented. Tasks remaining:
+- Set up CI/CD pipeline for cross-platform builds (task 80.5)
+- Add integration tests for npm package
+- Test npm package installation and usage
+
+See task 80 (Section 12.5) in [tasks.md](tasks.md) for detailed NAPI-RS integration status.
 
 ### Post-release
 

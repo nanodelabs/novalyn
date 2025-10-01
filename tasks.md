@@ -242,13 +242,13 @@ ______________________________________________________________________
 
 ## 12.5. NAPI-RS Integration for npm Publishing
 
-80.1. [ ] Add napi and napi-derive dependencies conditionally via feature flag.
-80.2. [ ] Create NAPI bindings module exposing core functionality.
-80.3. [ ] Implement JavaScript-compatible API surface (async where needed).
-80.4. [ ] Add package.json with proper npm metadata and binary configuration.
+80.1. [x] Add napi and napi-derive dependencies conditionally via feature flag.
+80.2. [x] Create NAPI bindings module exposing core functionality.
+80.3. [x] Implement JavaScript-compatible API surface (async where needed).
+80.4. [x] Add package.json with proper npm metadata and binary configuration.
 80.5. [ ] Set up NAPI-RS build pipeline for cross-platform binaries.
-80.6. [ ] Create TypeScript definitions for the npm package.
-80.7. [ ] Add npm-specific documentation and examples.
+80.6. [x] Create TypeScript definitions for the npm package.
+80.7. [x] Add npm-specific documentation and examples.
 
 🧪 Tests:
 

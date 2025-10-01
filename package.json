@@ -22,7 +22,8 @@
     "index.js",
     "index.d.ts",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "*.node"
   ],
   "napi": {
     "name": "changelogen",

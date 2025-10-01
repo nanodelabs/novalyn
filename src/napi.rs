@@ -3,7 +3,6 @@
 //! This module provides JavaScript-compatible bindings for changelogen functionality,
 //! enabling npm package distribution via NAPI-RS.
 
-#![cfg(feature = "napi")]
 #![allow(unsafe_code)] // NAPI-RS requires unsafe code for FFI bindings
 
 use crate::authors::{AuthorOptions, Authors};
@@ -121,7 +120,7 @@ pub struct ReleaseResult {
 /// ```
 #[napi]
 pub async fn generate(options: Option<GenerateOptions>) -> Result<GenerateResult> {
-    let opts = options.unwrap_or_else(|| GenerateOptions {
+    let opts = options.unwrap_or(GenerateOptions {
         cwd: None,
         from: None,
         to: None,
@@ -214,7 +213,7 @@ pub async fn generate(options: Option<GenerateOptions>) -> Result<GenerateResult
     })
     .await
     .map_err(|e| Error::from_reason(format!("Task panicked: {}", e)))?
-    .map_err(|e| Error::from_reason(e))?;
+    .map_err(Error::from_reason)?;
 
     Ok(GenerateResult {
         content: result.0,
@@ -244,7 +243,7 @@ pub async fn generate(options: Option<GenerateOptions>) -> Result<GenerateResult
 /// ```
 #[napi]
 pub async fn release(options: Option<ReleaseOptions>) -> Result<ReleaseResult> {
-    let opts = options.unwrap_or_else(|| ReleaseOptions {
+    let opts = options.unwrap_or(ReleaseOptions {
         cwd: None,
         from: None,
         to: None,
@@ -292,7 +291,7 @@ pub async fn release(options: Option<ReleaseOptions>) -> Result<ReleaseResult> {
     })
     .await
     .map_err(|e| Error::from_reason(format!("Task panicked: {}", e)))?
-    .map_err(|e| Error::from_reason(e))?;
+    .map_err(Error::from_reason)?;
 
     // Read the generated changelog content
     let content = std::fs::read_to_string(&result.changelog_path)
@@ -328,7 +327,7 @@ pub async fn release(options: Option<ReleaseOptions>) -> Result<ReleaseResult> {
 /// ```
 #[napi]
 pub async fn show_version(options: Option<GenerateOptions>) -> Result<String> {
-    let opts = options.unwrap_or_else(|| GenerateOptions {
+    let opts = options.unwrap_or(GenerateOptions {
         cwd: None,
         from: None,
         to: None,
@@ -383,7 +382,7 @@ pub async fn show_version(options: Option<GenerateOptions>) -> Result<String> {
     })
     .await
     .map_err(|e| Error::from_reason(format!("Task panicked: {}", e)))?
-    .map_err(|e| Error::from_reason(e))?;
+    .map_err(Error::from_reason)?;
 
     Ok(version)
 }
