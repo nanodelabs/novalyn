@@ -219,7 +219,7 @@ ______________________________________________________________________
 🧪 Tests (network mock or feature-gated):
 
 - [x] Manual fallback without token.
-- [ ] Update path after create.
+- [x] Update path after create.
 
 ______________________________________________________________________
 
@@ -281,8 +281,8 @@ ______________________________________________________________________
 
 🧪 Tests:
 
-- [ ] Smoke log initialization (no panic).
-- [ ] Verbose toggle effect.
+- [x] Smoke log initialization (no panic).
+- [x] Verbose toggle effect.
 
 ______________________________________________________________________
 
@@ -303,7 +303,7 @@ ______________________________________________________________________
 ## 16. Authors & Contributors Edge Enhancements
 
 93. [x] Normalize unicode (NFC) for consistent grouping.
-01. [ ] Provide optional aliasing (future/backlog marker).
+01. [x] Provide optional aliasing (future/backlog marker).
 
 ______________________________________________________________________
 
@@ -313,8 +313,8 @@ ______________________________________________________________________
 01. [x] Implement parse_seq_vs_parallel benchmark (using divan).
 01. [x] Implement render_block benchmark (vary commit counts).
 01. [x] Implement version_inference benchmark.
-01. [ ] Document baseline results.
-01. [ ] Evaluate dashmap effect; remove if \<5% improvement (then: update Cargo.toml).
+01. [x] Document baseline results.
+01. [x] Evaluate dashmap effect; remove if \<5% improvement (then: update Cargo.toml).
 
 ______________________________________________________________________
 
@@ -383,13 +383,13 @@ ______________________________________________________________________
 
 - [ ] Matches JS output for a sampled repository (diff = empty).
 - [x] Parallel vs sequential identical.
-- [ ] Signed tag path error messaging clear (if GPG absent).
+- [x] Signed tag path error messaging clear (if GPG absent).
 - [x] New version bump logic conforms to 0.x rules & explicit override.
 - [x] Idempotent rerun no duplication.
 - [x] Contributors section correctness (exclusions, email hiding).
 - [x] Compare link correct for GitHub & GitLab test remotes.
 - [x] All tests green on all CI platforms.
-- [ ] No extraneous dependencies (review needed).
+- [x] No extraneous dependencies (review completed, documented in DEPENDENCIES.md).
 
 ______________________________________________________________________
 

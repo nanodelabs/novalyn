@@ -28,7 +28,6 @@ name = "parse_performance"
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
-dashmap = { version = "6", optional = true }
 demand = "1.7"
 git-conventional = "0.12"
 git2 = "0.20"

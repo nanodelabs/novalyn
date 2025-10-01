@@ -18,6 +18,10 @@ pub struct AuthorOptions {
     pub exclude: Vec<String>,    // names or emails exact match
     pub hide_author_email: bool, // redact email if true
     pub no_authors: bool,        // suppress entirely
+                                 // TODO(backlog): Add optional author aliasing support
+                                 // This would allow mapping one author identity to another for consistent grouping
+                                 // e.g., "old-email@example.com" -> "new-email@example.com"
+                                 // Tracked in backlog as Stage 16 enhancement
 }
 
 impl Authors {
