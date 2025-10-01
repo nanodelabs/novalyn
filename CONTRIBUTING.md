@@ -15,7 +15,7 @@ Thank you for your interest in contributing to changelogen-rs! This document pro
 
 ### Prerequisites
 
-- **Rust**: 1.90.0 or later (MSRV enforced by CI)
+- **Rust**: 1.85.0 or later
 - **Git**: For version control
 - **just**: Command runner - `cargo install just` or see [installation options](https://github.com/casey/just#installation)
 - **cargo-nextest**: Test runner - `cargo install cargo-nextest` (or use `just install-tools`)
@@ -49,6 +49,7 @@ We provide a justfile with common development tasks:
 just help           # Show all available commands
 just check          # Run all checks (format, lint, test)
 just pre-commit     # Run pre-commit checks
+just install-hook   # Install pre-commit hook
 just watch          # Watch for changes and run tests
 ```
 
@@ -57,14 +58,15 @@ just watch          # Watch for changes and run tests
 Before committing, always run:
 
 ```bash
-just pre-commit
+just pre-commit # Or run just install-hook and git will do it
 ```
 
 This runs:
+
 1. **Format check**: `cargo fmt --all -- --check`
-2. **Linting**: `cargo clippy --all-targets --all-features -- -D warnings`
-3. **Tests**: `cargo nextest run` (or `cargo test`)
-4. **Doc tests**: `cargo test --doc`
+1. **Linting**: `cargo clippy --all-targets --all-features -- -D warnings`
+1. **Tests**: `cargo nextest run` (or `cargo test`)
+1. **Doc tests**: `cargo test --doc`
 
 Alternatively, run each step manually:
 
@@ -172,6 +174,7 @@ cargo codspeed run -- --bench 100
 Benchmarks are in `benches/` and use the `codspeed-divan-compat` framework (CodSpeed-instrumented divan API). See [PERF.md](PERF.md) for detailed performance documentation.
 
 **Available benchmarks**:
+
 - `parse_sequential`: Baseline single-threaded parsing (10, 50, 100, 500 commits)
 - `parse_parallel`: Multi-threaded parsing with rayon (50, 100, 500 commits)
 - `version_inference`: Semver bump calculation (10, 50, 100, 500 commits)
@@ -182,11 +185,11 @@ Benchmarks are in `benches/` and use the `codspeed-divan-compat` framework (CodS
 ## Pull Request Process
 
 1. **Fork and branch**: Create a feature branch from `main`
-2. **Make changes**: Follow code quality standards
-3. **Test**: Ensure all tests pass
-4. **Commit**: Write clear, descriptive commit messages
-5. **Push**: Push to your fork
-6. **PR**: Open a pull request with a clear description
+1. **Make changes**: Follow code quality standards
+1. **Test**: Ensure all tests pass
+1. **Commit**: Write clear, descriptive commit messages
+1. **Push**: Push to your fork
+1. **PR**: Open a pull request with a clear description
 
 ### PR Requirements
 
@@ -223,24 +226,28 @@ This project aims for **output parity** with [`@unjs/changelogen`](https://githu
 ### Code Quality Principles
 
 1. **Correctness**: Code must be correct first
-2. **Safety**: Avoid unsafe code and panics
-3. **Performance**: Leverage Rust's performance where beneficial
-4. **Clarity**: Code should be readable and well-documented
+1. **Safety**: Avoid unsafe code and panics
+1. **Performance**: Leverage Rust's performance where beneficial
+1. **Clarity**: Code should be readable and well-documented
 
 ### What to Contribute
 
 **Good PRs:**
+
 - Bug fixes with tests
 - Performance improvements with benchmarks
 - Documentation improvements
 - Test coverage improvements
 - Code quality improvements (following standards)
+- Support for other languages
 
 **Discuss First:**
+
 - New features (open an issue first)
 - Breaking changes
 - Major refactors
 - Significant dependency additions
+- Language extras (like new parser etc)
 
 ## Need Help?
 
@@ -250,22 +257,23 @@ This project aims for **output parity** with [`@unjs/changelogen`](https://githu
 - Look at existing tests for examples
 - Open an issue for questions
 
----
+______________________________________________________________________
 
 ## Release Process
 
-> **Note**: This section is for maintainers only.
+> [!NOTE]
+> This section is for maintainers only.
 
 ### Pre-release Checklist
 
 Before cutting a release:
 
 1. **All tests pass**: `just check`
-2. **Benchmarks run**: `cargo codspeed build && cargo codspeed run` (document any regressions)
-3. **Documentation updated**: README, CHANGELOG, version numbers
-4. **MSRV validated**: CI passes on minimum Rust version
-5. **No clippy warnings**: `cargo clippy -- -D warnings`
-6. **Cargo.lock committed**: Ensure lock file is up to date
+1. **Benchmarks run**: `cargo codspeed build && cargo codspeed run` (document any regressions)
+1. **Documentation updated**: README, CHANGELOG, version numbers
+1. **MSRV validated**: CI passes on minimum Rust version
+1. **No clippy warnings**: `cargo clippy -- -D warnings`
+1. **Cargo.lock committed**: Ensure lock file is up to date
 
 ### Version Bumping
 
@@ -286,11 +294,12 @@ changelogen release --sign
 ```
 
 This will:
+
 1. Analyze commits since last tag
-2. Infer semantic version bump (major/minor/patch)
-3. Update `Cargo.toml` version
-4. Generate changelog entry in `CHANGELOG.md`
-5. Create git tag
+1. Infer semantic version bump (major/minor/patch)
+1. Update `Cargo.toml` version
+1. Generate changelog entry in `CHANGELOG.md`
+1. Create git tag
 
 ### Manual Release Steps
 
@@ -363,9 +372,9 @@ See task 80 (Section 12.5) in [tasks.md](tasks.md) for NAPI-RS integration statu
 ### Post-release
 
 1. **Verify installation**: `cargo install changelogen --version 1.2.3`
-2. **Test published crate**: In a new directory, `cargo install changelogen && changelogen --version`
-3. **Update documentation**: Ensure README reflects new version capabilities
-4. **Announce**: Create announcement issue/discussion if significant changes
+1. **Test published crate**: In a new directory, `cargo install changelogen && changelogen --version`
+1. **Update documentation**: Ensure README reflects new version capabilities
+1. **Announce**: Create announcement issue/discussion if significant changes
 
 ## License
 

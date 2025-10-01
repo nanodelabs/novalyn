@@ -3,93 +3,10 @@ use crate::{
     pipeline::{ExitCode, ReleaseOptions, run_release},
 };
 use anyhow::Result;
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{CommandFactory, Parser};
+use clap_complete;
 
-#[derive(Parser, Debug)]
-#[command(
-    name = "changelogen",
-    version,
-    about = "Generate changelogs from conventional commits."
-)]
-pub struct Cli {
-    #[command(subcommand)]
-    pub command: Commands,
-    #[arg(long)]
-    pub cwd: Option<String>,
-    /// Increase verbosity (-v, -vv, -vvv)
-    #[arg(short = 'v', action = ArgAction::Count)]
-    pub verbose: u8,
-}
-
-#[derive(Subcommand, Debug)]
-pub enum Commands {
-    /// Show the next inferred version
-    Show {
-        #[arg(long)]
-        from: Option<String>,
-        #[arg(long)]
-        to: Option<String>,
-        #[arg(long, value_name = "SEMVER")]
-        new_version: Option<String>,
-    },
-    /// Generate release block (writes with --write)
-    Generate {
-        #[arg(long)]
-        write: bool,
-        /// Write output to file instead of stdout (implies --write when path is CHANGELOG.md)
-        #[arg(long, value_name = "PATH")]
-        output: Option<String>,
-        #[arg(long)]
-        from: Option<String>,
-        #[arg(long)]
-        to: Option<String>,
-        #[arg(long, value_name = "SEMVER")]
-        new_version: Option<String>,
-        #[arg(long)]
-        no_authors: bool,
-        #[arg(long, value_name = "NAME_OR_EMAIL")]
-        exclude_author: Vec<String>,
-        #[arg(long)]
-        hide_author_email: bool,
-        #[arg(long)]
-        clean: bool,
-        #[arg(long)]
-        sign: bool,
-        /// Auto-confirm (skip prompts)
-        #[arg(long)]
-        yes: bool,
-    },
-    /// Run full release (bump, changelog, tag creation optional in future)
-    Release {
-        #[arg(long)]
-        dry_run: bool,
-        #[arg(long)]
-        from: Option<String>,
-        #[arg(long)]
-        to: Option<String>,
-        #[arg(long, value_name = "SEMVER")]
-        new_version: Option<String>,
-        #[arg(long)]
-        no_authors: bool,
-        #[arg(long, value_name = "NAME_OR_EMAIL")]
-        exclude_author: Vec<String>,
-        #[arg(long)]
-        hide_author_email: bool,
-        #[arg(long)]
-        clean: bool,
-        #[arg(long)]
-        sign: bool,
-        #[arg(long)]
-        yes: bool,
-    },
-    /// GitHub release synchronization only
-    Github {
-        #[arg(long)]
-        tag: String,
-        #[arg(long)]
-        body_path: Option<String>,
-    },
-}
+pub use crate::cli_def::{Cli, Commands, Completions};
 
 pub fn run() -> Result<ExitCode> {
     let cli = Cli::parse();
@@ -100,6 +17,16 @@ pub fn run() -> Result<ExitCode> {
         .map(std::path::PathBuf::from)
         .unwrap_or(std::env::current_dir()?);
     let exit = match cli.command {
+        Commands::Completions(completions) => {
+            let mut cmd = Cli::command();
+            clap_complete::generate(
+                completions.shell,
+                &mut cmd,
+                "changelogen",
+                &mut std::io::stdout(),
+            );
+            ExitCode::Success
+        }
         Commands::Show {
             from,
             to,

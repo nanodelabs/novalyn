@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub use changelogen as lib;
 
 fn main() {

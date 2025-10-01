@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches: [main, master]
@@ -8,11 +7,9 @@ on:
   schedule:
     #  Sundays at 00:00 UTC
     - cron: '0 0 * * 0'
-
 env:
   RUST_BACKTRACE: 1
   CARGO_TERM_COLOR: always
-
 jobs:
   fmt:
     name: Format
@@ -20,32 +17,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Setup rust toolchain, cache and just
+        uses: moonrepo/setup-rust@v1
         with:
-          components: rustfmt
-      - name: Install just
-        uses: taiki-e/install-action@just
+          channel: stable
+          bins: just
       - name: Check formatting
         run: just fmt-check
-
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - name: Setup rust toolchain, cache and just
+        uses: moonrepo/setup-rust@v1
         with:
-          components: clippy
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-      - name: Install just
-        uses: taiki-e/install-action@just
+          channel: stable
+          bins: just
       - name: Run clippy
         run: just lint
-
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -56,19 +47,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-      - name: Install just
-        uses: taiki-e/install-action@just
-      - name: Install nextest
-        uses: taiki-e/install-action@nextest
+      - name: Setup rust toolchain, cache, install nextest and just
+        uses: moonrepo/setup-rust@v1
+        with:
+          channel: stable
+          cache-target: test
+          bins: just,cargo-nextest
       - name: Build
         run: just build
       - name: Run tests
         run: just test
-
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -76,23 +64,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
       - uses: EmbarkStudios/cargo-deny-action@v2
-
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Install nightly rust
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Setup rust toolchain, cache, install nextest, just and cargo-llvm-cov
+        uses: moonrepo/setup-rust@v1
         with:
-          components: llvm-tools-preview
-      - name: Install just
-        uses: taiki-e/install-action@just
-      - name: Install nextest
-        uses: taiki-e/install-action@nextest
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+          channel: nightly
+          components: llvm-tools
+          cache-target: test
+          bins: just,cargo-nextest,cargo-llvm-cov
       - name: Generate coverage
         run: |
           cargo llvm-cov --all-features --no-report nextest

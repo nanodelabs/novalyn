@@ -16,7 +16,7 @@ See [tasks.md](tasks.md) for detailed roadmap and implementation status.
 
 ## Features
 
-- ✅ **Conventional Commit Parsing** - Supports standard commit message formats  
+- ✅ **Conventional Commit Parsing** - Supports standard commit message formats
 - ✅ **Configurable Types** - Customize commit types, emojis, and semver impact
 - ✅ **Multiple Providers** - GitHub, GitLab, Bitbucket repository detection
 - ✅ **Parallel Processing** - Fast parsing of large commit histories
@@ -71,20 +71,20 @@ Or use `[package.metadata.changelogen]` in `Cargo.toml`.
 
 ### Intentional Differences
 
-| Feature | JavaScript Version | Rust Version | Notes |
-|---------|-------------------|--------------|-------|
-| **Configuration** | JSON/JS files | TOML files | Rust ecosystem standard |
-| **Config location** | `package.json` or `.changelogrc` | `changelogen.toml` or `Cargo.toml` | Cargo integration |
-| **Parallel processing** | Single-threaded | Optional multi-threaded (rayon) | Performance optimization for large repos |
-| **Package distribution** | npm | Cargo (npm via NAPI-RS planned) | Native Rust tooling |
-| **Binary size** | Node.js required (~50MB+) | Static binary (~5MB) | No runtime dependency |
+| Feature                  | JavaScript Version               | Rust Version                       | Notes                                    |
+| ------------------------ | -------------------------------- | ---------------------------------- | ---------------------------------------- |
+| **Configuration**        | JSON/JS files                    | TOML files                         | Rust ecosystem standard                  |
+| **Config location**      | `package.json` or `.changelogrc` | `changelogen.toml` or `Cargo.toml` | Cargo integration                        |
+| **Parallel processing**  | Single-threaded                  | Optional multi-threaded (rayon)    | Performance optimization for large repos |
+| **Package distribution** | npm                              | Cargo (npm via NAPI-RS planned)    | Native Rust tooling                      |
+| **Binary size**          | Node.js required (~50MB+)        | Static binary (~5MB)               | No runtime dependency                    |
 
 ### Parity Guarantees
 
 These behaviors match the JavaScript version **exactly**:
 
 - ✅ **Commit classification**: Type detection, scope parsing, breaking change identification
-- ✅ **Version inference**: Semver rules including pre-1.0 adjustments  
+- ✅ **Version inference**: Semver rules including pre-1.0 adjustments
 - ✅ **Markdown output**: Format, section ordering, reference linking
 - ✅ **Filtering rules**: Disabled types, `chore(deps)` handling
 - ✅ **Contributors**: Deduplication, co-author detection, ordering
@@ -125,52 +125,11 @@ GITHUB_TOKEN=xxx                   # GitHub API token for release sync
 
 ## Goals
 
-### Parity with JavaScript Version
-
-This project aims for **output parity** with the JavaScript version:
-
-- Commit classification matches exactly
-- Markdown output format preserved
-- Configuration precedence identical
-- Semver inference follows same rules
-
-See [PARITY_SPEC.md](PARITY_SPEC.md) for detailed parity requirements.
-
-### Code Quality
-
-- **Correctness**: Code must be correct first
-- **Safety**: Avoid unsafe code and panics, no unwrap() outside tests
-- **Performance**: Leverage Rust's performance for large repositories
-- **Clarity**: Well-documented, readable code
-
-## Testing
-
-Comprehensive test suite with:
-- Unit tests for all modules
-- Integration tests for CLI and pipeline
-- Determinism tests for reproducible output
-- Parallel vs sequential equivalence tests
-- Snapshot tests for output validation
-
-```bash
-# Run all tests
-cargo test --all
-
-# Run specific test
-cargo test --test determinism
-
-# With coverage (requires cargo-tarpaulin)
-cargo tarpaulin --out Html
-```
-
-## CI/CD
-
-The project uses GitHub Actions for CI with:
-- Multi-platform testing (Linux, macOS, Windows)
-- MSRV (Minimum Supported Rust Version: 1.90.0) validation
-- Code coverage reporting
-- Security audits (cargo-deny)
-- Scheduled dependency audits
+- Parity with JavaScript Version
+- Support more than just npm (cargo, go and others, contributions needed!)
+- Performance
+- Security
+- else?
 
 ## License
 

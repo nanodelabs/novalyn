@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This is the initial release of changelogen-rs, a Rust port of [@unjs/changelogen](https://github.com/unjs/changelogen).
 
 **Core Features:**
+
 - ✅ Conventional commit parsing with breaking change detection
 - ✅ Semantic version inference with pre-1.0 adjustments
 - ✅ Configurable commit types with emoji and semver impact
@@ -22,18 +23,21 @@ This is the initial release of changelogen-rs, a Rust port of [@unjs/changelogen
 - ✅ Clean code quality (no unwrap outside tests, clippy clean)
 
 **Configuration:**
+
 - TOML-based configuration via `changelogen.toml`
 - Cargo.toml integration via `[package.metadata.changelogen]`
 - Environment variable support for tokens and thresholds
 - Scope mapping and type filtering
 
 **CLI Commands:**
+
 - `changelogen show` - Display next inferred version
 - `changelogen generate` - Generate changelog block
 - `changelogen release` - Full release pipeline
 - `changelogen github` - Sync release to GitHub
 
 **Quality:**
+
 - Comprehensive test suite with 25+ integration tests
 - Snapshot testing for output validation
 - Determinism tests for reproducible results
@@ -41,12 +45,14 @@ This is the initial release of changelogen-rs, a Rust port of [@unjs/changelogen
 - Benchmark suite for performance tracking
 
 **Documentation:**
+
 - Detailed parity specification with JS version
 - Contributing guidelines with dev workflow
 - Performance documentation and benchmarking guide
 - Comprehensive README with examples
 
 **Distribution:**
+
 - Available via Cargo: `cargo install changelogen`
 - Static binary with no runtime dependencies
 - npm package via NAPI-RS (planned for future release)
@@ -54,6 +60,7 @@ This is the initial release of changelogen-rs, a Rust port of [@unjs/changelogen
 ### 📦 Dependencies
 
 Core dependencies:
+
 - git2: Git repository operations
 - semver: Semantic versioning
 - clap: CLI argument parsing

@@ -1,13 +1,10 @@
 # justfile for changelogen-rs development
 
 tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-codspeed"
+clippy := ""
 
 # Default recipe (shows help)
-default:
-    @just --list
-
-# Show this help message
-help:
+_default:
     @just --list
 
 # Format code with rustfmt
@@ -21,6 +18,10 @@ fmt-check:
 # Run clippy linter
 lint:
     cargo clippy --all-targets --all-features -- -D warnings
+
+# Run clippy linter and autofix
+lint-fix:
+    cargo clippy --all-targets --all-features --fix -- -D warnings
 
 # Build the project
 build:
@@ -52,8 +53,8 @@ doc:
 check: fmt-check lint test
 
 # Run pre-commit checks
-pre-commit: fmt lint test
-    @echo "All pre-commit checks passed!"
+pre-commit: fmt lint test deny
+    @echo "{{ GREEN + BOLD }}✅ All pre-commit checks passed!{{ NORMAL }}"
 
 # Run cargo-deny checks
 deny:
@@ -65,13 +66,25 @@ audit:
 
 # Install development tools using cargo-binstall
 install-tools:
-    @echo "Installing development tools..."
+    @echo "{{ BLUE + BOLD }}Installing development tools...{{ NORMAL }}"
     cargo binstall -y {{tools}} || cargo install cargo-binstall && cargo binstall -y {{tools}}
-    @echo "Tools installed!"
+    @echo "{{ GREEN + BOLD }}✅ Tools installed!{{ NORMAL }}"
+
+# Install git pre-commit hook (run with just pre-commit)
+install-hook:
+    @echo -e "#!/bin/sh\njust pre-commit" > .git/hooks/pre-commit
+    chmod +x .git/hooks/pre-commit
+    @echo "{{ GREEN + BOLD }}✅ Pre-commit hook installed!{{ NORMAL }}"
 
 # Clean build artifacts
 clean:
     cargo clean
+
+# Generate coverage with llvm-cov
+coverage:
+    cargo llvm-cov --all-features --no-report nextest
+    cargo llvm-cov --all-features --no-report --doc
+    cargo llvm-cov report --doctests
 
 # Watch for changes and run tests
 watch:
@@ -80,4 +93,4 @@ watch:
 # Create a release build and run the binary
 release:
     cargo build --release
-    @echo "Release binary: target/release/changelogen"
+    @echo "{{ BLUE + BOLD }}Release binary:{{ NORMAL }} {{ UNDERLINE + CYAN }}target/release/changelogen{{ NORMAL }}"

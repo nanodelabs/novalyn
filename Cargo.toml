@@ -55,14 +55,23 @@ toml_edit = { version = "0.23", features = ["serde"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 unicode-normalization = "0.1"
+clap_complete = "4.5.58"
+clap_complete_nushell = "4.5.8"
 
 [dev-dependencies]
 assert_fs = "1"
-cargo-deny = "0.18"
 divan = { package = "codspeed-divan-compat", version = "3.0.5" }
 insta = { version = "1", features = ["yaml"] }
 proptest = "1"
 tempfile = "3"
+
+[build-dependencies]
+clap = { version = "4.5.48", features = [
+  "derive",
+] }
+clap_complete = "4.5.58"
+clap_complete_nushell = "4.5.8"
+clap_mangen = "0.2.29"
 
 [features]
 default = []
