@@ -1,0 +1,42 @@
+# Build artifacts
+target/
+Cargo.lock
+
+# Development files
+.git/
+.github/
+.vscode/
+.config/
+.devcontainer/
+*.swp
+*.swo
+*~
+
+# Test files
+tests/
+benches/
+test/
+
+# Documentation (except npm README)
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+PARITY_SPEC.md
+PERF.md
+tasks.md
+AGENTS.md
+
+# Build configuration
+build.rs
+Cross.toml
+deny.toml
+committed.toml
+justfile
+rust-toolchain.toml
+.clippy.toml
+rustfmt.toml
+
+# Source files (except what's needed for napi)
+src/main.rs
+src/cli.rs
+src/cli_def.rs

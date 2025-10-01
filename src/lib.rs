@@ -1,4 +1,4 @@
-#![forbid(unsafe_code)]
+#![cfg_attr(not(feature = "napi"), forbid(unsafe_code))]
 
 pub mod authors;
 pub mod changelog;
@@ -9,6 +9,8 @@ pub mod error;
 pub mod git;
 pub mod github;
 pub mod logging;
+#[cfg(feature = "napi")]
+pub mod napi;
 pub mod parse;
 pub mod pipeline;
 pub mod render;

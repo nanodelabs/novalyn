@@ -1,0 +1,68 @@
+{
+  "name": "changelogen",
+  "version": "0.0.0",
+  "description": "💅 Beautiful Changelogs using Conventional Commits",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MuntasirSZN/changelogen-rs.git"
+  },
+  "keywords": [
+    "changelog",
+    "conventional-commits",
+    "git",
+    "release",
+    "semver",
+    "cli",
+    "napi-rs",
+    "rust"
+  ],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "napi": {
+    "name": "changelogen",
+    "triples": {
+      "defaults": true,
+      "additional": [
+        "x86_64-unknown-linux-musl",
+        "aarch64-unknown-linux-gnu",
+        "armv7-unknown-linux-gnueabihf",
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "i686-pc-windows-msvc",
+        "aarch64-pc-windows-msvc"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">= 16"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release --features napi",
+    "build:debug": "napi build --platform --features napi",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "node --test test",
+    "universal": "napi universal",
+    "version": "napi version"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0"
+  },
+  "license": "MIT",
+  "author": "MuntasirSZN",
+  "bugs": {
+    "url": "https://github.com/MuntasirSZN/changelogen-rs/issues"
+  },
+  "homepage": "https://github.com/MuntasirSZN/changelogen-rs#readme"
+}

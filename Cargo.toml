@@ -20,6 +20,7 @@ categories = ["command-line-utilities", "development-tools"]
 [lib]
 name = "changelogen"
 path = "src/lib.rs"
+crate-type = ["lib", "cdylib"]
 
 [[bench]]
 harness = false
@@ -75,3 +76,8 @@ clap_mangen = "0.2.29"
 
 [features]
 default = []
+napi = ["dep:napi", "dep:napi-derive"]
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+napi = { version = "3", features = ["serde-json", "tokio_rt"], optional = true }
+napi-derive = { version = "3", optional = true }
