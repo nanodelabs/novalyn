@@ -1,6 +1,5 @@
 ---
 source: tests/cli_extras.rs
-assertion_line: 15
 expression: help
 ---
 Generate changelogs from conventional commits.
@@ -8,11 +7,12 @@ Generate changelogs from conventional commits.
 Usage: changelogen [OPTIONS] <COMMAND>
 
 Commands:
-  show      Show the next inferred version
-  generate  Generate release block (writes with --write)
-  release   Run full release (bump, changelog, tag creation optional in future)
-  github    GitHub release synchronization only
-  help      Print this message or the help of the given subcommand(s)
+  completions  Print shell completions
+  show         Show the next inferred version
+  generate     Generate release block (writes with --write)
+  release      Run full release (bump, changelog, tag creation optional in future)
+  github       GitHub release synchronization only
+  help         Print this message or the help of the given subcommand(s)
 
 Options:
       --cwd <CWD>
