@@ -304,11 +304,11 @@ Reference Specs: parity spec (sections indicated as §), JS source inventory.
 
 ## 18. Documentation (§22, §29)
 
-101. [ ] README: parity statement, quick start, differences vs JS (available via both Cargo and npm).
-102. [ ] CONTRIBUTING: dev setup, MSRV, tests, benchmarks, release instructions.
-103. [ ] PERF docs: initial benchmark table.
-104. [ ] PARITY_SPEC inclusion & cross-link tasks.md.
-105. [ ] Changelog bootstrapped by tool itself for first release.
+101. [x] README: parity statement, quick start, differences vs JS (available via both Cargo and npm).
+102. [x] CONTRIBUTING: dev setup, MSRV, tests, benchmarks, release instructions.
+103. [x] PERF docs: initial benchmark table.
+104. [x] PARITY_SPEC inclusion & cross-link tasks.md.
+105. [x] Changelog bootstrapped by tool itself for first release.
 
 ---
 

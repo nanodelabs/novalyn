@@ -147,10 +147,26 @@ cargo test -- --nocapture
 ### Benchmarks
 
 ```bash
+# Run all benchmarks
 cargo bench
+
+# Run specific benchmark
+cargo bench parse_sequential
+
+# Save baseline for comparison
+cargo bench -- --save-baseline main
+
+# Compare against baseline
+cargo bench -- --baseline main
 ```
 
-Benchmarks are in `benches/` and use the `divan` framework.
+Benchmarks are in `benches/` and use the `divan` framework. See [PERF.md](PERF.md) for detailed performance documentation.
+
+**Available benchmarks**:
+- `parse_sequential`: Baseline single-threaded parsing
+- `parse_parallel`: Multi-threaded parsing with rayon
+- `version_inference`: Semver bump calculation
+- `render_block`: Markdown changelog generation
 
 ## Pull Request Process
 
@@ -217,10 +233,128 @@ This project aims for **output parity** with [`@unjs/changelogen`](https://githu
 
 ## Need Help?
 
-- Check `tasks.md` for current work and roadmap
-- Review `PARITY_SPEC.md` for parity requirements
+- Check [tasks.md](tasks.md) for current work and roadmap
+- Review [PARITY_SPEC.md](PARITY_SPEC.md) for parity requirements
+- Review [PERF.md](PERF.md) for performance guidelines
 - Look at existing tests for examples
 - Open an issue for questions
+
+---
+
+## Release Process
+
+> **Note**: This section is for maintainers only.
+
+### Pre-release Checklist
+
+Before cutting a release:
+
+1. **All tests pass**: `just check`
+2. **Benchmarks run**: `cargo bench` (document any regressions)
+3. **Documentation updated**: README, CHANGELOG, version numbers
+4. **MSRV validated**: CI passes on minimum Rust version
+5. **No clippy warnings**: `cargo clippy -- -D warnings`
+6. **Cargo.lock committed**: Ensure lock file is up to date
+
+### Version Bumping
+
+The tool can bump its own version! Use the `release` command:
+
+```bash
+# Dry run first to preview
+changelogen release --dry-run
+
+# Create release with automatic version bump
+changelogen release
+
+# Or specify explicit version
+changelogen release --new-version 1.2.3
+
+# With signed tag
+changelogen release --sign
+```
+
+This will:
+1. Analyze commits since last tag
+2. Infer semantic version bump (major/minor/patch)
+3. Update `Cargo.toml` version
+4. Generate changelog entry in `CHANGELOG.md`
+5. Create git tag
+
+### Manual Release Steps
+
+If you need to release manually:
+
+```bash
+# 1. Update version in Cargo.toml
+vim Cargo.toml  # Bump version field
+
+# 2. Generate changelog
+changelogen generate --write
+
+# 3. Commit changes
+git add Cargo.toml CHANGELOG.md
+git commit -m "chore: release v1.2.3"
+
+# 4. Create tag
+git tag -a v1.2.3 -m "Release v1.2.3"
+
+# 5. Push
+git push origin main --tags
+
+# 6. Publish to crates.io
+cargo publish
+```
+
+### Publishing to crates.io
+
+```bash
+# Test the package first
+cargo package --list
+cargo package --allow-dirty  # If you have uncommitted docs
+
+# Publish
+cargo publish
+
+# If you need to specify token
+cargo publish --token $CARGO_REGISTRY_TOKEN
+```
+
+### GitHub Release
+
+After tagging, create a GitHub release:
+
+```bash
+# Using the tool (requires GITHUB_TOKEN)
+changelogen github v1.2.3
+
+# Or manually via GitHub UI
+# 1. Go to https://github.com/MuntasirSZN/changelogen-rs/releases/new
+# 2. Select tag v1.2.3
+# 3. Copy content from CHANGELOG.md for release notes
+# 4. Publish
+```
+
+### npm Package (Future)
+
+Once NAPI-RS integration is complete:
+
+```bash
+# Build native modules for all platforms
+npm run build:napi
+
+# Publish to npm
+npm publish
+```
+
+See task 80 (Section 12.5) in [tasks.md](tasks.md) for NAPI-RS integration status.
+
+### Post-release
+
+1. **Verify installation**: `cargo install changelogen --version 1.2.3`
+2. **Test published crate**: In a new directory, `cargo install changelogen && changelogen --version`
+3. **Update documentation**: Ensure README reflects new version capabilities
+4. **Announce**: Create announcement issue/discussion if significant changes
 
 ## License
 
