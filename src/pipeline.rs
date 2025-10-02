@@ -135,8 +135,8 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
                     warn!("failed to resolve GitHub handles: {}", e);
                 }
             } else {
-                warn!(
-                    "--github-alias specified but no token provided (use --github-token or GITHUB_TOKEN env var)"
+                debug!(
+                    "GitHub aliasing enabled but no token provided; skipping handle resolution (set GITHUB_TOKEN or GH_TOKEN env var, or use --no-github-alias to disable)"
                 );
             }
         }

@@ -63,7 +63,7 @@ pub fn run() -> Result<ExitCode> {
             clean,
             sign,
             yes,
-            github_alias,
+            no_github_alias,
             github_token,
         } => {
             // Read GitHub token from env if not provided
@@ -86,7 +86,7 @@ pub fn run() -> Result<ExitCode> {
                 clean,
                 sign,
                 yes,
-                github_alias,
+                github_alias: !no_github_alias,
                 github_token,
             })?;
             if let Some(path) = output {
@@ -123,7 +123,7 @@ pub fn run() -> Result<ExitCode> {
             clean,
             sign,
             yes,
-            github_alias,
+            no_github_alias,
             github_token,
         } => {
             // Read GitHub token from env if not provided
@@ -146,7 +146,7 @@ pub fn run() -> Result<ExitCode> {
                 clean,
                 sign,
                 yes,
-                github_alias,
+                github_alias: !no_github_alias,
                 github_token,
             })?;
             if outcome.wrote {
