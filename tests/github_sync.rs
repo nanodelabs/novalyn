@@ -3,6 +3,18 @@ use changelogen::repository::Repository;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
+// Helper module for wiremock tests that require rustls initialization
+mod wiremock_helpers {
+    use std::sync::Once;
+    static INIT: Once = Once::new();
+
+    pub fn setup() {
+        INIT.call_once(|| {
+            changelogen::init_crypto_provider();
+        });
+    }
+}
+
 #[tokio::test]
 async fn github_sync_fallback_without_token() {
     // Use a GitHub-like repo struct
@@ -41,8 +53,8 @@ async fn github_sync_non_github_repo_error() {
 }
 
 #[tokio::test]
-#[ignore = "wiremock requires rustls provider initialization"]
 async fn github_sync_create_release_with_wiremock() {
+    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     // Mock GET request returning 404 (release doesn't exist)
@@ -80,8 +92,8 @@ async fn github_sync_create_release_with_wiremock() {
 }
 
 #[tokio::test]
-#[ignore = "wiremock requires rustls provider initialization"]
 async fn github_sync_update_existing_release_with_wiremock() {
+    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     // Mock GET request returning existing release
