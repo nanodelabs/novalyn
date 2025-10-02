@@ -65,9 +65,11 @@ scc = "3.2.0"
 mimalloc-safe = "0.1.54"
 
 [dev-dependencies]
+assert_cmd = "2"
 assert_fs = "1"
 divan = { package = "codspeed-divan-compat", version = "3.0.5" }
 insta = { version = "1", features = ["yaml"] }
+predicates = "3"
 proptest = "1"
 tempfile = "3"
 wiremock = "0.6"
