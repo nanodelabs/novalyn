@@ -117,6 +117,8 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
                 hide_author_email: opts.hide_author_email,
                 no_authors: opts.no_authors,
                 aliases,
+                github_token: None, // TODO: Add CLI support for GitHub token
+                enable_github_aliasing: false, // TODO: Add CLI flag for GitHub aliasing
             },
         ))
     };

@@ -22,6 +22,8 @@ pub struct AuthorOptions {
     pub hide_author_email: bool, // redact email if true
     pub no_authors: bool,        // suppress entirely
     pub aliases: FastHashMap<EcoString, EcoString>, // map old identity to new (name or email)
+    pub github_token: Option<String>, // GitHub token for email->handle resolution
+    pub enable_github_aliasing: bool, // whether to resolve emails to @handles
 }
 
 impl Default for AuthorOptions {
@@ -31,6 +33,8 @@ impl Default for AuthorOptions {
             hide_author_email: false,
             no_authors: false,
             aliases: FastHashMap::with_hasher(foldhash::fast::RandomState::default()),
+            github_token: None,
+            enable_github_aliasing: false,
         }
     }
 }
@@ -65,6 +69,23 @@ impl Authors {
             list: out,
             suppressed: false,
         }
+    }
+
+    /// Resolve email addresses to GitHub handles using GitHub API.
+    /// This modifies author names in place, replacing emails with @handles when found.
+    pub async fn resolve_github_handles(&mut self, token: &str) -> Result<(), String> {
+        use crate::github::get_username_from_email;
+
+        for author in &mut self.list {
+            if let Some(ref email) = author.email {
+                if let Ok(Some(handle)) = get_username_from_email(email.as_str(), Some(token)).await
+                {
+                    // Replace name with GitHub handle
+                    author.name = EcoString::from(handle);
+                }
+            }
+        }
+        Ok(())
     }
 }
 

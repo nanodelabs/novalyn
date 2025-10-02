@@ -31,11 +31,16 @@ fn verbose_toggle_effect() {
 #[test]
 fn logging_respects_rust_log_env() {
     // Test that RUST_LOG environment variable is respected
-    // Note: We don't actually set RUST_LOG here to avoid unsafe blocks
-    // and potential test interference. The logic is tested via code inspection:
-    // - logging::init reads RUST_LOG via std::env::var
-    // - If set, uses that value; otherwise uses verbosity-based default
+    // Set RUST_LOG to verify the logging system honors it
+    unsafe {
+        std::env::set_var("RUST_LOG", "debug");
+    }
 
-    // This test verifies the init doesn't panic when RUST_LOG might be set
+    // This test verifies the init doesn't panic with RUST_LOG set
     logging::init(0);
+
+    // Clean up
+    unsafe {
+        std::env::remove_var("RUST_LOG");
+    }
 }

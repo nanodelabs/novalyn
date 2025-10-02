@@ -12,6 +12,12 @@ pub struct ReleaseInfo {
     pub skipped: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitHubUser {
+    pub login: String,
+    pub email: Option<String>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum GithubError {
     #[error("no repository information available for github sync")]
@@ -22,6 +28,55 @@ pub enum GithubError {
     Network(String),
     #[error("unexpected response status {0}")]
     Status(u16),
+}
+
+/// Fetch GitHub username from email address.
+/// Returns the username (handle) if found, None otherwise.
+#[instrument(skip(token))]
+pub async fn get_username_from_email(
+    email: &str,
+    token: Option<&str>,
+) -> Result<Option<String>, GithubError> {
+    let Some(token) = token else {
+        return Ok(None); // No token, can't query API
+    };
+
+    let client = reqwest::Client::new();
+    let search_url = format!(
+        "https://api.github.com/search/users?q={}+in:email",
+        urlencoding::encode(email)
+    );
+
+    debug!("searching GitHub for email" = %email);
+
+    let resp = client
+        .get(&search_url)
+        .header("User-Agent", "changelogen-rs")
+        .bearer_auth(token)
+        .send()
+        .await
+        .map_err(|e| GithubError::Network(e.to_string()))?;
+
+    if !resp.status().is_success() {
+        warn!(status = %resp.status(), "github user search failed");
+        return Ok(None);
+    }
+
+    #[derive(Deserialize)]
+    struct SearchResult {
+        items: Vec<GitHubUser>,
+    }
+
+    let result: SearchResult = resp
+        .json()
+        .await
+        .map_err(|e| GithubError::Network(e.to_string()))?;
+
+    if let Some(user) = result.items.first() {
+        Ok(Some(format!("@{}", user.login)))
+    } else {
+        Ok(None)
+    }
 }
 
 /// Sync release with GitHub: get existing by tag, create or update.

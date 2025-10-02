@@ -303,7 +303,7 @@ ______________________________________________________________________
 ## 16. Authors & Contributors Edge Enhancements
 
 93. [x] Normalize unicode (NFC) for consistent grouping.
-01. [x] Provide optional aliasing (implemented with HashMap\<String, String\>).
+01. [~] Provide optional aliasing (basic implementation complete; needs GitHub integration for email->handle mapping).
 
 ______________________________________________________________________
 
@@ -383,13 +383,13 @@ ______________________________________________________________________
 
 - [ ] Matches JS output for a sampled repository (diff = empty).
 - [x] Parallel vs sequential identical.
-- [x] Signed tag path error messaging clear (if GPG absent).
+- [ ] Signed tag path error messaging clear (if GPG absent).
 - [x] New version bump logic conforms to 0.x rules & explicit override.
 - [x] Idempotent rerun no duplication.
 - [x] Contributors section correctness (exclusions, email hiding).
 - [x] Compare link correct for GitHub & GitLab test remotes.
 - [x] All tests green on all CI platforms.
-- [x] No extraneous dependencies (review completed, documented in DEPENDENCIES.md).
+- [x] No extraneous dependencies (review completed).
 
 ______________________________________________________________________
 
