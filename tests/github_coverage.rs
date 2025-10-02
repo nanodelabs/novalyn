@@ -1,4 +1,4 @@
-use changelogen::github::{get_username_from_email, sync_release, GithubError};
+use changelogen::github::{GithubError, get_username_from_email, sync_release};
 use changelogen::repository::Repository;
 
 #[tokio::test]
@@ -11,7 +11,7 @@ async fn test_get_username_no_token() {
 #[tokio::test]
 async fn test_sync_release_no_token_fallback() {
     let repo = Repository::parse("https://github.com/owner/repo.git").unwrap();
-    
+
     let result = sync_release(&repo, None, "v1.0.0", "Release body", None).await;
     assert!(result.is_ok());
     let info = result.unwrap();
@@ -24,7 +24,7 @@ async fn test_sync_release_no_token_fallback() {
 #[tokio::test]
 async fn test_sync_release_non_github_error() {
     let repo = Repository::parse("https://gitlab.com/owner/repo.git").unwrap();
-    
+
     let result = sync_release(&repo, Some("token"), "v1.0.0", "Release body", None).await;
     assert!(result.is_err());
     match result.unwrap_err() {
@@ -36,7 +36,7 @@ async fn test_sync_release_non_github_error() {
 #[tokio::test]
 async fn test_sync_release_bitbucket_error() {
     let repo = Repository::parse("https://bitbucket.org/owner/repo.git").unwrap();
-    
+
     let result = sync_release(&repo, Some("token"), "v1.0.0", "Release body", None).await;
     assert!(result.is_err());
 }
@@ -44,14 +44,17 @@ async fn test_sync_release_bitbucket_error() {
 #[test]
 fn test_github_error_display() {
     let err = GithubError::NoRepo;
-    assert_eq!(err.to_string(), "no repository information available for github sync");
-    
+    assert_eq!(
+        err.to_string(),
+        "no repository information available for github sync"
+    );
+
     let err = GithubError::NotGithub;
     assert_eq!(err.to_string(), "repository provider not GitHub");
-    
+
     let err = GithubError::Network("test error".to_string());
     assert_eq!(err.to_string(), "network error: test error");
-    
+
     let err = GithubError::Status(404);
     assert_eq!(err.to_string(), "unexpected response status 404");
 }
@@ -64,8 +67,9 @@ async fn test_get_username_with_custom_api_base() {
         "test@example.com",
         Some("fake_token"),
         Some("https://api.custom.com"),
-    ).await;
-    
+    )
+    .await;
+
     // This will fail with network error since it's a fake URL,
     // but it proves the parameter is being used
     assert!(result.is_err() || result.is_ok());
@@ -75,7 +79,7 @@ async fn test_get_username_with_custom_api_base() {
 #[ignore = "requires rustls provider initialization"]
 async fn test_sync_release_with_custom_api_base() {
     let repo = Repository::parse("https://github.com/owner/repo.git").unwrap();
-    
+
     // Test that api_base parameter is respected
     let result = sync_release(
         &repo,
@@ -83,8 +87,9 @@ async fn test_sync_release_with_custom_api_base() {
         "v1.0.0",
         "Release body",
         Some("https://api.custom.com"),
-    ).await;
-    
+    )
+    .await;
+
     // This will fail with network error since it's a fake URL,
     // but it proves the parameter is being used
     assert!(result.is_err() || result.is_ok());

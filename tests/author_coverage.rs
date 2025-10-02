@@ -1,8 +1,8 @@
+use assert_fs::TempDir;
 use changelogen::authors::{Author, AuthorOptions, Authors};
+use changelogen::config::{LoadOptions, load_config};
 use changelogen::git::RawCommit;
 use changelogen::parse::parse_and_classify;
-use changelogen::config::{LoadOptions, load_config};
-use assert_fs::TempDir;
 use ecow::{EcoString, EcoVec};
 
 fn mk_commit(name: &str, email: &str, co_authors: &[&str]) -> RawCommit {
@@ -27,17 +27,18 @@ fn test_author_collection_basic() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Bob", "bob@example.com", &[]),
     ];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
-    
+
     assert_eq!(authors.list.len(), 2);
     assert!(!authors.suppressed);
 }
@@ -48,18 +49,19 @@ fn test_author_deduplication() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Alice", "alice@example.com", &[]), // duplicate
         mk_commit("Bob", "bob@example.com", &[]),
     ];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
-    
+
     assert_eq!(authors.list.len(), 2); // Only 2 unique authors
 }
 
@@ -69,20 +71,21 @@ fn test_author_exclusion_by_name() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Bot", "bot@example.com", &[]),
     ];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions {
         exclude: EcoVec::from(vec![EcoString::from("Bot")]),
         ..Default::default()
     };
     let authors = Authors::collect(&parsed, &opts);
-    
+
     assert_eq!(authors.list.len(), 1);
     assert_eq!(authors.list[0].name.as_str(), "Alice");
 }
@@ -93,20 +96,21 @@ fn test_author_exclusion_by_email() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Bot", "bot@automation.com", &[]),
     ];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions {
         exclude: EcoVec::from(vec![EcoString::from("bot@automation.com")]),
         ..Default::default()
     };
     let authors = Authors::collect(&parsed, &opts);
-    
+
     assert_eq!(authors.list.len(), 1);
     assert_eq!(authors.list[0].name.as_str(), "Alice");
 }
@@ -117,17 +121,18 @@ fn test_hide_author_email() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![mk_commit("Alice", "alice@example.com", &[])];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions {
         hide_author_email: true,
         ..Default::default()
     };
     let authors = Authors::collect(&parsed, &opts);
-    
+
     assert_eq!(authors.list.len(), 1);
     assert!(authors.list[0].email.is_none()); // Email should be hidden
 }
@@ -138,17 +143,18 @@ fn test_no_authors_suppression() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![mk_commit("Alice", "alice@example.com", &[])];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions {
         no_authors: true,
         ..Default::default()
     };
     let authors = Authors::collect(&parsed, &opts);
-    
+
     assert!(authors.list.is_empty());
     assert!(authors.suppressed);
 }
@@ -159,8 +165,9 @@ fn test_co_authors_parsing() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let mut commits = vec![mk_commit(
         "Alice",
         "alice@example.com",
@@ -169,10 +176,10 @@ fn test_co_authors_parsing() {
     // Need to add the co-author line to the body correctly
     commits[0].body = "Co-authored-by: Charlie <charlie@x.com>\n".to_string();
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
-    
+
     // Should have at least Alice, might have Charlie if co-author parsing works
     assert!(!authors.list.is_empty());
 }
@@ -183,21 +190,20 @@ fn test_author_aliasing() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Alice Smith", "alice@example.com", &[]), // Different name, same email
     ];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let mut opts = AuthorOptions::default();
-    opts.aliases.insert(
-        EcoString::from("Alice Smith"),
-        EcoString::from("Alice"),
-    );
+    opts.aliases
+        .insert(EcoString::from("Alice Smith"), EcoString::from("Alice"));
     let authors = Authors::collect(&parsed, &opts);
-    
+
     // Both should resolve to "Alice" due to aliasing
     assert_eq!(authors.list.len(), 1);
     assert_eq!(authors.list[0].name.as_str(), "Alice");
@@ -209,18 +215,19 @@ fn test_unicode_normalization() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     // Different unicode representations of the same character
     let commits = vec![
         mk_commit("José", "jose@example.com", &[]), // é as single character
         mk_commit("José", "jose@example.com", &[]), // é as combining characters
     ];
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
-    
+
     // Should deduplicate despite different unicode representations
     assert_eq!(authors.list.len(), 1);
 }
@@ -231,14 +238,15 @@ fn test_empty_email_handling() {
     let cfg = load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
-    }).unwrap();
-    
+    })
+    .unwrap();
+
     let commits = vec![mk_commit("Alice", "", &[])]; // Empty email
     let parsed = parse_and_classify(commits, &cfg);
-    
+
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
-    
+
     assert_eq!(authors.list.len(), 1);
     assert!(authors.list[0].email.is_none()); // Empty email should be None
 }
@@ -253,7 +261,7 @@ fn test_resolve_github_handles_structure() {
         }]),
         suppressed: false,
     };
-    
+
     // Just verify the structure is correct
     assert_eq!(authors.list.len(), 1);
     assert!(!authors.suppressed);
