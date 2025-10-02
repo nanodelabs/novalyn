@@ -1,9 +1,14 @@
 use crate::parse::ParsedCommit;
 use ecow::{EcoString, EcoVec};
+use once_cell::sync::Lazy;
 use unicode_normalization::UnicodeNormalization;
 
 type FastHashMap<K, V> = std::collections::HashMap<K, V, foldhash::quality::RandomState>;
 type FastHashSet<T> = std::collections::HashSet<T, foldhash::quality::RandomState>;
+
+// Reusable hash builder to avoid allocation overhead
+static HASH_BUILDER: Lazy<foldhash::quality::RandomState> =
+    Lazy::new(foldhash::quality::RandomState::default);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Author {
@@ -33,7 +38,7 @@ impl Default for AuthorOptions {
             exclude: EcoVec::new(),
             hide_author_email: false,
             no_authors: false,
-            aliases: FastHashMap::with_hasher(foldhash::quality::RandomState::default()),
+            aliases: FastHashMap::with_hasher(*HASH_BUILDER),
             github_token: None,
             enable_github_aliasing: false,
         }
@@ -48,7 +53,7 @@ impl Authors {
                 suppressed: true,
             };
         }
-        let mut seen = FastHashSet::with_hasher(foldhash::quality::RandomState::default());
+        let mut seen = FastHashSet::with_hasher(*HASH_BUILDER);
         let mut out = EcoVec::with_capacity(commits.len());
         for c in commits {
             // primary author
