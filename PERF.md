@@ -193,14 +193,23 @@ Key areas:
 - Git operations use libgit2 (C library) vs nodegit, similar performance expected
 - Markdown rendering should be comparable
 
-### Optimization Opportunities
+### Performance Optimizations Implemented
 
-Potential areas for future optimization (evaluated via benchmarks):
+The codebase uses several optimizations for improved performance:
 
-1. **String allocation**: Use `ecow` for copy-on-write strings and small string optimization
-1. **Hash function**: Use `foldhash` for faster hashing with quality settings
+1. **Copy-on-write strings with `ecow`**: Used in `src/authors.rs` for the `Author` struct. EcoString provides efficient string handling with small-string optimization and copy-on-write semantics, reducing allocations when strings are cloned.
+
+2. **Fast hashing with `foldhash`**: Used with `HashMap` in author aliasing (`AuthorOptions.aliases`). The `foldhash::fast::RandomState` hasher provides quality hashing with better performance than the default SipHash.
+
+3. **Optimized collections**: Author names and emails use `EcoString` to minimize allocations during author deduplication and aliasing operations.
+
+### Future Optimization Opportunities
+
+Additional areas for optimization (evaluated via benchmarks):
+
 1. **Parallel rendering**: Currently sequential, could parallelize section rendering
 1. **Caching**: Memoize regex compilation and provider detection
+1. **Memory pools**: Reuse allocations across multiple operations
 
 ## Memory Usage
 

@@ -1,10 +1,13 @@
 use crate::parse::ParsedCommit;
+use ecow::EcoString;
 use unicode_normalization::UnicodeNormalization;
+
+type FastHashMap<K, V> = std::collections::HashMap<K, V, foldhash::fast::RandomState>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Author {
-    pub name: String,
-    pub email: Option<String>,
+    pub name: EcoString,
+    pub email: Option<EcoString>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -13,14 +16,23 @@ pub struct Authors {
     pub suppressed: bool,
 }
 
-use std::collections::HashMap;
-
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct AuthorOptions {
-    pub exclude: Vec<String>,             // names or emails exact match
-    pub hide_author_email: bool,          // redact email if true
-    pub no_authors: bool,                 // suppress entirely
-    pub aliases: HashMap<String, String>, // map old identity to new (name or email)
+    pub exclude: Vec<EcoString>, // names or emails exact match
+    pub hide_author_email: bool, // redact email if true
+    pub no_authors: bool,        // suppress entirely
+    pub aliases: FastHashMap<EcoString, EcoString>, // map old identity to new (name or email)
+}
+
+impl Default for AuthorOptions {
+    fn default() -> Self {
+        Self {
+            exclude: Vec::new(),
+            hide_author_email: false,
+            no_authors: false,
+            aliases: FastHashMap::with_hasher(foldhash::fast::RandomState::default()),
+        }
+    }
 }
 
 impl Authors {
@@ -56,13 +68,12 @@ impl Authors {
     }
 }
 
-fn normalize(s: &str) -> String {
-    s.nfc().collect::<String>()
+fn normalize(s: &str) -> EcoString {
+    EcoString::from(s.nfc().collect::<String>())
 }
 
-fn excluded(opts: &AuthorOptions, name: &str, email: Option<&str>) -> bool {
-    let target_name = normalize(name);
-    if opts.exclude.iter().any(|e| e == &target_name) {
+fn excluded(opts: &AuthorOptions, name: &EcoString, email: Option<&EcoString>) -> bool {
+    if opts.exclude.iter().any(|e| e == name) {
         return true;
     }
     if let Some(e) = email {
@@ -75,7 +86,7 @@ fn excluded(opts: &AuthorOptions, name: &str, email: Option<&str>) -> bool {
 
 fn push_author<'a>(
     out: &mut Vec<Author>,
-    seen: &mut std::collections::BTreeSet<(String, Option<String>)>,
+    seen: &mut std::collections::BTreeSet<(EcoString, Option<EcoString>)>,
     name: &'a str,
     email: &'a str,
     opts: &AuthorOptions,
@@ -97,7 +108,7 @@ fn push_author<'a>(
         }
     }
 
-    if excluded(opts, &name_n, email_n.as_deref()) {
+    if excluded(opts, &name_n, email_n.as_ref()) {
         return;
     }
     let key = (name_n.clone(), email_n.clone());
@@ -186,7 +197,7 @@ mod tests {
         let a = Authors::collect(
             &commits,
             &AuthorOptions {
-                exclude: vec!["Ålice".into()],
+                exclude: vec![EcoString::from("Ålice")],
                 ..Default::default()
             },
         );
@@ -204,9 +215,12 @@ mod tests {
 
     #[test]
     fn author_aliasing() {
-        let mut aliases = HashMap::new();
-        aliases.insert("old@example.com".to_string(), "new@example.com".to_string());
-        aliases.insert("OldName".to_string(), "NewName".to_string());
+        let mut aliases = FastHashMap::with_hasher(foldhash::fast::RandomState::default());
+        aliases.insert(
+            EcoString::from("old@example.com"),
+            EcoString::from("new@example.com"),
+        );
+        aliases.insert(EcoString::from("OldName"), EcoString::from("NewName"));
 
         let commits = vec![
             mk_commit("OldName", "old@example.com", &[]),
@@ -224,6 +238,6 @@ mod tests {
         // Should be deduplicated to one author after aliasing
         assert_eq!(a.list.len(), 1);
         assert_eq!(a.list[0].name, "NewName");
-        assert_eq!(a.list[0].email, Some("new@example.com".to_string()));
+        assert_eq!(a.list[0].email, Some(EcoString::from("new@example.com")));
     }
 }

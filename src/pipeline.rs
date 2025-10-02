@@ -100,13 +100,23 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     let authors = if opts.no_authors {
         None
     } else {
+        use ecow::EcoString;
+
+        let aliases =
+            std::collections::HashMap::with_hasher(foldhash::fast::RandomState::default());
+        // TODO: Add CLI support for aliases
+
         Some(Authors::collect(
             &parsed,
             &AuthorOptions {
-                exclude: opts.exclude_authors.clone(),
+                exclude: opts
+                    .exclude_authors
+                    .iter()
+                    .map(|s| EcoString::from(s.as_str()))
+                    .collect(),
                 hide_author_email: opts.hide_author_email,
                 no_authors: opts.no_authors,
-                aliases: std::collections::HashMap::new(), // TODO: Add CLI support for aliases
+                aliases,
             },
         ))
     };
