@@ -1,5 +1,10 @@
 #![forbid(unsafe_code)]
 
+use mimalloc_safe::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 pub use changelogen as lib;
 
 fn main() {

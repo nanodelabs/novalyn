@@ -1,9 +1,13 @@
 use changelogen::config::{LoadOptions, load_config};
 use changelogen::git::RawCommit;
 use changelogen::parse::parse_and_classify;
-use divan::Bencher;
+use divan::{AllocProfiler, Bencher};
+use mimalloc_safe::MiMalloc;
 use std::env;
 use tempfile::TempDir;
+
+#[global_allocator]
+static GLOBAL: AllocProfiler<MiMalloc> = AllocProfiler::new(MiMalloc);
 
 fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
     let commit_types = ["feat", "fix", "docs", "style", "refactor", "test", "chore"];
