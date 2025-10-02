@@ -1,8 +1,9 @@
 use crate::parse::ParsedCommit;
-use ecow::EcoString;
+use ecow::{EcoString, EcoVec};
 use unicode_normalization::UnicodeNormalization;
 
-type FastHashMap<K, V> = std::collections::HashMap<K, V, foldhash::fast::RandomState>;
+type FastHashMap<K, V> = std::collections::HashMap<K, V, foldhash::quality::RandomState>;
+type FastHashSet<T> = std::collections::HashSet<T, foldhash::quality::RandomState>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Author {
@@ -12,15 +13,15 @@ pub struct Author {
 
 #[derive(Debug, Clone, Default)]
 pub struct Authors {
-    pub list: Vec<Author>,
+    pub list: EcoVec<Author>,
     pub suppressed: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct AuthorOptions {
-    pub exclude: Vec<EcoString>, // names or emails exact match
-    pub hide_author_email: bool, // redact email if true
-    pub no_authors: bool,        // suppress entirely
+    pub exclude: EcoVec<EcoString>, // names or emails exact match
+    pub hide_author_email: bool,    // redact email if true
+    pub no_authors: bool,           // suppress entirely
     pub aliases: FastHashMap<EcoString, EcoString>, // map old identity to new (name or email)
     pub github_token: Option<String>, // GitHub token for email->handle resolution
     pub enable_github_aliasing: bool, // whether to resolve emails to @handles
@@ -29,10 +30,10 @@ pub struct AuthorOptions {
 impl Default for AuthorOptions {
     fn default() -> Self {
         Self {
-            exclude: Vec::new(),
+            exclude: EcoVec::new(),
             hide_author_email: false,
             no_authors: false,
-            aliases: FastHashMap::with_hasher(foldhash::fast::RandomState::default()),
+            aliases: FastHashMap::with_hasher(foldhash::quality::RandomState::default()),
             github_token: None,
             enable_github_aliasing: false,
         }
@@ -43,12 +44,12 @@ impl Authors {
     pub fn collect(commits: &[ParsedCommit], opts: &AuthorOptions) -> Self {
         if opts.no_authors {
             return Authors {
-                list: Vec::new(),
+                list: EcoVec::new(),
                 suppressed: true,
             };
         }
-        let mut seen = std::collections::BTreeSet::new();
-        let mut out: Vec<Author> = Vec::new();
+        let mut seen = FastHashSet::with_hasher(foldhash::quality::RandomState::default());
+        let mut out = EcoVec::with_capacity(commits.len());
         for c in commits {
             // primary author
             push_author(
@@ -76,7 +77,9 @@ impl Authors {
     pub async fn resolve_github_handles(&mut self, token: &str) -> Result<(), String> {
         use crate::github::get_username_from_email;
 
-        for author in &mut self.list {
+        // Make EcoVec mutable to iterate and modify
+        let authors_vec = self.list.make_mut();
+        for author in authors_vec.iter_mut() {
             if let Some(ref email) = author.email {
                 if let Ok(Some(handle)) = get_username_from_email(email.as_str(), Some(token)).await
                 {
@@ -106,8 +109,8 @@ fn excluded(opts: &AuthorOptions, name: &EcoString, email: Option<&EcoString>) -
 }
 
 fn push_author<'a>(
-    out: &mut Vec<Author>,
-    seen: &mut std::collections::BTreeSet<(EcoString, Option<EcoString>)>,
+    out: &mut EcoVec<Author>,
+    seen: &mut FastHashSet<(EcoString, Option<EcoString>)>,
     name: &'a str,
     email: &'a str,
     opts: &AuthorOptions,
@@ -218,7 +221,7 @@ mod tests {
         let a = Authors::collect(
             &commits,
             &AuthorOptions {
-                exclude: vec![EcoString::from("Ålice")],
+                exclude: EcoVec::from(vec![EcoString::from("Ålice")]),
                 ..Default::default()
             },
         );
@@ -236,7 +239,7 @@ mod tests {
 
     #[test]
     fn author_aliasing() {
-        let mut aliases = FastHashMap::with_hasher(foldhash::fast::RandomState::default());
+        let mut aliases = FastHashMap::with_hasher(foldhash::quality::RandomState::default());
         aliases.insert(
             EcoString::from("old@example.com"),
             EcoString::from("new@example.com"),

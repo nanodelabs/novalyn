@@ -197,11 +197,28 @@ Key areas:
 
 The codebase uses several optimizations for improved performance:
 
-1. **Copy-on-write strings with `ecow`**: Used in `src/authors.rs` for the `Author` struct. EcoString provides efficient string handling with small-string optimization and copy-on-write semantics, reducing allocations when strings are cloned.
+1. **Copy-on-write strings with `ecow`**: 
+   - Used extensively in `src/authors.rs` for the `Author` struct (name and email fields)
+   - EcoString provides efficient string handling with small-string optimization and copy-on-write semantics
+   - Reduces allocations when strings are cloned during author deduplication
+   - **EcoVec** used for the authors list, providing similar benefits for vector operations
 
-2. **Fast hashing with `foldhash`**: Used with `HashMap` in author aliasing (`AuthorOptions.aliases`). The `foldhash::fast::RandomState` hasher provides quality hashing with better performance than the default SipHash.
+2. **High-quality hashing with `foldhash::quality`**: 
+   - Used with `HashMap` and `HashSet` in author aliasing and deduplication
+   - The `foldhash::quality::RandomState` hasher provides superior hashing quality and performance
+   - Significantly faster than the default SipHash while maintaining good distribution
+   - Applied to `AuthorOptions.aliases` (HashMap) and author seen-set (HashSet)
 
-3. **Optimized collections**: Author names and emails use `EcoString` to minimize allocations during author deduplication and aliasing operations.
+3. **Optimized collections**: 
+   - Author names and emails use `EcoString` to minimize allocations
+   - Author lists use `EcoVec<Author>` for efficient vector operations
+   - Exclusion lists use `EcoVec<EcoString>` for minimal memory overhead
+   - All hash-based collections use `foldhash::quality` for optimal performance
+
+4. **scc library available**: The `scc` (Scalable Concurrent Containers) library is available for future concurrent operations when needed, including:
+   - Concurrent HashMap, HashSet for multi-threaded scenarios
+   - Lock-free data structures (Queue, Stack, Bag, LinkedList)
+   - Read-optimized structures (HashIndex, TreeIndex)
 
 ### Future Optimization Opportunities
 
@@ -209,7 +226,7 @@ Additional areas for optimization (evaluated via benchmarks):
 
 1. **Parallel rendering**: Currently sequential, could parallelize section rendering
 1. **Caching**: Memoize regex compilation and provider detection
-1. **Memory pools**: Reuse allocations across multiple operations
+1. **Concurrent author collection**: Could use scc::HashMap for parallel commit processing
 
 ## Memory Usage
 
