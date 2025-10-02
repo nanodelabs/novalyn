@@ -77,8 +77,10 @@ fn test_author_exclusion_by_name() {
     ];
     let parsed = parse_and_classify(commits, &cfg);
     
-    let mut opts = AuthorOptions::default();
-    opts.exclude = EcoVec::from(vec![EcoString::from("Bot")]);
+    let opts = AuthorOptions {
+        exclude: EcoVec::from(vec![EcoString::from("Bot")]),
+        ..Default::default()
+    };
     let authors = Authors::collect(&parsed, &opts);
     
     assert_eq!(authors.list.len(), 1);
@@ -99,8 +101,10 @@ fn test_author_exclusion_by_email() {
     ];
     let parsed = parse_and_classify(commits, &cfg);
     
-    let mut opts = AuthorOptions::default();
-    opts.exclude = EcoVec::from(vec![EcoString::from("bot@automation.com")]);
+    let opts = AuthorOptions {
+        exclude: EcoVec::from(vec![EcoString::from("bot@automation.com")]),
+        ..Default::default()
+    };
     let authors = Authors::collect(&parsed, &opts);
     
     assert_eq!(authors.list.len(), 1);
@@ -118,8 +122,10 @@ fn test_hide_author_email() {
     let commits = vec![mk_commit("Alice", "alice@example.com", &[])];
     let parsed = parse_and_classify(commits, &cfg);
     
-    let mut opts = AuthorOptions::default();
-    opts.hide_author_email = true;
+    let opts = AuthorOptions {
+        hide_author_email: true,
+        ..Default::default()
+    };
     let authors = Authors::collect(&parsed, &opts);
     
     assert_eq!(authors.list.len(), 1);
@@ -137,8 +143,10 @@ fn test_no_authors_suppression() {
     let commits = vec![mk_commit("Alice", "alice@example.com", &[])];
     let parsed = parse_and_classify(commits, &cfg);
     
-    let mut opts = AuthorOptions::default();
-    opts.no_authors = true;
+    let opts = AuthorOptions {
+        no_authors: true,
+        ..Default::default()
+    };
     let authors = Authors::collect(&parsed, &opts);
     
     assert!(authors.list.is_empty());

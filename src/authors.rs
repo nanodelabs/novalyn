@@ -38,7 +38,7 @@ impl Default for AuthorOptions {
             exclude: EcoVec::new(),
             hide_author_email: false,
             no_authors: false,
-            aliases: FastHashMap::with_hasher(*HASH_BUILDER),
+            aliases: FastHashMap::with_hasher(HASH_BUILDER.clone()),
             github_token: None,
             enable_github_aliasing: false,
         }
@@ -53,7 +53,7 @@ impl Authors {
                 suppressed: true,
             };
         }
-        let mut seen = FastHashSet::with_hasher(*HASH_BUILDER);
+        let mut seen = FastHashSet::with_hasher(HASH_BUILDER.clone());
         let mut out = EcoVec::with_capacity(commits.len());
         for c in commits {
             // primary author

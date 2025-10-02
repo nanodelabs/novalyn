@@ -303,7 +303,7 @@ ______________________________________________________________________
 ## 16. Authors & Contributors Edge Enhancements
 
 93. [x] Normalize unicode (NFC) for consistent grouping.
-01. [~] Provide optional aliasing (basic implementation complete; needs GitHub integration for email->handle mapping).
+01. [x] Provide optional aliasing (fully implemented with GitHub integration for email->handle mapping, enabled by default).
 
 ______________________________________________________________________
 
