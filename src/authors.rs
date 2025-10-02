@@ -81,7 +81,8 @@ impl Authors {
         let authors_vec = self.list.make_mut();
         for author in authors_vec.iter_mut() {
             if let Some(ref email) = author.email {
-                if let Ok(Some(handle)) = get_username_from_email(email.as_str(), Some(token)).await
+                if let Ok(Some(handle)) =
+                    get_username_from_email(email.as_str(), Some(token), None).await
                 {
                     // Replace name with GitHub handle
                     author.name = EcoString::from(handle);

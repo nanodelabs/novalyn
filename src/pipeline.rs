@@ -7,7 +7,7 @@ use crate::{
 };
 
 use anyhow::Result;
-use tracing::{debug, info, instrument};
+use tracing::{debug, info, instrument, warn};
 
 /// Simple confirmation prompt that respects the --yes flag
 fn confirm_action(message: &str, yes_flag: bool) -> Result<bool> {
@@ -41,6 +41,8 @@ pub struct ReleaseOptions {
     pub clean: bool,
     pub sign: bool,
     pub yes: bool,
+    pub github_alias: bool,
+    pub github_token: Option<String>,
 }
 
 pub struct ReleaseOutcome {
@@ -104,7 +106,6 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
 
         let aliases =
             std::collections::HashMap::with_hasher(foldhash::quality::RandomState::default());
-        // TODO: Add CLI support for aliases
 
         let exclude: EcoVec<EcoString> = opts
             .exclude_authors
@@ -112,17 +113,35 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
             .map(|s| EcoString::from(s.as_str()))
             .collect();
 
-        Some(Authors::collect(
+        let mut authors = Authors::collect(
             &parsed,
             &AuthorOptions {
                 exclude,
                 hide_author_email: opts.hide_author_email,
                 no_authors: opts.no_authors,
                 aliases,
-                github_token: None, // TODO: Add CLI support for GitHub token
-                enable_github_aliasing: false, // TODO: Add CLI flag for GitHub aliasing
+                github_token: opts.github_token.clone(),
+                enable_github_aliasing: opts.github_alias,
             },
-        ))
+        );
+
+        // If GitHub aliasing is enabled and we have a token, resolve handles
+        if opts.github_alias {
+            if let Some(ref token) = opts.github_token {
+                // This is async, need to make run_release async or use blocking
+                // For now, spawn a runtime
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                if let Err(e) = rt.block_on(authors.resolve_github_handles(token)) {
+                    warn!("failed to resolve GitHub handles: {}", e);
+                }
+            } else {
+                warn!(
+                    "--github-alias specified but no token provided (use --github-token or GITHUB_TOKEN env var)"
+                );
+            }
+        }
+
+        Some(authors)
     };
 
     // 8. Render

@@ -32,18 +32,22 @@ pub enum GithubError {
 
 /// Fetch GitHub username from email address.
 /// Returns the username (handle) if found, None otherwise.
-#[instrument(skip(token))]
+/// `api_base` parameter allows testing with mock servers (defaults to "https://api.github.com")
+#[instrument(skip(token, api_base))]
 pub async fn get_username_from_email(
     email: &str,
     token: Option<&str>,
+    api_base: Option<&str>,
 ) -> Result<Option<String>, GithubError> {
     let Some(token) = token else {
         return Ok(None); // No token, can't query API
     };
 
+    let api_base = api_base.unwrap_or("https://api.github.com");
     let client = reqwest::Client::new();
     let search_url = format!(
-        "https://api.github.com/search/users?q={}+in:email",
+        "{}/search/users?q={}+in:email",
+        api_base,
         urlencoding::encode(email)
     );
 
@@ -81,12 +85,14 @@ pub async fn get_username_from_email(
 
 /// Sync release with GitHub: get existing by tag, create or update.
 /// Returns ReleaseInfo even on fallback path (manual URL) with skipped=true.
-#[instrument(skip(token, body), fields(tag = %tag))]
+/// `api_base` parameter allows testing with mock servers (defaults to "https://api.github.com")
+#[instrument(skip(token, body, api_base), fields(tag = %tag))]
 pub async fn sync_release(
     repo: &Repository,
     token: Option<&str>,
     tag: &str,
     body: &str,
+    api_base: Option<&str>,
 ) -> Result<ReleaseInfo, GithubError> {
     if repo.provider != crate::repository::Provider::GitHub {
         return Err(GithubError::NotGithub);
@@ -106,12 +112,10 @@ pub async fn sync_release(
         });
     };
     let client = reqwest::Client::new();
-    let api_base = format!(
-        "https://api.github.com/repos/{}/{}/releases",
-        repo.owner, repo.name
-    );
+    let api_base = api_base.unwrap_or("https://api.github.com");
+    let releases_base = format!("{}/repos/{}/{}/releases", api_base, repo.owner, repo.name);
     // 1. Try get by tag
-    let get_url = format!("{}/tags/{}", api_base, tag);
+    let get_url = format!("{}/tags/{}", releases_base, tag);
     debug!("github_get_tag" = %get_url, "attempting fetch existing release");
     let existing = client
         .get(&get_url)
@@ -138,7 +142,7 @@ pub async fn sync_release(
             prerelease: false,
         };
         let resp = client
-            .post(&api_base)
+            .post(&releases_base)
             .header("User-Agent", "changelogen-rs")
             .bearer_auth(token)
             .json(&payload)
@@ -178,7 +182,7 @@ pub async fn sync_release(
         struct UpdateRelease<'a> {
             body: &'a str,
         }
-        let patch_url = format!("{}/{}", api_base, data.id);
+        let patch_url = format!("{}/{}", releases_base, data.id);
         let resp = client
             .patch(&patch_url)
             .header("User-Agent", "changelogen-rs")

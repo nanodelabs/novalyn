@@ -28,6 +28,8 @@ fn dry_run_leaves_changelog_untouched() {
         clean: false,
         sign: false,
         yes: true,
+        github_alias: false,
+        github_token: None,
     })
     .unwrap();
     assert_eq!(outcome.exit as i32, ExitCode::NoChange as i32); // dry run reports no change (wrote=false)
@@ -52,6 +54,8 @@ fn exit_code_no_change() {
         clean: false,
         sign: false,
         yes: true,
+        github_alias: false,
+        github_token: None,
     })
     .unwrap();
     assert!(outcome1.wrote);
@@ -69,6 +73,8 @@ fn exit_code_no_change() {
         clean: false,
         sign: false,
         yes: true,
+        github_alias: false,
+        github_token: None,
     })
     .unwrap();
     assert!(!outcome2.wrote);

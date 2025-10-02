@@ -155,6 +155,8 @@ fn repeated_full_pipeline_identical() {
         clean: false,
         sign: false,
         yes: true,
+        github_alias: false,
+        github_token: None,
     };
 
     let opts2 = ReleaseOptions {
@@ -169,6 +171,8 @@ fn repeated_full_pipeline_identical() {
         clean: false,
         sign: false,
         yes: true,
+        github_alias: false,
+        github_token: None,
     };
 
     let opts3 = ReleaseOptions {
@@ -183,6 +187,8 @@ fn repeated_full_pipeline_identical() {
         clean: false,
         sign: false,
         yes: true,
+        github_alias: false,
+        github_token: None,
     };
 
     let outcome1 = run_release(opts1).unwrap();

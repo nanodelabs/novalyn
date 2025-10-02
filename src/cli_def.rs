@@ -55,6 +55,12 @@ pub enum Commands {
         /// Auto-confirm (skip prompts)
         #[arg(long)]
         yes: bool,
+        /// Enable GitHub aliasing (convert email addresses to @handles)
+        #[arg(long)]
+        github_alias: bool,
+        /// GitHub token for API access (reads from GITHUB_TOKEN or GH_TOKEN env vars)
+        #[arg(long)]
+        github_token: Option<String>,
     },
     /// Run full release (bump, changelog, tag creation optional in future)
     Release {
@@ -78,6 +84,12 @@ pub enum Commands {
         sign: bool,
         #[arg(long)]
         yes: bool,
+        /// Enable GitHub aliasing (convert email addresses to @handles)
+        #[arg(long)]
+        github_alias: bool,
+        /// GitHub token for API access (reads from GITHUB_TOKEN or GH_TOKEN env vars)
+        #[arg(long)]
+        github_token: Option<String>,
     },
     /// GitHub release synchronization only
     Github {
