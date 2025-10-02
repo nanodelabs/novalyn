@@ -197,30 +197,10 @@ Key areas:
 
 Potential areas for future optimization (evaluated via benchmarks):
 
-1. **String allocation**: Pre-allocate string buffers based on commit count
+1. **String allocation**: Use `ecow` for copy-on-write strings and small string optimization
+1. **Hash function**: Use `foldhash` for faster hashing with quality settings
 1. **Parallel rendering**: Currently sequential, could parallelize section rendering
 1. **Caching**: Memoize regex compilation and provider detection
-1. **Memory pools**: Reuse allocations across multiple operations
-
-### dashmap Evaluation (Task 100 - Completed)
-
-**Status**: ✅ Removed from dependencies
-
-**Evaluation Results:**
-- dashmap was listed as an optional dependency but never used in the codebase
-- Current implementation uses standard `HashMap` and `BTreeSet` for all collections
-- Parallel parsing uses rayon with no need for concurrent hash maps
-- Author deduplication uses `BTreeSet<(String, Option<String>)>` which is adequate
-
-**Decision**: Removed dashmap from Cargo.toml (Stage 17, Task 100)
-
-**Rationale:**
-1. **Zero usage**: No code references dashmap or DashMap types
-2. **No identified bottleneck**: Standard collections perform well in benchmarks
-3. **Simplified dependencies**: Reduces binary size and build time
-4. **YAGNI principle**: Add concurrent collections only when profiling shows need
-
-**Future consideration**: If future profiling identifies concurrent hash map needs, re-evaluate dashmap or similar crates.
 
 ## Memory Usage
 

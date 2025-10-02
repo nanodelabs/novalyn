@@ -106,6 +106,7 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
                 exclude: opts.exclude_authors.clone(),
                 hide_author_email: opts.hide_author_email,
                 no_authors: opts.no_authors,
+                aliases: std::collections::HashMap::new(), // TODO: Add CLI support for aliases
             },
         ))
     };

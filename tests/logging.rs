@@ -7,8 +7,6 @@ fn smoke_log_initialization() {
     logging::init(0);
     logging::init(1);
     logging::init(2);
-
-    // If we got here, no panic occurred - test passes
 }
 
 #[test]
@@ -28,8 +26,6 @@ fn verbose_toggle_effect() {
     // verbosity 3+ = trace
     logging::init(3);
     logging::init(10);
-
-    // If we got here, no panic occurred - test passes
 }
 
 #[test]
@@ -42,7 +38,4 @@ fn logging_respects_rust_log_env() {
 
     // This test verifies the init doesn't panic when RUST_LOG might be set
     logging::init(0);
-
-    // If we got here, no panic occurred - test passes
 }
-

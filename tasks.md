@@ -303,7 +303,7 @@ ______________________________________________________________________
 ## 16. Authors & Contributors Edge Enhancements
 
 93. [x] Normalize unicode (NFC) for consistent grouping.
-01. [x] Provide optional aliasing (future/backlog marker).
+01. [x] Provide optional aliasing (implemented with HashMap\<String, String\>).
 
 ______________________________________________________________________
 

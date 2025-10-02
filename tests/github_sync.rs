@@ -11,26 +11,27 @@ async fn github_sync_fallback_without_token() {
 }
 
 #[tokio::test]
-async fn github_sync_update_after_create() {
-    // This test documents the update flow: when a release exists, we update it
-    // In reality this would need a mock server or real API calls
-    // For now, we test the basic logic by verifying the sync_release function
-    // handles the update path correctly via the code inspection
-
-    // Test setup: parse a GitHub repo
+async fn github_sync_constructs_correct_manual_url() {
+    // Test that manual URL is correctly constructed for various repo formats
     let repo = Repository::parse("https://github.com/test/repo.git").unwrap();
-
-    // Without token, should fall back to manual URL
-    let info = sync_release(&repo, None, "v1.0.0", "Initial body")
+    let info = sync_release(&repo, None, "v1.2.3", "Release body")
         .await
         .unwrap();
-    assert!(info.skipped, "without token should skip sync");
-    assert!(info.url.contains("releases/tag/v1.0.0"));
 
-    // The actual update path is tested in the implementation:
-    // 1. First call with 404 -> creates release (created=true, updated=false)
-    // 2. Second call with 200 -> updates release (created=false, updated=true)
-    // Since we don't have a mock server in this minimal test setup,
-    // the logic is verified via code review and the structure of ReleaseInfo
-    // which has both `created` and `updated` flags.
+    assert!(info.skipped, "should skip when no token");
+    assert!(!info.created, "should not be marked as created");
+    assert!(!info.updated, "should not be marked as updated");
+    assert_eq!(info.tag, "v1.2.3");
+    assert_eq!(info.url, "https://github.com/test/repo/releases/tag/v1.2.3");
+}
+
+#[tokio::test]
+async fn github_sync_non_github_repo_error() {
+    // Test that non-GitHub repos are rejected
+    let repo = Repository::parse("https://gitlab.com/test/repo.git").unwrap();
+    let result = sync_release(&repo, Some("token"), "v1.0.0", "Body").await;
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.to_string(), "repository provider not GitHub");
 }

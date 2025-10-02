@@ -29,6 +29,8 @@ name = "parse_performance"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 demand = "1.7"
+ecow = "0.2"
+foldhash = "0.1"
 git-conventional = "0.12"
 git2 = "0.20"
 jiff = "0.2"

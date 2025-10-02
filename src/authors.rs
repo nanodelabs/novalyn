@@ -13,15 +13,14 @@ pub struct Authors {
     pub suppressed: bool,
 }
 
+use std::collections::HashMap;
+
 #[derive(Debug, Clone, Default)]
 pub struct AuthorOptions {
-    pub exclude: Vec<String>,    // names or emails exact match
-    pub hide_author_email: bool, // redact email if true
-    pub no_authors: bool,        // suppress entirely
-                                 // TODO(backlog): Add optional author aliasing support
-                                 // This would allow mapping one author identity to another for consistent grouping
-                                 // e.g., "old-email@example.com" -> "new-email@example.com"
-                                 // Tracked in backlog as Stage 16 enhancement
+    pub exclude: Vec<String>,             // names or emails exact match
+    pub hide_author_email: bool,          // redact email if true
+    pub no_authors: bool,                 // suppress entirely
+    pub aliases: HashMap<String, String>, // map old identity to new (name or email)
 }
 
 impl Authors {
@@ -81,12 +80,23 @@ fn push_author<'a>(
     email: &'a str,
     opts: &AuthorOptions,
 ) {
-    let name_n = normalize(name.trim());
-    let email_n = if email.trim().is_empty() {
+    let mut name_n = normalize(name.trim());
+    let mut email_n = if email.trim().is_empty() {
         None
     } else {
         Some(normalize(email.trim()))
     };
+
+    // Apply aliases
+    if let Some(alias) = opts.aliases.get(&name_n) {
+        name_n = alias.clone();
+    }
+    if let Some(ref e) = email_n {
+        if let Some(alias) = opts.aliases.get(e) {
+            email_n = Some(alias.clone());
+        }
+    }
+
     if excluded(opts, &name_n, email_n.as_deref()) {
         return;
     }
@@ -190,5 +200,30 @@ mod tests {
             },
         );
         assert_eq!(a2.list[0].email, None);
+    }
+
+    #[test]
+    fn author_aliasing() {
+        let mut aliases = HashMap::new();
+        aliases.insert("old@example.com".to_string(), "new@example.com".to_string());
+        aliases.insert("OldName".to_string(), "NewName".to_string());
+
+        let commits = vec![
+            mk_commit("OldName", "old@example.com", &[]),
+            mk_commit("NewName", "new@example.com", &[]),
+        ];
+
+        let a = Authors::collect(
+            &commits,
+            &AuthorOptions {
+                aliases,
+                ..Default::default()
+            },
+        );
+
+        // Should be deduplicated to one author after aliasing
+        assert_eq!(a.list.len(), 1);
+        assert_eq!(a.list[0].name, "NewName");
+        assert_eq!(a.list[0].email, Some("new@example.com".to_string()));
     }
 }
