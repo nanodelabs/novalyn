@@ -104,12 +104,20 @@ just check          # Run all checks (format, lint, test)
 just test           # Run tests
 just lint           # Run clippy
 just fmt            # Format code
+just coverage       # Generate coverage report (text summary)
+just coverage-html  # Generate HTML coverage report and open in browser
+just coverage-lcov  # Generate lcov.info for Codecov
 
 # Manual commands
 cargo build
 cargo test
 cargo clippy -- -D warnings
 cargo fmt --all
+
+# Coverage with cargo-llvm-cov
+cargo install cargo-llvm-cov
+cargo llvm-cov --all-features --workspace
+cargo llvm-cov --all-features --workspace --html --open
 
 # Run benchmarks
 cargo bench

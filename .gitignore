@@ -1,1 +1,6 @@
 /target
+
+# Coverage artifacts
+lcov.info
+*.profraw
+*.profdata

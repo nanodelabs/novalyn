@@ -86,11 +86,22 @@ install-hook:
 clean:
     cargo clean
 
-# Generate coverage with llvm-cov
+# Generate coverage report (text summary)
 coverage:
-    cargo llvm-cov --all-features --no-report nextest
-    cargo llvm-cov --all-features --no-report --doc
-    cargo llvm-cov report --doctests
+    cargo llvm-cov --all-features --workspace
+
+# Generate HTML coverage report and open in browser
+coverage-html:
+    cargo llvm-cov --all-features --workspace --html --open
+
+# Generate lcov.info for Codecov (matches CI workflow)
+coverage-lcov:
+    cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+    @echo "{{ GREEN + BOLD }}✅ Coverage report saved to lcov.info{{ NORMAL }}"
+
+# Clean coverage data
+coverage-clean:
+    cargo llvm-cov clean
 
 # Watch for changes and run tests
 watch:
