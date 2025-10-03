@@ -6,6 +6,7 @@ tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-
 
 format := "cargo fmt --all"
 clippy := "cargo clippy --all-targets --all-features"
+coverage := "cargo llvm-cov --all-features --workspace"
 build := "cargo build --all --locked"
 nextest := "cargo nextest run --all-features --locked"
 
@@ -88,15 +89,15 @@ clean:
 
 # Generate coverage report (text summary)
 coverage:
-    cargo llvm-cov --all-features --workspace
+    {{ coverage }}
 
 # Generate HTML coverage report and open in browser
 coverage-html:
-    cargo llvm-cov --all-features --workspace --html --open
+    {{ coverage }} --html --open
 
 # Generate lcov.info for Codecov (matches CI workflow)
 coverage-lcov:
-    cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+    {{ coverage }} --lcov --output-path lcov.info
     @echo "{{ GREEN + BOLD }}✅ Coverage report saved to lcov.info{{ NORMAL }}"
 
 # Clean coverage data
