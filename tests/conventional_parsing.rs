@@ -7,7 +7,7 @@ fn mk(summary: &str) -> RawCommit {
         id: "x".into(),
         short_id: "x".into(),
         summary: summary.into(),
-        body: String::new(),
+        body: String::new().into(),
         author_name: "A".into(),
         author_email: "a@b.c".into(),
         timestamp: 0,
@@ -23,7 +23,7 @@ fn feat_bang_breaking() {
     })
     .unwrap();
     let commits = parse_and_classify(
-        vec![mk("feat!: change api"), mk("feat(core)!: change core")],
+        vec![mk("feat!: change api"), mk("feat(core)!: change core")].into(),
         &cfg,
     );
     assert_eq!(commits.len(), 2);

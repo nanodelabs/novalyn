@@ -1,8 +1,9 @@
+use ecow::EcoString;
 use std::path::Path;
 
 /// Write or prepend the new release block to CHANGELOG.md.
 /// Returns Ok(true) if file changed, false if idempotent (identical top block already present).
-pub fn write_or_update_changelog(path: &Path, new_block: &str) -> std::io::Result<bool> {
+pub fn write_or_update_changelog(path: &Path, new_block: &EcoString) -> std::io::Result<bool> {
     let file_path = path.join("CHANGELOG.md");
     let existing = std::fs::read_to_string(&file_path).unwrap_or_else(|_| "# Changelog\n".into());
     let mut normalized_new = new_block.trim_end().to_string();
@@ -33,7 +34,7 @@ pub fn write_or_update_changelog(path: &Path, new_block: &str) -> std::io::Resul
     Ok(true)
 }
 
-fn extract_top_block(existing: &str) -> Option<String> {
+fn extract_top_block(existing: &str) -> Option<EcoString> {
     let mut lines = existing.lines().peekable();
     // Skip single title line if present
     if let Some(first) = lines.peek() {
@@ -41,7 +42,7 @@ fn extract_top_block(existing: &str) -> Option<String> {
             lines.next();
         }
     }
-    let mut collected = Vec::new();
+    let mut collected: Vec<EcoString> = Vec::new();
     let mut in_block = false;
     for line in lines {
         if line.starts_with("## ") {
@@ -49,18 +50,18 @@ fn extract_top_block(existing: &str) -> Option<String> {
                 break;
             }
             in_block = true;
-            collected.push(line.to_string());
+            collected.push(line.into());
         } else if in_block {
             if line.starts_with("## ") {
                 break;
             }
-            collected.push(line.to_string());
+            collected.push(line.into());
         }
     }
     if collected.is_empty() {
         None
     } else {
-        Some(collected.join("\n") + "\n")
+        Some((collected.join("\n") + "\n").into())
     }
 }
 
@@ -72,7 +73,8 @@ mod tests {
     #[test]
     fn prepends_when_missing() {
         let dir = tempdir().unwrap();
-        let changed = write_or_update_changelog(dir.path(), "## v1.0.0\nNotes\n").unwrap();
+        let changed =
+            write_or_update_changelog(dir.path(), &EcoString::from("## v1.0.0\nNotes\n")).unwrap();
         assert!(changed);
         let txt = std::fs::read_to_string(dir.path().join("CHANGELOG.md")).unwrap();
         assert!(txt.starts_with("## v1.0.0"));
@@ -81,8 +83,10 @@ mod tests {
     #[test]
     fn second_release_inserts_above() {
         let dir = tempdir().unwrap();
-        write_or_update_changelog(dir.path(), "## v1.0.0\nOld\n").unwrap();
-        let changed = write_or_update_changelog(dir.path(), "## v1.1.0\nNew stuff\n").unwrap();
+        write_or_update_changelog(dir.path(), &EcoString::from("## v1.0.0\nOld\n")).unwrap();
+        let changed =
+            write_or_update_changelog(dir.path(), &EcoString::from("## v1.1.0\nNew stuff\n"))
+                .unwrap();
         assert!(changed);
         let txt = std::fs::read_to_string(dir.path().join("CHANGELOG.md")).unwrap();
         assert!(txt.starts_with("## v1.1.0"));
@@ -93,8 +97,8 @@ mod tests {
     fn idempotent_same_top_block() {
         let dir = tempdir().unwrap();
         let block = "## v1.0.0\nBody\n";
-        write_or_update_changelog(dir.path(), block).unwrap();
-        let changed = write_or_update_changelog(dir.path(), block).unwrap();
+        write_or_update_changelog(dir.path(), &EcoString::from(block)).unwrap();
+        let changed = write_or_update_changelog(dir.path(), &EcoString::from(block)).unwrap();
         assert!(!changed);
     }
 }

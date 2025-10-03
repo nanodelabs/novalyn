@@ -9,10 +9,10 @@ use clap::{ArgAction, Args, Parser, Subcommand};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
-    #[arg(long)]
+    #[arg(long, short)]
     pub cwd: Option<String>,
     /// Increase verbosity (-v, -vv, -vvv)
-    #[arg(short = 'v', action = ArgAction::Count)]
+    #[arg(short = 'v', long, action = ArgAction::Count)]
     pub verbose: u8,
 }
 
@@ -22,68 +22,80 @@ pub enum Commands {
     Completions(Completions),
     /// Show the next inferred version
     Show {
-        #[arg(long)]
+        #[arg(long, short)]
         from: Option<String>,
-        #[arg(long)]
+        #[arg(long, short)]
         to: Option<String>,
-        #[arg(long, value_name = "SEMVER")]
+        #[arg(long, short, value_name = "SEMVER")]
         new_version: Option<String>,
     },
     /// Generate release block (writes with --write)
     Generate {
-        #[arg(long)]
+        #[arg(long, short)]
         write: bool,
         /// Write output to file instead of stdout (implies --write when path is CHANGELOG.md)
-        #[arg(long, value_name = "PATH")]
+        #[arg(long, short, value_name = "PATH")]
         output: Option<String>,
-        #[arg(long)]
+        #[arg(long, short)]
         from: Option<String>,
-        #[arg(long)]
+        #[arg(long, short)]
         to: Option<String>,
-        #[arg(long, value_name = "SEMVER")]
+        #[arg(long, value_name = "SEMVER", short)]
         new_version: Option<String>,
-        #[arg(long)]
+        #[arg(long, short = 'N')]
         no_authors: bool,
-        #[arg(long, value_name = "NAME_OR_EMAIL")]
+        #[arg(long, short, value_name = "NAME_OR_EMAIL")]
         exclude_author: Vec<String>,
-        #[arg(long)]
+        #[arg(long, short = 'E')]
         hide_author_email: bool,
-        #[arg(long)]
+        #[arg(long, short)]
         clean: bool,
-        #[arg(long)]
+        #[arg(long, short)]
         sign: bool,
         /// Auto-confirm (skip prompts)
-        #[arg(long)]
+        #[arg(long, short)]
         yes: bool,
+        /// Disable GitHub aliasing (enabled by default, converts email addresses to @handles)
+        #[arg(long, short = 'G')]
+        no_github_alias: bool,
+        /// GitHub token for API access (reads from GITHUB_TOKEN or GH_TOKEN env vars)
+        #[arg(long, short)]
+        github_token: Option<String>,
     },
     /// Run full release (bump, changelog, tag creation optional in future)
     Release {
-        #[arg(long)]
+        #[arg(long, short)]
         dry_run: bool,
-        #[arg(long)]
+        #[arg(long, short)]
         from: Option<String>,
-        #[arg(long)]
+        #[arg(long, short)]
         to: Option<String>,
         #[arg(long, value_name = "SEMVER")]
         new_version: Option<String>,
-        #[arg(long)]
+        #[arg(long, short)]
         no_authors: bool,
         #[arg(long, value_name = "NAME_OR_EMAIL")]
         exclude_author: Vec<String>,
-        #[arg(long)]
+        #[arg(long, short = 'E')]
         hide_author_email: bool,
-        #[arg(long)]
+        #[arg(long, short)]
         clean: bool,
-        #[arg(long)]
+        #[arg(long, short)]
         sign: bool,
-        #[arg(long)]
+        #[arg(long, short)]
         yes: bool,
+        /// Disable GitHub aliasing (enabled by default, converts email addresses to @handles)
+        #[arg(long, short = 'G')]
+        no_github_alias: bool,
+        /// GitHub token for API access (reads from GITHUB_TOKEN or GH_TOKEN env vars)
+        #[arg(long, short)]
+        github_token: Option<String>,
     },
     /// GitHub release synchronization only
     Github {
-        #[arg(long)]
+        #[arg(long, short)]
         tag: String,
-        #[arg(long)]
+        #[arg(long, short)]
         body_path: Option<String>,
     },
 }

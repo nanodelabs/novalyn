@@ -7,7 +7,8 @@ use crate::{
 };
 
 use anyhow::Result;
-use tracing::{debug, info, instrument};
+use ecow::{EcoString, EcoVec};
+use tracing::{debug, info, instrument, warn};
 
 /// Simple confirmation prompt that respects the --yes flag
 fn confirm_action(message: &str, yes_flag: bool) -> Result<bool> {
@@ -31,16 +32,18 @@ pub enum ExitCode {
 
 pub struct ReleaseOptions {
     pub cwd: std::path::PathBuf,
-    pub from: Option<String>,
-    pub to: Option<String>, // default HEAD
+    pub from: Option<EcoString>,
+    pub to: Option<EcoString>, // default HEAD
     pub dry_run: bool,
     pub new_version: Option<semver::Version>,
     pub no_authors: bool,
-    pub exclude_authors: Vec<String>,
+    pub exclude_authors: EcoVec<EcoString>,
     pub hide_author_email: bool,
     pub clean: bool,
     pub sign: bool,
     pub yes: bool,
+    pub github_alias: bool,
+    pub github_token: Option<EcoString>,
 }
 
 pub struct ReleaseOutcome {
@@ -100,14 +103,42 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     let authors = if opts.no_authors {
         None
     } else {
-        Some(Authors::collect(
+        use ecow::{EcoString, EcoVec};
+
+        let aliases =
+            std::collections::HashMap::with_hasher(foldhash::quality::RandomState::default());
+
+        let exclude: EcoVec<EcoString> = opts.exclude_authors.clone();
+
+        let mut authors = Authors::collect(
             &parsed,
             &AuthorOptions {
-                exclude: opts.exclude_authors.clone(),
+                exclude,
                 hide_author_email: opts.hide_author_email,
                 no_authors: opts.no_authors,
+                aliases,
+                github_token: opts.github_token.as_ref().map(|s| s.to_string()),
+                enable_github_aliasing: opts.github_alias,
             },
-        ))
+        );
+
+        // If GitHub aliasing is enabled and we have a token, resolve handles
+        if opts.github_alias {
+            if let Some(ref token) = opts.github_token {
+                // This is async, need to make run_release async or use blocking
+                // For now, spawn a runtime
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                if let Err(e) = rt.block_on(authors.resolve_github_handles(token)) {
+                    warn!("failed to resolve GitHub handles: {}", e);
+                }
+            } else {
+                debug!(
+                    "GitHub aliasing enabled but no token provided; skipping handle resolution (set GITHUB_TOKEN or GH_TOKEN env var, or use --no-github-alias to disable)"
+                );
+            }
+        }
+
+        Some(authors)
     };
 
     // 8. Render

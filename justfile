@@ -1,7 +1,14 @@
 # justfile for changelogen-rs development
 
 tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-codspeed cargo-insta"
-clippy := ""
+
+# Commands
+
+format := "cargo fmt --all"
+clippy := "cargo clippy --all-targets --all-features"
+coverage := "cargo llvm-cov --all-features --workspace"
+build := "cargo build --all --locked"
+nextest := "cargo nextest run --all-features --locked"
 
 # Default recipe (shows help)
 _default:
@@ -9,36 +16,36 @@ _default:
 
 # Format code with rustfmt
 fmt:
-    cargo fmt --all
+    {{ format }}
 
 # Check code formatting
 fmt-check:
-    cargo fmt --all -- --check
+    {{ format }} -- --check
 
 # Run clippy linter
 lint:
-    cargo clippy --all-targets --all-features -- -D warnings
+    {{ clippy }} -- -D warnings
 
 # Run clippy linter and autofix
 lint-fix:
-    cargo clippy --all-targets --all-features --fix -- -D warnings
+    {{ clippy }} --fix -- -D warnings
 
 # Build the project
 build:
-    cargo build --all --locked
+    {{ build }}
 
 # Build release version
 build-release:
-    cargo build --all --locked --release
+    {{ build }} --release
 
 # Run tests with nextest
 test:
-    cargo nextest run --all-features --locked
+    {{ nextest }}
     cargo test --doc --locked
 
 # Run tests without doc tests
 test-fast:
-    cargo nextest run --all-features --locked
+    {{ nextest }}
 
 # Run benchmarks (uses CodSpeed)
 bench:
@@ -67,7 +74,7 @@ audit:
 # Install development tools using cargo-binstall
 install-tools:
     @echo "{{ BLUE + BOLD }}Installing development tools...{{ NORMAL }}"
-    cargo binstall -y {{tools}} || cargo install cargo-binstall && cargo binstall -y {{tools}}
+    cargo binstall -y {{ tools }} || cargo install cargo-binstall && cargo binstall -y {{ tools }}
     @echo "{{ GREEN + BOLD }}✅ Tools installed!{{ NORMAL }}"
 
 # Install git pre-commit hook (run with just pre-commit)
@@ -80,11 +87,22 @@ install-hook:
 clean:
     cargo clean
 
-# Generate coverage with llvm-cov
+# Generate coverage report (text summary)
 coverage:
-    cargo llvm-cov --all-features --no-report nextest
-    cargo llvm-cov --all-features --no-report --doc
-    cargo llvm-cov report --doctests
+    {{ coverage }}
+
+# Generate HTML coverage report and open in browser
+coverage-html:
+    {{ coverage }} --html --open
+
+# Generate lcov.info for Codecov (matches CI workflow)
+coverage-lcov:
+    {{ coverage }} --lcov --output-path lcov.info
+    @echo "{{ GREEN + BOLD }}✅ Coverage report saved to lcov.info{{ NORMAL }}"
+
+# Clean coverage data
+coverage-clean:
+    cargo llvm-cov clean
 
 # Watch for changes and run tests
 watch:

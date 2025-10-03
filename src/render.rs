@@ -4,6 +4,7 @@ use crate::{
     parse::ParsedCommit,
     repository::{Repository, format_compare_changes},
 };
+use ecow::{EcoString, EcoVec};
 
 #[derive(Debug)]
 pub struct RenderContext<'a> {
@@ -17,7 +18,7 @@ pub struct RenderContext<'a> {
     pub current_ref: &'a str,
 }
 
-pub fn render_release_block(ctx: &RenderContext<'_>) -> String {
+pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
     let mut out = String::new();
     // Header
     out.push_str(&format!("## v{}", ctx.version));
@@ -37,11 +38,11 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> String {
         if !tc.enabled {
             continue;
         }
-        let mut section_lines: Vec<String> = Vec::new();
-        let mut candidates: Vec<&ParsedCommit> =
+        let mut section_lines: EcoVec<EcoString> = EcoVec::new();
+        let mut candidates: EcoVec<&ParsedCommit> =
             ctx.commits.iter().filter(|c| c.r#type == tc.key).collect();
         // Already chronological by pipeline; ensure stable tie-break by original index (defensive)
-        candidates.sort_by_key(|c| c.index);
+        candidates.make_mut().sort_by_key(|c| c.index);
         for c in candidates {
             let mut line = String::new();
             if let Some(scope) = &c.scope {
@@ -53,17 +54,17 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> String {
                 line.push_str(" (BREAKING)");
             }
             if !c.issues.is_empty() {
-                let refs: Vec<String> = if let Some(repo) = ctx.repo {
+                let refs: EcoVec<EcoString> = if let Some(repo) = ctx.repo {
                     c.issues
                         .iter()
-                        .map(|n| format!("[#{}]({})", n, repo.issue_url(*n)))
+                        .map(|n| format!("[#{}]({})", n, repo.issue_url(*n)).into())
                         .collect()
                 } else {
-                    c.issues.iter().map(|n| format!("#{}", n)).collect()
+                    c.issues.iter().map(|n| format!("#{}", n).into()).collect()
                 };
                 line.push_str(&format!(" ({})", refs.join(", ")));
             }
-            section_lines.push(line);
+            section_lines.push(line.into());
         }
         if !section_lines.is_empty() {
             out.push('\n');
@@ -92,7 +93,7 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> String {
     if !out.ends_with('\n') {
         out.push('\n');
     }
-    out
+    out.into()
 }
 
 #[cfg(test)]
@@ -109,7 +110,7 @@ mod tests {
             scope_map: Default::default(),
             types: default_types(),
             new_version: None,
-            warnings: vec![],
+            warnings: vec![].into(),
             github_token: None,
             cwd: std::path::PathBuf::from("."),
             source_file: None,
@@ -122,8 +123,8 @@ mod tests {
             raw: RawCommit {
                 id: "1".into(),
                 short_id: "1".into(),
-                summary: format!("{}: {}", t, desc),
-                body: String::new(),
+                summary: format!("{}: {}", t, desc).into(),
+                body: EcoString::new(),
                 author_name: "A".into(),
                 author_email: "a@x".into(),
                 timestamp: 0,
@@ -131,11 +132,11 @@ mod tests {
             r#type: t.into(),
             scope: None,
             description: desc.into(),
-            body: String::new(),
-            footers: vec![],
+            body: EcoString::new(),
+            footers: vec![].into(),
             breaking: false,
-            issues: vec![],
-            co_authors: vec![],
+            issues: vec![].into(),
+            co_authors: vec![].into(),
             type_cfg: None,
             index: 0,
         }

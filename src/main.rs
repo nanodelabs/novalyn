@@ -1,11 +1,14 @@
 #![forbid(unsafe_code)]
 
+use mimalloc_safe::MiMalloc;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
+
 pub use changelogen as lib;
 
 fn main() {
-    rustls::crypto::aws_lc_rs::default_provider()
-        .install_default()
-        .expect("crypto provider already installed");
+    lib::init_crypto_provider();
     match lib::cli::run() {
         Ok(exit_code) => std::process::exit(exit_code as i32),
         Err(e) => {

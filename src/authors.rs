@@ -1,35 +1,60 @@
 use crate::parse::ParsedCommit;
+use ecow::{EcoString, EcoVec};
+use once_cell::sync::Lazy;
 use unicode_normalization::UnicodeNormalization;
+
+type FastHashMap<K, V> = std::collections::HashMap<K, V, foldhash::quality::RandomState>;
+type FastHashSet<T> = std::collections::HashSet<T, foldhash::quality::RandomState>;
+
+// Reusable hash builder to avoid allocation overhead
+static HASH_BUILDER: Lazy<foldhash::quality::RandomState> =
+    Lazy::new(foldhash::quality::RandomState::default);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Author {
-    pub name: String,
-    pub email: Option<String>,
+    pub name: EcoString,
+    pub email: Option<EcoString>,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct Authors {
-    pub list: Vec<Author>,
+    pub list: EcoVec<Author>,
     pub suppressed: bool,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct AuthorOptions {
-    pub exclude: Vec<String>,    // names or emails exact match
-    pub hide_author_email: bool, // redact email if true
-    pub no_authors: bool,        // suppress entirely
+    pub exclude: EcoVec<EcoString>, // names or emails exact match
+    pub hide_author_email: bool,    // redact email if true
+    pub no_authors: bool,           // suppress entirely
+    pub aliases: FastHashMap<EcoString, EcoString>, // map old identity to new (name or email)
+    pub github_token: Option<String>, // GitHub token for email->handle resolution
+    pub enable_github_aliasing: bool, // whether to resolve emails to @handles
+}
+
+impl Default for AuthorOptions {
+    fn default() -> Self {
+        Self {
+            exclude: EcoVec::new(),
+            hide_author_email: false,
+            no_authors: false,
+            aliases: FastHashMap::with_hasher(HASH_BUILDER.clone()),
+            github_token: None,
+            enable_github_aliasing: false,
+        }
+    }
 }
 
 impl Authors {
     pub fn collect(commits: &[ParsedCommit], opts: &AuthorOptions) -> Self {
         if opts.no_authors {
             return Authors {
-                list: Vec::new(),
+                list: EcoVec::new(),
                 suppressed: true,
             };
         }
-        let mut seen = std::collections::BTreeSet::new();
-        let mut out: Vec<Author> = Vec::new();
+        let mut seen = FastHashSet::with_hasher(HASH_BUILDER.clone());
+        let mut out = EcoVec::with_capacity(commits.len());
         for c in commits {
             // primary author
             push_author(
@@ -51,15 +76,34 @@ impl Authors {
             suppressed: false,
         }
     }
+
+    /// Resolve email addresses to GitHub handles using GitHub API.
+    /// This modifies author names in place, replacing emails with @handles when found.
+    pub async fn resolve_github_handles(&mut self, token: &str) -> Result<(), String> {
+        use crate::github::get_username_from_email;
+
+        // Make EcoVec mutable to iterate and modify
+        let authors_vec = self.list.make_mut();
+        for author in authors_vec.iter_mut() {
+            if let Some(ref email) = author.email {
+                if let Ok(Some(handle)) =
+                    get_username_from_email(email.as_str(), Some(token), None).await
+                {
+                    // Replace name with GitHub handle
+                    author.name = handle;
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
-fn normalize(s: &str) -> String {
-    s.nfc().collect::<String>()
+fn normalize(s: &str) -> EcoString {
+    EcoString::from(s.nfc().collect::<String>())
 }
 
-fn excluded(opts: &AuthorOptions, name: &str, email: Option<&str>) -> bool {
-    let target_name = normalize(name);
-    if opts.exclude.iter().any(|e| e == &target_name) {
+fn excluded(opts: &AuthorOptions, name: &EcoString, email: Option<&EcoString>) -> bool {
+    if opts.exclude.iter().any(|e| e == name) {
         return true;
     }
     if let Some(e) = email {
@@ -71,19 +115,30 @@ fn excluded(opts: &AuthorOptions, name: &str, email: Option<&str>) -> bool {
 }
 
 fn push_author<'a>(
-    out: &mut Vec<Author>,
-    seen: &mut std::collections::BTreeSet<(String, Option<String>)>,
+    out: &mut EcoVec<Author>,
+    seen: &mut FastHashSet<(EcoString, Option<EcoString>)>,
     name: &'a str,
     email: &'a str,
     opts: &AuthorOptions,
 ) {
-    let name_n = normalize(name.trim());
-    let email_n = if email.trim().is_empty() {
+    let mut name_n = normalize(name.trim());
+    let mut email_n = if email.trim().is_empty() {
         None
     } else {
         Some(normalize(email.trim()))
     };
-    if excluded(opts, &name_n, email_n.as_deref()) {
+
+    // Apply aliases
+    if let Some(alias) = opts.aliases.get(&name_n) {
+        name_n = alias.clone();
+    }
+    if let Some(ref e) = email_n {
+        if let Some(alias) = opts.aliases.get(e) {
+            email_n = Some(alias.clone());
+        }
+    }
+
+    if excluded(opts, &name_n, email_n.as_ref()) {
         return;
     }
     let key = (name_n.clone(), email_n.clone());
@@ -126,7 +181,7 @@ mod tests {
                 id: "1".into(),
                 short_id: "1".into(),
                 summary: "feat: something".into(),
-                body: String::new(),
+                body: String::new().into(),
                 author_name: name.into(),
                 author_email: email.into(),
                 timestamp: 0,
@@ -134,11 +189,11 @@ mod tests {
             r#type: "feat".into(),
             scope: None,
             description: "something".into(),
-            body: String::new(),
-            footers: vec![],
+            body: String::new().into(),
+            footers: vec![].into(),
             breaking: false,
-            issues: vec![],
-            co_authors: co.iter().map(|s| s.to_string()).collect(),
+            issues: vec![].into(),
+            co_authors: co.iter().map(|s| EcoString::from(*s)).collect(),
             type_cfg: None,
             index: 0,
         }
@@ -172,7 +227,7 @@ mod tests {
         let a = Authors::collect(
             &commits,
             &AuthorOptions {
-                exclude: vec!["Ålice".into()],
+                exclude: EcoVec::from(vec![EcoString::from("Ålice")]),
                 ..Default::default()
             },
         );
@@ -186,5 +241,33 @@ mod tests {
             },
         );
         assert_eq!(a2.list[0].email, None);
+    }
+
+    #[test]
+    fn author_aliasing() {
+        let mut aliases = FastHashMap::with_hasher(foldhash::quality::RandomState::default());
+        aliases.insert(
+            EcoString::from("old@example.com"),
+            EcoString::from("new@example.com"),
+        );
+        aliases.insert(EcoString::from("OldName"), EcoString::from("NewName"));
+
+        let commits = vec![
+            mk_commit("OldName", "old@example.com", &[]),
+            mk_commit("NewName", "new@example.com", &[]),
+        ];
+
+        let a = Authors::collect(
+            &commits,
+            &AuthorOptions {
+                aliases,
+                ..Default::default()
+            },
+        );
+
+        // Should be deduplicated to one author after aliasing
+        assert_eq!(a.list.len(), 1);
+        assert_eq!(a.list[0].name, "NewName");
+        assert_eq!(a.list[0].email, Some(EcoString::from("new@example.com")));
     }
 }

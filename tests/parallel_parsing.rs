@@ -8,12 +8,12 @@ fn create_test_commits(count: usize) -> Vec<RawCommit> {
     let mut commits = Vec::new();
     for i in 0..count {
         commits.push(RawCommit {
-            id: format!("commit{:03}", i),
-            short_id: format!("c{:03}", i),
-            summary: format!("feat: feature {}", i),
-            body: String::new(),
-            author_name: "Test Author".to_string(),
-            author_email: "test@example.com".to_string(),
+            id: format!("commit{:03}", i).into(),
+            short_id: format!("c{:03}", i).into(),
+            summary: format!("feat: feature {}", i).into(),
+            body: String::new().into(),
+            author_name: "Test Author".to_string().into(),
+            author_email: "test@example.com".to_string().into(),
             timestamp: 1704110400, // 2024-01-01T12:00:00Z as Unix timestamp
         });
     }
@@ -36,13 +36,13 @@ fn parallel_vs_sequential_identical_output() {
     unsafe {
         env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "1000"); // Force sequential
     }
-    let sequential_result = parse_and_classify(commits.clone(), &cfg);
+    let sequential_result = parse_and_classify(commits.clone().into(), &cfg);
 
     // Test parallel processing
     unsafe {
         env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "50"); // Force parallel
     }
-    let parallel_result = parse_and_classify(commits, &cfg);
+    let parallel_result = parse_and_classify(commits.into(), &cfg);
 
     // Results should be identical
     assert_eq!(sequential_result.len(), parallel_result.len());
@@ -74,7 +74,7 @@ fn parallel_threshold_respected() {
         env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "200");
     }
     let commits = create_test_commits(10);
-    let result = parse_and_classify(commits, &cfg);
+    let result = parse_and_classify(commits.into(), &cfg);
 
     // Should process without issues regardless of mode
     assert!(result.len() <= 10); // Some commits might be filtered

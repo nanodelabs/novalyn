@@ -1,9 +1,13 @@
 use changelogen::config::{LoadOptions, load_config};
 use changelogen::git::RawCommit;
 use changelogen::parse::parse_and_classify;
-use divan::Bencher;
+use divan::{AllocProfiler, Bencher};
+use mimalloc_safe::MiMalloc;
 use std::env;
 use tempfile::TempDir;
+
+#[global_allocator]
+static GLOBAL: AllocProfiler<MiMalloc> = AllocProfiler::new(MiMalloc);
 
 fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
     let commit_types = ["feat", "fix", "docs", "style", "refactor", "test", "chore"];
@@ -19,16 +23,16 @@ fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
             };
             let breaking = if i % 20 == 0 { "!" } else { "" };
             RawCommit {
-                id: format!("commit{:06}", i),
-                short_id: format!("c{:06x}", i),
-                summary: format!("{}{}{}: implement feature {}", commit_type, scope, breaking, i),
+                id: format!("commit{:06}", i).into(),
+                short_id: format!("c{:06x}", i).into(),
+                summary: format!("{}{}{}: implement feature {}", commit_type, scope, breaking, i).into(),
                 body: if i % 10 == 0 {
-                    format!("This is a detailed commit body for commit {}.\n\nIt contains multiple paragraphs and explains the changes in detail.", i)
+                    format!("This is a detailed commit body for commit {}.\n\nIt contains multiple paragraphs and explains the changes in detail.", i).into()
                 } else {
-                    String::new()
+String::new().into()
                 },
-                author_name: format!("Author {}", i % 10),
-                author_email: format!("author{}@example.com", i % 10),
+                author_name: format!("Author {}", i % 10).into(),
+                author_email: format!("author{}@example.com", i % 10).into(),
                 timestamp: 1704110400 + (i as i64 * 3600), // Hourly commits
             }
         })
@@ -53,7 +57,7 @@ fn parse_sequential(bencher: Bencher, size: usize) {
             } // Force sequential
             commits.clone()
         })
-        .bench_values(|commits| parse_and_classify(commits, &cfg));
+        .bench_values(|commits| parse_and_classify(commits.into(), &cfg));
 }
 
 #[divan::bench(args = [50, 100, 500])]
@@ -74,7 +78,7 @@ fn parse_parallel(bencher: Bencher, size: usize) {
             } // Force parallel
             commits.clone()
         })
-        .bench_values(|commits| parse_and_classify(commits, &cfg));
+        .bench_values(|commits| parse_and_classify(commits.into(), &cfg));
 }
 
 #[divan::bench(args = [10, 50, 100, 500])]
@@ -87,7 +91,7 @@ fn version_inference(bencher: Bencher, size: usize) {
     .unwrap();
 
     let commits = generate_synthetic_commits(size);
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
     let previous_version = semver::Version::new(1, 0, 0);
 
     bencher
@@ -110,7 +114,7 @@ fn render_block(bencher: Bencher, size: usize) {
     let previous_version = semver::Version::new(0, 9, 0);
 
     let commits = generate_synthetic_commits(size);
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     bencher
         .with_inputs(|| {

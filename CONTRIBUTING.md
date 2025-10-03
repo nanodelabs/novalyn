@@ -19,6 +19,7 @@ Thank you for your interest in contributing to changelogen-rs! This document pro
 - **Git**: For version control
 - **just**: Command runner - `cargo install just` or see [installation options](https://github.com/casey/just#installation)
 - **cargo-nextest**: Test runner - `cargo install cargo-nextest` (or use `just install-tools`)
+- **cargo-insta** : Snapshot testing - `cargo install cargo-insta` (or use `just install-tools`)
 - **cargo-binstall** (optional but recommended): Faster binary installation - `cargo install cargo-binstall`
 
 ### Clone and Build

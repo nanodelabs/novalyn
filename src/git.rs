@@ -1,13 +1,14 @@
+use ecow::{EcoString, EcoVec};
 use git2::{Oid, Repository, StatusOptions};
 
 #[derive(Debug, Clone)]
 pub struct RawCommit {
-    pub id: String,
-    pub short_id: String,
-    pub summary: String,
-    pub body: String,
-    pub author_name: String,
-    pub author_email: String,
+    pub id: EcoString,
+    pub short_id: EcoString,
+    pub summary: EcoString,
+    pub body: EcoString,
+    pub author_name: EcoString,
+    pub author_email: EcoString,
     pub timestamp: i64,
 }
 
@@ -15,9 +16,9 @@ pub fn detect_repo(path: &std::path::Path) -> Result<Repository, git2::Error> {
     Repository::discover(path)
 }
 
-pub fn last_tag(repo: &Repository) -> Result<Option<String>, git2::Error> {
+pub fn last_tag(repo: &Repository) -> Result<Option<EcoString>, git2::Error> {
     let tags = repo.tag_names(None)?;
-    let mut latest: Option<(String, i64, semver::Version)> = None;
+    let mut latest: Option<(EcoString, i64, semver::Version)> = None;
     for name_opt in tags.iter() {
         let name = match name_opt {
             Some(n) => n,
@@ -31,10 +32,10 @@ pub fn last_tag(repo: &Repository) -> Result<Option<String>, git2::Error> {
         {
             let time = commit.time().seconds();
             match &latest {
-                None => latest = Some((name.to_string(), time, parsed)),
+                None => latest = Some((name.into(), time, parsed)),
                 Some((_, lt_time, lt_ver)) => {
                     if time > *lt_time || (time == *lt_time && &parsed > lt_ver) {
-                        latest = Some((name.to_string(), time, parsed));
+                        latest = Some((name.into(), time, parsed));
                     }
                 }
             }
@@ -43,7 +44,7 @@ pub fn last_tag(repo: &Repository) -> Result<Option<String>, git2::Error> {
     Ok(latest.map(|(n, _, _)| n))
 }
 
-pub fn current_ref(repo: &Repository) -> Result<Option<String>, git2::Error> {
+pub fn current_ref(repo: &Repository) -> Result<Option<EcoString>, git2::Error> {
     let head = match repo.head() {
         Ok(h) => h,
         Err(e) => {
@@ -55,7 +56,7 @@ pub fn current_ref(repo: &Repository) -> Result<Option<String>, git2::Error> {
         }
     };
     if head.is_branch() {
-        return Ok(head.shorthand().map(|s| s.to_string()));
+        return Ok(head.shorthand().map(|s| s.into()));
     }
     // detached: see if it points at a tag
     let oid = head.target();
@@ -66,21 +67,24 @@ pub fn current_ref(repo: &Repository) -> Result<Option<String>, git2::Error> {
                 && let Ok(tag_oid) = repo.refname_to_id(&format!("refs/tags/{}", name))
                 && tag_oid == oid
             {
-                return Ok(Some(name.to_string()));
+                return Ok(Some(name.into()));
             }
         }
     }
-    Ok(Some(format!(
-        "DETACHED@{}",
-        oid.map(|o| o.to_string()).unwrap_or_default()
-    )))
+    Ok(Some(
+        format!(
+            "DETACHED@{}",
+            oid.map(|o| o.to_string()).unwrap_or_default()
+        )
+        .into(),
+    ))
 }
 
 pub fn commits_between(
     repo: &Repository,
     from: Option<&str>,
     to: &str,
-) -> Result<Vec<RawCommit>, git2::Error> {
+) -> Result<EcoVec<RawCommit>, git2::Error> {
     let to_obj = repo.revparse_single(to)?;
     let to_commit = to_obj.peel_to_commit()?;
 
@@ -93,7 +97,7 @@ pub fn commits_between(
     }
     revwalk.set_sorting(git2::Sort::TOPOLOGICAL | git2::Sort::TIME)?;
 
-    let mut commits: Vec<RawCommit> = Vec::new();
+    let mut commits: EcoVec<RawCommit> = EcoVec::new();
     for oid_res in revwalk {
         if let Ok(oid) = oid_res
             && let Ok(commit) = repo.find_commit(oid)
@@ -101,17 +105,17 @@ pub fn commits_between(
             commits.push(to_raw_commit(&commit));
         }
     }
-    commits.reverse(); // chronological oldest->newest
+    commits.make_mut().reverse(); // chronological oldest->newest
     Ok(commits)
 }
 
 fn to_raw_commit(commit: &git2::Commit) -> RawCommit {
-    let id = commit.id().to_string();
-    let short_id = commit.id().to_string()[0..7].to_string();
+    let id = commit.id().to_string().into();
+    let short_id = commit.id().to_string()[0..7].to_string().into();
     let message = commit.message().unwrap_or("");
     let mut lines = message.lines();
-    let summary = lines.next().unwrap_or("").to_string();
-    let body = lines.collect::<Vec<_>>().join("\n");
+    let summary = lines.next().unwrap_or("").into();
+    let body = lines.collect::<Vec<_>>().join("\n").into();
     let sig = commit.author();
     let time = commit.time();
     RawCommit {
@@ -119,8 +123,8 @@ fn to_raw_commit(commit: &git2::Commit) -> RawCommit {
         short_id,
         summary,
         body,
-        author_name: sig.name().unwrap_or("").to_string(),
-        author_email: sig.email().unwrap_or("").to_string(),
+        author_name: sig.name().unwrap_or("").into(),
+        author_email: sig.email().unwrap_or("").into(),
         timestamp: time.seconds(),
     }
 }

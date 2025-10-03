@@ -1,5 +1,6 @@
 use crate::config::{ResolvedConfig, SemverImpact, TypeConfigResolved};
 use crate::git::RawCommit;
+use ecow::{EcoString, EcoVec};
 use git_conventional::Commit as ConventionalCommit;
 use once_cell::sync::Lazy;
 use rayon::prelude::*;
@@ -17,14 +18,14 @@ static ISSUE_RE: Lazy<Regex> =
 #[derive(Debug, Clone)]
 pub struct ParsedCommit {
     pub raw: RawCommit,
-    pub r#type: String,
-    pub scope: Option<String>,
-    pub description: String,
-    pub body: String,
-    pub footers: Vec<(String, String)>,
+    pub r#type: EcoString,
+    pub scope: Option<EcoString>,
+    pub description: EcoString,
+    pub body: EcoString,
+    pub footers: EcoVec<(EcoString, EcoString)>,
     pub breaking: bool,
-    pub issues: Vec<u64>,
-    pub co_authors: Vec<String>,
+    pub issues: EcoVec<u64>,
+    pub co_authors: EcoVec<EcoString>,
     pub type_cfg: Option<TypeConfigResolved>,
     pub index: usize, // original chronological order position for deterministic ordering
 }
@@ -49,7 +50,10 @@ impl BumpKind {
     }
 }
 
-pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<ParsedCommit> {
+pub fn parse_and_classify(
+    commits: EcoVec<RawCommit>,
+    cfg: &ResolvedConfig,
+) -> EcoVec<ParsedCommit> {
     let threshold = std::env::var("CHANGELOGEN_PARALLEL_THRESHOLD")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -63,15 +67,15 @@ pub fn parse_and_classify(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<
 }
 
 fn parse_and_classify_sequential(
-    commits: Vec<RawCommit>,
+    commits: EcoVec<RawCommit>,
     cfg: &ResolvedConfig,
-) -> Vec<ParsedCommit> {
+) -> EcoVec<ParsedCommit> {
     tracing::debug!(
         count = commits.len(),
         mode = "sequential",
         "parsing_commits"
     );
-    let mut out = Vec::new();
+    let mut out = EcoVec::new();
     for (idx, rc) in commits.into_iter().enumerate() {
         let mut p = parse_one(&rc, &COMMIT_HEADER_RE);
         p.index = idx;
@@ -84,14 +88,17 @@ fn parse_and_classify_sequential(
     out
 }
 
-fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) -> Vec<ParsedCommit> {
+fn parse_and_classify_parallel(
+    commits: EcoVec<RawCommit>,
+    cfg: &ResolvedConfig,
+) -> EcoVec<ParsedCommit> {
     tracing::debug!(count = commits.len(), mode = "parallel", "parsing_commits");
 
     // Create indexed commits to preserve original order
     let indexed_commits: Vec<(usize, RawCommit)> = commits.into_iter().enumerate().collect();
 
     // Process in parallel while maintaining original index
-    let mut parsed: Vec<ParsedCommit> = indexed_commits
+    let mut parsed: EcoVec<ParsedCommit> = indexed_commits
         .par_iter()
         .map(|(idx, rc)| {
             let mut p = parse_one(rc, &COMMIT_HEADER_RE);
@@ -100,7 +107,8 @@ fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) ->
             p
         })
         .filter(should_keep)
-        .collect();
+        .collect::<Vec<_>>()
+        .into();
 
     // Log the classified commits (in parallel processing, order may be different in logs)
     for p in &parsed {
@@ -108,21 +116,21 @@ fn parse_and_classify_parallel(commits: Vec<RawCommit>, cfg: &ResolvedConfig) ->
     }
 
     // Sort back to original chronological order
-    parsed.sort_by_key(|p| p.index);
+    parsed.make_mut().sort_by_key(|p| p.index);
     parsed
 }
 
 // Parse a single raw commit. Try git-conventional first for richer parsing, fallback to regex.
 fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
-    let mut r#type = String::from("other");
+    let mut r#type = EcoString::from("other");
     let mut scope = None;
     let mut description = rc.summary.clone();
     let mut breaking = false;
     // Attempt conventional commit parse
     if let Ok(cc) = ConventionalCommit::parse(&rc.summary) {
-        r#type = cc.type_().as_str().to_ascii_lowercase();
-        scope = cc.scope().map(|s| s.to_string());
-        description = cc.description().to_string();
+        r#type = cc.type_().as_str().to_ascii_lowercase().into();
+        scope = cc.scope().map(|s| s.as_str().into());
+        description = cc.description().into();
         if cc.breaking() {
             breaking = true;
         }
@@ -130,19 +138,19 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
         // These unwraps are safe because capture groups are guaranteed by successful regex match
         r#type = caps
             .name("type")
-            .map(|m| m.as_str().to_ascii_lowercase())
-            .unwrap_or_else(|| "other".to_string());
-        scope = caps.name("scope").map(|m| m.as_str().to_string());
+            .map(|m| m.as_str().to_ascii_lowercase().into())
+            .unwrap_or_else(|| "other".into());
+        scope = caps.name("scope").map(|m| m.as_str().into());
         description = caps
             .name("desc")
-            .map(|m| m.as_str().to_string())
+            .map(|m| m.as_str().into())
             .unwrap_or_else(|| rc.summary.clone());
         if caps.name("bang").is_some() {
             breaking = true;
         }
     }
     let mut body = rc.body.clone();
-    let mut footers: Vec<(String, String)> = Vec::new();
+    let mut footers: EcoVec<(EcoString, EcoString)> = EcoVec::new();
     if !body.is_empty() {
         let lines: Vec<&str> = body.lines().collect();
         // Parse footers forward: find last blank line; everything after that that matches footer syntax.
@@ -155,7 +163,7 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
         }
         let start_footer = split_idx.map(|i| i + 1).unwrap_or(lines.len());
         // Collect raw footer lines (with continuation support)
-        let mut cur_key: Option<String> = None;
+        let mut cur_key: Option<EcoString> = None;
         let mut cur_val = String::new();
         for &line in &lines[start_footer..] {
             if let Some((k, v)) = line.split_once(':') {
@@ -166,10 +174,10 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
                 {
                     // flush previous
                     if let Some(k_existing) = cur_key.take() {
-                        footers.push((k_existing, cur_val.trim_end().to_string()));
+                        footers.push((k_existing, cur_val.trim_end().into()));
                         cur_val = String::new();
                     }
-                    cur_key = Some(k_trim.to_string());
+                    cur_key = Some(k_trim.into());
                     cur_val.push_str(v.trim_start());
                 } else {
                     // invalid footer key -> stop parsing further footers
@@ -193,13 +201,13 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
             }
         }
         if let Some(k) = cur_key.take() {
-            footers.push((k, cur_val.trim_end().to_string()));
+            footers.push((k, cur_val.trim_end().into()));
         }
         if !footers.is_empty() {
             body = if start_footer == lines.len() {
                 body
             } else if let Some(idx) = split_idx {
-                lines[..idx].join("\n")
+                lines[..idx].join("\n").into()
             } else {
                 // This branch should not be reached given the logic above,
                 // but we handle it gracefully
@@ -215,19 +223,21 @@ fn parse_one(rc: &RawCommit, rex: &Regex) -> ParsedCommit {
         }
     }
     // If body ended up including trailing blank due to cut logic, trim newline artifacts
-    body = body.trim_end().to_string();
+    body = body.trim_end().into();
     let mut issues = collect_issue_numbers(&rc.summary);
     issues.extend(collect_issue_numbers(&body));
     for (k, v) in &footers {
         issues.extend(collect_issue_numbers(k));
         issues.extend(collect_issue_numbers(v));
     }
-    issues.sort_unstable();
-    issues.dedup();
-    let mut co_authors = Vec::new();
+    let mut issues_vec = issues.into_iter().collect::<Vec<_>>();
+    issues_vec.sort_unstable();
+    issues_vec.dedup();
+    issues = issues_vec.into();
+    let mut co_authors = EcoVec::new();
     for (k, v) in &footers {
         if k.eq_ignore_ascii_case("Co-authored-by") {
-            co_authors.push(v.to_string());
+            co_authors.push(v.clone());
         }
     }
     ParsedCommit {
@@ -280,10 +290,10 @@ fn should_keep(pc: &ParsedCommit) -> bool {
     true
 }
 
-fn collect_issue_numbers(s: &str) -> Vec<u64> {
+fn collect_issue_numbers(s: &str) -> EcoVec<u64> {
     // Capture individual #123 plus grouped variants inside parentheses or separated by commas/spaces.
     // Strategy: first find all #\d+ tokens.
-    let mut v = Vec::new();
+    let mut v = EcoVec::new();
     for cap in ISSUE_RE.captures_iter(s) {
         if let Ok(num) = cap[1].parse() {
             v.push(num);
@@ -375,7 +385,7 @@ pub fn interpolate(
     previous: &semver::Version,
     new_version: &semver::Version,
     date: &jiff::civil::Date,
-) -> String {
+) -> EcoString {
     let mut out = String::with_capacity(template.len() + 16);
     let mut chars = template.chars().peekable();
     while let Some(ch) = chars.next() {
@@ -412,7 +422,7 @@ pub fn interpolate(
             out.push(ch);
         }
     }
-    out
+    out.into()
 }
 
 #[cfg(test)]

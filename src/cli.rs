@@ -5,6 +5,7 @@ use crate::{
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_complete;
+use ecow::EcoVec;
 
 pub use crate::cli_def::{Cli, Commands, Completions};
 
@@ -35,16 +36,18 @@ pub fn run() -> Result<ExitCode> {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
                 cwd,
-                from,
-                to,
+                from: from.map(|s| s.into()),
+                to: to.map(|s| s.into()),
                 dry_run: true,
                 new_version: parsed_new,
                 no_authors: true,
-                exclude_authors: vec![],
+                exclude_authors: EcoVec::new(),
                 hide_author_email: false,
                 clean: false,
                 sign: false,
                 yes: true, // Show command doesn't need confirmation
+                github_alias: false,
+                github_token: None,
             })?;
             println!("{}", outcome.version);
             ExitCode::Success
@@ -61,20 +64,31 @@ pub fn run() -> Result<ExitCode> {
             clean,
             sign,
             yes,
+            no_github_alias,
+            github_token,
         } => {
+            // Read GitHub token from env if not provided
+            let github_token = github_token.or_else(|| {
+                std::env::var("GITHUB_TOKEN")
+                    .ok()
+                    .or_else(|| std::env::var("GH_TOKEN").ok())
+            });
+
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
                 cwd: cwd.clone(),
-                from,
-                to,
+                from: from.map(|s| s.into()),
+                to: to.map(|s| s.into()),
                 dry_run: !write,
                 new_version: parsed_new,
                 no_authors,
-                exclude_authors: exclude_author,
+                exclude_authors: exclude_author.into_iter().map(|s| s.into()).collect(),
                 hide_author_email,
                 clean,
                 sign,
                 yes,
+                github_alias: !no_github_alias,
+                github_token: github_token.map(|s| s.into()),
             })?;
             if let Some(path) = output {
                 std::fs::write(&path, outcome.version.to_string())?;
@@ -110,20 +124,31 @@ pub fn run() -> Result<ExitCode> {
             clean,
             sign,
             yes,
+            no_github_alias,
+            github_token,
         } => {
+            // Read GitHub token from env if not provided
+            let github_token = github_token.or_else(|| {
+                std::env::var("GITHUB_TOKEN")
+                    .ok()
+                    .or_else(|| std::env::var("GH_TOKEN").ok())
+            });
+
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
                 cwd: cwd.clone(),
-                from,
-                to,
+                from: from.map(|s| s.into()),
+                to: to.map(|s| s.into()),
                 dry_run,
                 new_version: parsed_new,
                 no_authors,
-                exclude_authors: exclude_author,
+                exclude_authors: exclude_author.into_iter().map(|s| s.into()).collect(),
                 hide_author_email,
                 clean,
                 sign,
                 yes,
+                github_alias: !no_github_alias,
+                github_token: github_token.map(|s| s.into()),
             })?;
             if outcome.wrote {
                 println!("Released v{}", outcome.version);
@@ -148,7 +173,8 @@ pub fn run() -> Result<ExitCode> {
             if let Some(repo) = cfg.repo {
                 let rt = tokio::runtime::Runtime::new()?;
                 let info = rt.block_on(async move {
-                    github::sync_release(&repo, cfg.github_token.as_deref(), &tag, &body).await
+                    github::sync_release(&repo, cfg.github_token.as_deref(), &tag, &body, None)
+                        .await
                 });
                 match info {
                     Ok(r) => {

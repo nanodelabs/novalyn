@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use ecow::{EcoString, EcoVec};
 use semver::Version;
 use serde::Deserialize;
 use tracing::warn;
@@ -18,16 +19,16 @@ pub enum TypeToggleOrConfig {
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct TypeConfigPartial {
-    pub title: Option<String>,
-    pub emoji: Option<String>,
-    pub semver: Option<String>, // major | minor | patch | none
+    pub title: Option<EcoString>,
+    pub emoji: Option<EcoString>,
+    pub semver: Option<EcoString>, // major | minor | patch | none
 }
 
 #[derive(Debug, Clone)]
 pub struct TypeConfigResolved {
-    pub key: String,
-    pub title: String,
-    pub emoji: String,
+    pub key: EcoString,
+    pub title: EcoString,
+    pub emoji: EcoString,
     pub semver: SemverImpact,
     pub enabled: bool,
 }
@@ -55,10 +56,10 @@ impl SemverImpact {
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(default)]
 pub struct RawConfig {
-    pub new_version: Option<String>,
+    pub new_version: Option<EcoString>,
     #[serde(rename = "types")]
-    pub types_override: Option<BTreeMap<String, TypeToggleOrConfig>>, // allow disabling or overriding
-    pub scope_map: Option<BTreeMap<String, String>>, // future
+    pub types_override: Option<BTreeMap<EcoString, TypeToggleOrConfig>>, // allow disabling or overriding
+    pub scope_map: Option<BTreeMap<EcoString, EcoString>>, // future
     pub hide_author_email: Option<bool>,
     pub no_authors: Option<bool>,
     // capture unknown keys (flatten) for warning emission
@@ -72,11 +73,11 @@ use crate::repository as repo_mod; // binary crate re-exports via main, lib via 
 #[derive(Debug, Clone)]
 pub struct ResolvedConfig {
     // Optional scope mapping (exact match) applied after parsing
-    pub scope_map: std::collections::BTreeMap<String, String>,
+    pub scope_map: std::collections::BTreeMap<EcoString, EcoString>,
     pub types: Vec<TypeConfigResolved>,
     pub new_version: Option<Version>,
-    pub warnings: Vec<String>,
-    pub github_token: Option<String>,
+    pub warnings: EcoVec<EcoString>,
+    pub github_token: Option<EcoString>,
     pub cwd: PathBuf,
     pub source_file: Option<PathBuf>,
     pub repo: Option<repo_mod::Repository>, // set by detection (best-effort)
@@ -114,7 +115,7 @@ pub struct LoadOptions<'a> {
 }
 
 pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
-    let mut warnings = Vec::new();
+    let mut warnings = EcoVec::new();
     let mut source_file = None;
     let mut raw_stack: Vec<RawConfig> = Vec::new();
 
@@ -126,7 +127,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
                 source_file = Some(path.clone());
                 raw_stack.push(rc);
             }
-            Err(e) => warnings.push(format!("Failed to load changelogen.toml: {e}")),
+            Err(e) => warnings.push(format!("Failed to load changelogen.toml: {e}").into()),
         }
     }
 
@@ -138,7 +139,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
                     raw_stack.push(rc);
                 }
             }
-            Err(e) => warnings.push(format!("Failed to read Cargo.toml: {e}")),
+            Err(e) => warnings.push(format!("Failed to read Cargo.toml: {e}").into()),
         }
     }
 
@@ -166,7 +167,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
                                 types.push(TypeConfigResolved {
                                     key: k.clone(),
                                     title: k.clone(),
-                                    emoji: String::new(),
+                                    emoji: EcoString::new(),
                                     semver: SemverImpact::None,
                                     enabled: false,
                                 });
@@ -212,7 +213,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
         if let Some(vs) = &raw.new_version {
             match Version::parse(vs) {
                 Ok(v) => new_version = Some(v),
-                Err(e) => warnings.push(format!("Invalid new_version '{vs}': {e}")),
+                Err(e) => warnings.push(format!("Invalid new_version '{vs}': {e}").into()),
             }
         }
     }
@@ -222,7 +223,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     // accumulate unknown keys warnings (after all layers so later layers can override earlier ones silently)
     for raw in &raw_stack {
         for k in raw._unknown.keys() {
-            warnings.push(format!("Unknown config key: {k}"));
+            warnings.push(format!("Unknown config key: {k}").into());
         }
     }
 
@@ -230,7 +231,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     let repo = detect_repository(opts.cwd, &mut warnings);
 
     // Merge scope_map layering later entries override earlier
-    let mut scope_map: BTreeMap<String, String> = BTreeMap::new();
+    let mut scope_map: BTreeMap<EcoString, EcoString> = BTreeMap::new();
     for raw in &raw_stack {
         if let Some(sm) = &raw.scope_map {
             for (k, v) in sm {
@@ -267,12 +268,12 @@ fn find_file(cwd: &Path, name: &str) -> Option<PathBuf> {
     }
 }
 
-fn extract_metadata_block(cargo_toml: &str, warnings: &mut Vec<String>) -> Option<RawConfig> {
+fn extract_metadata_block(cargo_toml: &str, warnings: &mut EcoVec<EcoString>) -> Option<RawConfig> {
     // parse using toml_edit to avoid losing formatting
     let doc: toml_edit::DocumentMut = match cargo_toml.parse() {
         Ok(d) => d,
         Err(e) => {
-            warnings.push(format!("Cargo.toml parse error: {e}"));
+            warnings.push(format!("Cargo.toml parse error: {e}").into());
             return None;
         }
     };
@@ -290,7 +291,7 @@ fn extract_metadata_block(cargo_toml: &str, warnings: &mut Vec<String>) -> Optio
                 Some(rc)
             }
             Err(e) => {
-                warnings.push(format!("Failed to parse metadata.changelogen: {e}"));
+                warnings.push(format!("Failed to parse metadata.changelogen: {e}").into());
                 None
             }
         };
@@ -298,12 +299,12 @@ fn extract_metadata_block(cargo_toml: &str, warnings: &mut Vec<String>) -> Optio
     None
 }
 
-fn resolve_github_token() -> Option<String> {
+fn resolve_github_token() -> Option<EcoString> {
     for key in ["CHANGELOGEN_TOKENS_GITHUB", "GITHUB_TOKEN", "GH_TOKEN"] {
         if let Ok(v) = std::env::var(key)
             && !v.is_empty()
         {
-            return Some(v);
+            return Some(v.into());
         }
     }
     None
@@ -315,7 +316,7 @@ pub fn log_warnings(cfg: &ResolvedConfig) {
     }
 }
 
-fn detect_repository(cwd: &Path, warnings: &mut Vec<String>) -> Option<repo_mod::Repository> {
+fn detect_repository(cwd: &Path, warnings: &mut EcoVec<EcoString>) -> Option<repo_mod::Repository> {
     // crate path valid when used as library
     // Open git repo; if not a git repository, silently return None (git layer will handle hard error later)
     let repo = match git2::Repository::discover(cwd) {
@@ -326,7 +327,7 @@ fn detect_repository(cwd: &Path, warnings: &mut Vec<String>) -> Option<repo_mod:
     let remotes = match repo.remotes() {
         Ok(r) => r,
         Err(e) => {
-            warnings.push(format!("Failed to list git remotes: {e}"));
+            warnings.push(format!("Failed to list git remotes: {e}").into());
             return None;
         }
     };
@@ -351,7 +352,7 @@ fn detect_repository(cwd: &Path, warnings: &mut Vec<String>) -> Option<repo_mod:
     match repo_mod::Repository::parse(&remote_url) {
         Some(r) => Some(r),
         None => {
-            warnings.push(format!("Unrecognized remote URL format: {remote_url}"));
+            warnings.push(format!("Unrecognized remote URL format: {remote_url}").into());
             None
         }
     }

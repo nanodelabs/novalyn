@@ -36,7 +36,7 @@ fn parse_basic() {
             "Body part\n\nCo-authored-by: Someone <s@e.com>",
         ),
     ];
-    let parsed = parse_and_classify(commits, &cfg); // chore(deps) should be filtered
+    let parsed = parse_and_classify(commits.into(), &cfg); // chore(deps) should be filtered
     assert!(parsed.iter().any(|c| c.r#type == "feat" && c.breaking));
     assert!(!parsed.iter().any(|c| c.summary().starts_with("chore")));
     assert!(parsed.iter().any(|c| c.r#type == "refactor" && c.breaking));

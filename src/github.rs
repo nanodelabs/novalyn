@@ -1,3 +1,4 @@
+use ecow::{EcoString, EcoVec};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, instrument, warn};
 
@@ -5,11 +6,17 @@ use crate::repository::Repository;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReleaseInfo {
-    pub tag: String,
-    pub url: String,
+    pub tag: EcoString,
+    pub url: EcoString,
     pub created: bool,
     pub updated: bool,
     pub skipped: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitHubUser {
+    pub login: EcoString,
+    pub email: Option<EcoString>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -24,14 +31,69 @@ pub enum GithubError {
     Status(u16),
 }
 
+/// Fetch GitHub username from email address.
+/// Returns the username (handle) if found, None otherwise.
+/// `api_base` parameter allows testing with mock servers (defaults to "https://api.github.com")
+#[instrument(skip(token, api_base))]
+pub async fn get_username_from_email(
+    email: &str,
+    token: Option<&str>,
+    api_base: Option<&str>,
+) -> Result<Option<EcoString>, GithubError> {
+    let Some(token) = token else {
+        return Ok(None); // No token, can't query API
+    };
+
+    let api_base = api_base.unwrap_or("https://api.github.com");
+    let client = reqwest::Client::new();
+    let search_url = format!(
+        "{}/search/users?q={}+in:email",
+        api_base,
+        urlencoding::encode(email)
+    );
+
+    debug!("searching GitHub for email" = %email);
+
+    let resp = client
+        .get(&search_url)
+        .header("User-Agent", "changelogen-rs")
+        .bearer_auth(token)
+        .send()
+        .await
+        .map_err(|e| GithubError::Network(e.to_string()))?;
+
+    if !resp.status().is_success() {
+        warn!(status = %resp.status(), "github user search failed");
+        return Ok(None);
+    }
+
+    #[derive(Deserialize)]
+    struct SearchResult {
+        items: EcoVec<GitHubUser>,
+    }
+
+    let result: SearchResult = resp
+        .json()
+        .await
+        .map_err(|e| GithubError::Network(e.to_string()))?;
+
+    if let Some(user) = result.items.first() {
+        Ok(Some(format!("@{}", user.login).into()))
+    } else {
+        Ok(None)
+    }
+}
+
 /// Sync release with GitHub: get existing by tag, create or update.
 /// Returns ReleaseInfo even on fallback path (manual URL) with skipped=true.
-#[instrument(skip(token, body), fields(tag = %tag))]
+/// `api_base` parameter allows testing with mock servers (defaults to "https://api.github.com")
+#[instrument(skip(token, body, api_base), fields(tag = %tag))]
 pub async fn sync_release(
     repo: &Repository,
     token: Option<&str>,
     tag: &str,
     body: &str,
+    api_base: Option<&str>,
 ) -> Result<ReleaseInfo, GithubError> {
     if repo.provider != crate::repository::Provider::GitHub {
         return Err(GithubError::NotGithub);
@@ -43,20 +105,18 @@ pub async fn sync_release(
     let Some(token) = token else {
         // No token -> fallback manual URL, mark skipped
         return Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: manual_url,
+            tag: tag.into(),
+            url: manual_url.into(),
             created: false,
             updated: false,
             skipped: true,
         });
     };
     let client = reqwest::Client::new();
-    let api_base = format!(
-        "https://api.github.com/repos/{}/{}/releases",
-        repo.owner, repo.name
-    );
+    let api_base = api_base.unwrap_or("https://api.github.com");
+    let releases_base = format!("{}/repos/{}/{}/releases", api_base, repo.owner, repo.name);
     // 1. Try get by tag
-    let get_url = format!("{}/tags/{}", api_base, tag);
+    let get_url = format!("{}/tags/{}", releases_base, tag);
     debug!("github_get_tag" = %get_url, "attempting fetch existing release");
     let existing = client
         .get(&get_url)
@@ -83,7 +143,7 @@ pub async fn sync_release(
             prerelease: false,
         };
         let resp = client
-            .post(&api_base)
+            .post(&releases_base)
             .header("User-Agent", "changelogen-rs")
             .bearer_auth(token)
             .json(&payload)
@@ -102,8 +162,8 @@ pub async fn sync_release(
             .await
             .map_err(|e| GithubError::Network(e.to_string()))?;
         Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: data.html_url,
+            tag: tag.into(),
+            url: data.html_url.into(),
             created: true,
             updated: false,
             skipped: false,
@@ -123,7 +183,7 @@ pub async fn sync_release(
         struct UpdateRelease<'a> {
             body: &'a str,
         }
-        let patch_url = format!("{}/{}", api_base, data.id);
+        let patch_url = format!("{}/{}", releases_base, data.id);
         let resp = client
             .patch(&patch_url)
             .header("User-Agent", "changelogen-rs")
@@ -136,8 +196,8 @@ pub async fn sync_release(
             warn!(status = %resp.status(), "github update release failed");
         }
         Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: data.html_url,
+            tag: tag.into(),
+            url: data.html_url.into(),
             created: false,
             updated: true,
             skipped: false,
@@ -146,8 +206,8 @@ pub async fn sync_release(
         warn!(status = %existing.status(), "github get release unexpected status");
         // fallback manual
         Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: manual_url,
+            tag: tag.into(),
+            url: manual_url.into(),
             created: false,
             updated: false,
             skipped: true,
