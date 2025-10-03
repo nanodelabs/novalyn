@@ -8,30 +8,30 @@ use changelogen::render::render_release_block;
 fn create_test_commits() -> Vec<RawCommit> {
     vec![
         RawCommit {
-            id: "abc123".to_string(),
-            short_id: "abc123".to_string(),
-            summary: "feat: add new feature".to_string(),
-            body: "This adds a new feature\n\nCloses #123".to_string(),
-            author_name: "Alice".to_string(),
-            author_email: "alice@example.com".to_string(),
+            id: "abc123".to_string().into(),
+            short_id: "abc123".to_string().into(),
+            summary: "feat: add new feature".to_string().into(),
+            body: "This adds a new feature\n\nCloses #123".to_string().into(),
+            author_name: "Alice".to_string().into(),
+            author_email: "alice@example.com".to_string().into(),
             timestamp: 1704110400,
         },
         RawCommit {
-            id: "def456".to_string(),
-            short_id: "def456".to_string(),
-            summary: "fix: resolve bug".to_string(),
-            body: String::new(),
-            author_name: "Bob".to_string(),
-            author_email: "bob@example.com".to_string(),
+            id: "def456".to_string().into(),
+            short_id: "def456".to_string().into(),
+            summary: "fix: resolve bug".to_string().into(),
+            body: String::new().into(),
+            author_name: "Bob".to_string().into(),
+            author_email: "bob@example.com".to_string().into(),
             timestamp: 1704110500,
         },
         RawCommit {
-            id: "ghi789".to_string(),
-            short_id: "ghi789".to_string(),
-            summary: "feat!: breaking change".to_string(),
-            body: "BREAKING CHANGE: This breaks API".to_string(),
-            author_name: "Charlie".to_string(),
-            author_email: "charlie@example.com".to_string(),
+            id: "ghi789".to_string().into(),
+            short_id: "ghi789".to_string().into(),
+            summary: "feat!: breaking change".to_string().into(),
+            body: "BREAKING CHANGE: This breaks API".to_string().into(),
+            author_name: "Charlie".to_string().into(),
+            author_email: "charlie@example.com".to_string().into(),
             timestamp: 1704110600,
         },
     ]
@@ -49,9 +49,9 @@ fn repeated_parse_identical() {
     let commits = create_test_commits();
 
     // Parse multiple times
-    let result1 = parse_and_classify(commits.clone(), &cfg);
-    let result2 = parse_and_classify(commits.clone(), &cfg);
-    let result3 = parse_and_classify(commits, &cfg);
+    let result1 = parse_and_classify(commits.clone().into(), &cfg);
+    let result2 = parse_and_classify(commits.clone().into(), &cfg);
+    let result3 = parse_and_classify(commits.into(), &cfg);
 
     // All results should be identical
     assert_eq!(result1.len(), result2.len());
@@ -83,7 +83,7 @@ fn repeated_render_identical() {
     .unwrap();
 
     let commits = create_test_commits();
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let version = semver::Version::new(1, 0, 0);
     let prev_version = semver::Version::new(0, 9, 0);
@@ -150,7 +150,7 @@ fn repeated_full_pipeline_identical() {
         dry_run: true,
         new_version: None,
         no_authors: false,
-        exclude_authors: vec![],
+        exclude_authors: vec![].into(),
         hide_author_email: false,
         clean: false,
         sign: false,
@@ -166,7 +166,7 @@ fn repeated_full_pipeline_identical() {
         dry_run: true,
         new_version: None,
         no_authors: false,
-        exclude_authors: vec![],
+        exclude_authors: vec![].into(),
         hide_author_email: false,
         clean: false,
         sign: false,
@@ -182,7 +182,7 @@ fn repeated_full_pipeline_identical() {
         dry_run: true,
         new_version: None,
         no_authors: false,
-        exclude_authors: vec![],
+        exclude_authors: vec![].into(),
         hide_author_email: false,
         clean: false,
         sign: false,

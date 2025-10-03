@@ -23,7 +23,7 @@ fn format_hash_bitbucket() {
         owner: "o".into(),
         name: "r".into(),
         provider: Provider::Bitbucket,
-        original: String::new(),
+        original: String::new().into(),
     };
     let s = format_reference(Some(&repo), ReferenceKind::Hash, "abcdef1");
     assert_eq!(s, "[abcdef1](https://bitbucket.org/o/r/commits/abcdef1)");
@@ -48,7 +48,7 @@ fn compare_links() {
         owner: "o".into(),
         name: "r".into(),
         provider: Provider::Bitbucket,
-        original: String::new(),
+        original: String::new().into(),
     };
     let cmp_bb = format_compare_changes(Some("v1.2.0"), "v1.1.0", "deadbeef", Some(&bb)).unwrap();
     assert_eq!(

@@ -1,3 +1,4 @@
+use ecow::{EcoString, EcoVec};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, instrument, warn};
 
@@ -5,8 +6,8 @@ use crate::repository::Repository;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReleaseInfo {
-    pub tag: String,
-    pub url: String,
+    pub tag: EcoString,
+    pub url: EcoString,
     pub created: bool,
     pub updated: bool,
     pub skipped: bool,
@@ -14,8 +15,8 @@ pub struct ReleaseInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitHubUser {
-    pub login: String,
-    pub email: Option<String>,
+    pub login: EcoString,
+    pub email: Option<EcoString>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -38,7 +39,7 @@ pub async fn get_username_from_email(
     email: &str,
     token: Option<&str>,
     api_base: Option<&str>,
-) -> Result<Option<String>, GithubError> {
+) -> Result<Option<EcoString>, GithubError> {
     let Some(token) = token else {
         return Ok(None); // No token, can't query API
     };
@@ -68,7 +69,7 @@ pub async fn get_username_from_email(
 
     #[derive(Deserialize)]
     struct SearchResult {
-        items: Vec<GitHubUser>,
+        items: EcoVec<GitHubUser>,
     }
 
     let result: SearchResult = resp
@@ -77,7 +78,7 @@ pub async fn get_username_from_email(
         .map_err(|e| GithubError::Network(e.to_string()))?;
 
     if let Some(user) = result.items.first() {
-        Ok(Some(format!("@{}", user.login)))
+        Ok(Some(format!("@{}", user.login).into()))
     } else {
         Ok(None)
     }
@@ -104,8 +105,8 @@ pub async fn sync_release(
     let Some(token) = token else {
         // No token -> fallback manual URL, mark skipped
         return Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: manual_url,
+            tag: tag.into(),
+            url: manual_url.into(),
             created: false,
             updated: false,
             skipped: true,
@@ -161,8 +162,8 @@ pub async fn sync_release(
             .await
             .map_err(|e| GithubError::Network(e.to_string()))?;
         Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: data.html_url,
+            tag: tag.into(),
+            url: data.html_url.into(),
             created: true,
             updated: false,
             skipped: false,
@@ -195,8 +196,8 @@ pub async fn sync_release(
             warn!(status = %resp.status(), "github update release failed");
         }
         Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: data.html_url,
+            tag: tag.into(),
+            url: data.html_url.into(),
             created: false,
             updated: true,
             skipped: false,
@@ -205,8 +206,8 @@ pub async fn sync_release(
         warn!(status = %existing.status(), "github get release unexpected status");
         // fallback manual
         Ok(ReleaseInfo {
-            tag: tag.to_string(),
-            url: manual_url,
+            tag: tag.into(),
+            url: manual_url.into(),
             created: false,
             updated: false,
             skipped: true,

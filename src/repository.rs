@@ -1,3 +1,4 @@
+use ecow::EcoString;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -10,11 +11,11 @@ pub enum Provider {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Repository {
-    pub host: String,
-    pub owner: String,
-    pub name: String,
+    pub host: EcoString,
+    pub owner: EcoString,
+    pub name: EcoString,
     pub provider: Provider,
-    pub original: String,
+    pub original: EcoString,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -29,7 +30,7 @@ impl Repository {
         // Try SSH: git@host:owner/name(.git)
         if let Some(rest) = remote.strip_prefix("git@") {
             let mut parts = rest.splitn(2, ':');
-            let host = parts.next()?.to_string();
+            let host = parts.next()?.into();
             let path = parts.next()?;
             return Self::from_host_path(host, path, remote);
         }
@@ -37,28 +38,28 @@ impl Repository {
         if let Some(stripped) = remote.strip_prefix("ssh://git@")
             && let Some((host, path)) = stripped.split_once('/')
         {
-            return Self::from_host_path(host.to_string(), path, remote);
+            return Self::from_host_path(host.into(), path, remote);
         }
         // HTTPS: https://host/owner/name(.git)
         if let Some(stripped) = remote.strip_prefix("https://")
             && let Some((host, path)) = stripped.split_once('/')
         {
-            return Self::from_host_path(host.to_string(), path, remote);
+            return Self::from_host_path(host.into(), path, remote);
         }
         // HTTP (rare)
         if let Some(stripped) = remote.strip_prefix("http://")
             && let Some((host, path)) = stripped.split_once('/')
         {
-            return Self::from_host_path(host.to_string(), path, remote);
+            return Self::from_host_path(host.into(), path, remote);
         }
         None
     }
 
-    fn from_host_path(host: String, path: &str, original: &str) -> Option<Self> {
+    fn from_host_path(host: EcoString, path: &str, original: &str) -> Option<Self> {
         let path = path.trim_end_matches('/').trim_end_matches(".git");
         let mut segs = path.split('/');
-        let owner = segs.next()?.to_string();
-        let name = segs.next()?.to_string();
+        let owner = segs.next()?.into();
+        let name = segs.next()?.into();
         if segs.next().is_some() {
             return None;
         } // extra segments unsupported (subgroups future)
@@ -73,103 +74,115 @@ impl Repository {
             owner,
             name,
             provider,
-            original: original.to_string(),
+            original: original.into(),
         })
     }
 
-    pub fn commit_url(&self, sha: &str) -> String {
+    pub fn commit_url(&self, sha: &str) -> EcoString {
         match self.provider {
             Provider::GitHub | Provider::GitLab => format!(
                 "https://{}/{}/{}/commit/{}",
                 self.host, self.owner, self.name, sha
-            ),
+            )
+            .into(),
             Provider::Bitbucket => format!(
                 "https://{}/{}/{}/commits/{}",
                 self.host, self.owner, self.name, sha
-            ),
-            Provider::Other => String::new(),
+            )
+            .into(),
+            Provider::Other => EcoString::new(),
         }
     }
-    pub fn tag_url(&self, tag: &str) -> String {
+    pub fn tag_url(&self, tag: &str) -> EcoString {
         match self.provider {
             Provider::GitHub | Provider::GitLab => format!(
                 "https://{}/{}/{}/releases/tag/{}",
                 self.host, self.owner, self.name, tag
-            ),
+            )
+            .into(),
             Provider::Bitbucket => format!(
                 "https://{}/{}/{}/src/{}",
                 self.host, self.owner, self.name, tag
-            ),
-            Provider::Other => String::new(),
+            )
+            .into(),
+            Provider::Other => EcoString::new(),
         }
     }
-    pub fn issue_url(&self, num: u64) -> String {
+    pub fn issue_url(&self, num: u64) -> EcoString {
         match self.provider {
             Provider::GitHub | Provider::GitLab => format!(
                 "https://{}/{}/{}/issues/{}",
                 self.host, self.owner, self.name, num
-            ),
+            )
+            .into(),
             Provider::Bitbucket => format!(
                 "https://{}/{}/{}/issues/{}",
                 self.host, self.owner, self.name, num
-            ),
-            Provider::Other => String::new(),
+            )
+            .into(),
+            Provider::Other => EcoString::new(),
         }
     }
-    pub fn pr_url(&self, num: u64) -> String {
+    pub fn pr_url(&self, num: u64) -> EcoString {
         match self.provider {
             Provider::GitHub => format!(
                 "https://{}/{}/{}/pull/{}",
                 self.host, self.owner, self.name, num
-            ),
+            )
+            .into(),
             Provider::GitLab => format!(
                 "https://{}/{}/{}/merge_requests/{}",
                 self.host, self.owner, self.name, num
-            ),
+            )
+            .into(),
             Provider::Bitbucket => format!(
                 "https://{}/{}/{}/pull-requests/{}",
                 self.host, self.owner, self.name, num
-            ),
-            Provider::Other => String::new(),
+            )
+            .into(),
+            Provider::Other => EcoString::new(),
         }
     }
-    pub fn compare_url(&self, base: &str, head: &str) -> String {
+    pub fn compare_url(&self, base: &str, head: &str) -> EcoString {
         match self.provider {
             Provider::GitHub | Provider::GitLab => format!(
                 "https://{}/{}/{}/compare/{}...{}",
                 self.host, self.owner, self.name, base, head
-            ),
+            )
+            .into(),
             Provider::Bitbucket => format!(
                 "https://{}/{}/{}/branches/compare/{}..{}",
                 self.host, self.owner, self.name, head, base
-            ),
-            Provider::Other => String::new(),
+            )
+            .into(),
+            Provider::Other => EcoString::new(),
         }
     }
 }
 
-pub fn format_reference(repo: Option<&Repository>, kind: ReferenceKind, raw: &str) -> String {
+pub fn format_reference(repo: Option<&Repository>, kind: ReferenceKind, raw: &str) -> EcoString {
     let Some(r) = repo else {
-        return raw.to_string();
+        return raw.into();
     };
     let (segment, display) = match kind {
         ReferenceKind::PullRequest => match r.provider {
             Provider::GitHub => ("pull", raw.trim_start_matches('#')),
             Provider::GitLab => ("merge_requests", raw.trim_start_matches('#')),
             Provider::Bitbucket => ("pull-requests", raw.trim_start_matches('#')),
-            Provider::Other => return raw.to_string(),
+            Provider::Other => return raw.into(),
         },
         ReferenceKind::Issue => ("issues", raw.trim_start_matches('#')),
         ReferenceKind::Hash => match r.provider {
             Provider::GitHub | Provider::GitLab => ("commit", raw),
             Provider::Bitbucket => ("commits", raw),
-            Provider::Other => return raw.to_string(),
+            Provider::Other => return raw.into(),
         },
     };
     format!(
         "[{}](https://{}/{}/{}/{}/{})",
         raw, r.host, r.owner, r.name, segment, display
     )
+    .into()
 }
 
 pub fn format_compare_changes(
@@ -177,7 +190,7 @@ pub fn format_compare_changes(
     from: &str,
     to: &str,
     repo: Option<&Repository>,
-) -> Option<String> {
+) -> Option<EcoString> {
     let r = repo?;
     let head = v.unwrap_or(to);
     let url = match r.provider {
@@ -191,7 +204,7 @@ pub fn format_compare_changes(
         ),
         Provider::Other => return None,
     };
-    Some(format!("[compare changes]({})", url))
+    Some(format!("[compare changes]({})", url).into())
 }
 
 impl fmt::Display for Repository {

@@ -5,6 +5,7 @@ use crate::{
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_complete;
+use ecow::EcoVec;
 
 pub use crate::cli_def::{Cli, Commands, Completions};
 
@@ -35,12 +36,12 @@ pub fn run() -> Result<ExitCode> {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
                 cwd,
-                from,
-                to,
+                from: from.map(|s| s.into()),
+                to: to.map(|s| s.into()),
                 dry_run: true,
                 new_version: parsed_new,
                 no_authors: true,
-                exclude_authors: vec![],
+                exclude_authors: EcoVec::new(),
                 hide_author_email: false,
                 clean: false,
                 sign: false,
@@ -76,18 +77,18 @@ pub fn run() -> Result<ExitCode> {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
                 cwd: cwd.clone(),
-                from,
-                to,
+                from: from.map(|s| s.into()),
+                to: to.map(|s| s.into()),
                 dry_run: !write,
                 new_version: parsed_new,
                 no_authors,
-                exclude_authors: exclude_author,
+                exclude_authors: exclude_author.into_iter().map(|s| s.into()).collect(),
                 hide_author_email,
                 clean,
                 sign,
                 yes,
                 github_alias: !no_github_alias,
-                github_token,
+                github_token: github_token.map(|s| s.into()),
             })?;
             if let Some(path) = output {
                 std::fs::write(&path, outcome.version.to_string())?;
@@ -136,18 +137,18 @@ pub fn run() -> Result<ExitCode> {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
             let outcome = run_release(ReleaseOptions {
                 cwd: cwd.clone(),
-                from,
-                to,
+                from: from.map(|s| s.into()),
+                to: to.map(|s| s.into()),
                 dry_run,
                 new_version: parsed_new,
                 no_authors,
-                exclude_authors: exclude_author,
+                exclude_authors: exclude_author.into_iter().map(|s| s.into()).collect(),
                 hide_author_email,
                 clean,
                 sign,
                 yes,
                 github_alias: !no_github_alias,
-                github_token,
+                github_token: github_token.map(|s| s.into()),
             })?;
             if outcome.wrote {
                 println!("Released v{}", outcome.version);

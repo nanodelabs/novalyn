@@ -26,7 +26,7 @@ fn extracts_multiple_issues_grouped_and_body() {
         "fix(parser): handle edge (#12, #34)",
         "Implements fix refs #56 #78\n\nFooter: note\nBREAKING CHANGE: behaviour changed significantly\n    Additional explanation line\nAnother: value",
     );
-    let parsed = parse_and_classify(vec![c], &cfg);
+    let parsed = parse_and_classify(vec![c].into(), &cfg);
     assert_eq!(parsed[0].issues, vec![12, 34, 56, 78]);
     assert!(parsed[0].breaking, "breaking change detected via footer");
     // Multi-line not yet captured; just ensure footer exists for now

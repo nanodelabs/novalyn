@@ -7,7 +7,7 @@ fn mk(summary: &str) -> RawCommit {
         id: "x".into(),
         short_id: "x".into(),
         summary: summary.into(),
-        body: String::new(),
+        body: String::new().into(),
         author_name: "A".into(),
         author_email: "a@b.c".into(),
         timestamp: 0,
@@ -27,7 +27,7 @@ fn filters_chore_deps_variants() {
         mk("chore(deps-dev): bump dev"),
         mk("chore(other): keep"),
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
     assert_eq!(parsed.len(), 1, "only chore(other) should remain");
     assert_eq!(parsed[0].raw.summary, "chore(other): keep");
 }
@@ -41,7 +41,7 @@ fn keeps_breaking_chore_deps() {
     })
     .unwrap();
     let commits = vec![mk("chore(deps)!: major bump")];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
     assert_eq!(parsed.len(), 1);
     assert!(parsed[0].breaking);
 }

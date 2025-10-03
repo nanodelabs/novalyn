@@ -14,7 +14,7 @@ fn mk_commit(name: &str, email: &str, co_authors: &[&str]) -> RawCommit {
         id: "x".into(),
         short_id: "x".into(),
         summary: "feat: test".into(),
-        body,
+        body: body.into(),
         author_name: name.into(),
         author_email: email.into(),
         timestamp: 0,
@@ -34,7 +34,7 @@ fn test_author_collection_basic() {
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Bob", "bob@example.com", &[]),
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
@@ -57,7 +57,7 @@ fn test_author_deduplication() {
         mk_commit("Alice", "alice@example.com", &[]), // duplicate
         mk_commit("Bob", "bob@example.com", &[]),
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
@@ -78,7 +78,7 @@ fn test_author_exclusion_by_name() {
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Bot", "bot@example.com", &[]),
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions {
         exclude: EcoVec::from(vec![EcoString::from("Bot")]),
@@ -103,7 +103,7 @@ fn test_author_exclusion_by_email() {
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Bot", "bot@automation.com", &[]),
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions {
         exclude: EcoVec::from(vec![EcoString::from("bot@automation.com")]),
@@ -125,7 +125,7 @@ fn test_hide_author_email() {
     .unwrap();
 
     let commits = vec![mk_commit("Alice", "alice@example.com", &[])];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions {
         hide_author_email: true,
@@ -147,7 +147,7 @@ fn test_no_authors_suppression() {
     .unwrap();
 
     let commits = vec![mk_commit("Alice", "alice@example.com", &[])];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions {
         no_authors: true,
@@ -174,8 +174,10 @@ fn test_co_authors_parsing() {
         &["Co-authored-by: Charlie <charlie@x.com>"],
     )];
     // Need to add the co-author line to the body correctly
-    commits[0].body = "Co-authored-by: Charlie <charlie@x.com>\n".to_string();
-    let parsed = parse_and_classify(commits, &cfg);
+    commits[0].body = "Co-authored-by: Charlie <charlie@x.com>\n"
+        .to_string()
+        .into();
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
@@ -197,7 +199,7 @@ fn test_author_aliasing() {
         mk_commit("Alice", "alice@example.com", &[]),
         mk_commit("Alice Smith", "alice@example.com", &[]), // Different name, same email
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let mut opts = AuthorOptions::default();
     opts.aliases
@@ -223,7 +225,7 @@ fn test_unicode_normalization() {
         mk_commit("José", "jose@example.com", &[]), // é as single character
         mk_commit("José", "jose@example.com", &[]), // é as combining characters
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);
@@ -242,7 +244,7 @@ fn test_empty_email_handling() {
     .unwrap();
 
     let commits = vec![mk_commit("Alice", "", &[])]; // Empty email
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
 
     let opts = AuthorOptions::default();
     let authors = Authors::collect(&parsed, &opts);

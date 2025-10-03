@@ -9,7 +9,7 @@ fn mk(summary: &str) -> RawCommit {
         id: "x".into(),
         short_id: "x".into(),
         summary: summary.into(),
-        body: String::new(),
+        body: String::new().into(),
         author_name: "A".into(),
         author_email: "a@b.c".into(),
         timestamp: 0,
@@ -24,7 +24,7 @@ fn bump_rules_pre_1() {
         cli_overrides: None,
     })
     .unwrap();
-    let commits = parse_and_classify(vec![mk("feat: add"), mk("fix: bug")], &cfg);
+    let commits = parse_and_classify(vec![mk("feat: add"), mk("fix: bug")].into(), &cfg);
     let (new, kind) = infer_version(&Version::parse("0.1.0").unwrap(), &commits, None);
     assert_eq!(new, Version::parse("0.1.1").unwrap());
     assert_eq!(
@@ -42,7 +42,7 @@ fn bump_rules_breaking_pre_1() {
         cli_overrides: None,
     })
     .unwrap();
-    let commits = parse_and_classify(vec![mk("feat!: change")], &cfg);
+    let commits = parse_and_classify(vec![mk("feat!: change")].into(), &cfg);
     let (new, kind) = infer_version(&Version::parse("0.1.0").unwrap(), &commits, None);
     assert_eq!(new, Version::parse("0.2.0").unwrap());
     assert_eq!(kind, BumpKind::Major);
@@ -56,7 +56,7 @@ fn bump_rules_normal() {
         cli_overrides: None,
     })
     .unwrap();
-    let commits = parse_and_classify(vec![mk("feat: add"), mk("fix: bug")], &cfg);
+    let commits = parse_and_classify(vec![mk("feat: add"), mk("fix: bug")].into(), &cfg);
     let (new, kind) = infer_version(&Version::parse("1.1.0").unwrap(), &commits, None);
     assert_eq!(new, Version::parse("1.2.0").unwrap());
     assert_eq!(kind, BumpKind::Minor);

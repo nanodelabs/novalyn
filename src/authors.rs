@@ -90,7 +90,7 @@ impl Authors {
                     get_username_from_email(email.as_str(), Some(token), None).await
                 {
                     // Replace name with GitHub handle
-                    author.name = EcoString::from(handle);
+                    author.name = handle;
                 }
             }
         }
@@ -181,7 +181,7 @@ mod tests {
                 id: "1".into(),
                 short_id: "1".into(),
                 summary: "feat: something".into(),
-                body: String::new(),
+                body: String::new().into(),
                 author_name: name.into(),
                 author_email: email.into(),
                 timestamp: 0,
@@ -189,11 +189,11 @@ mod tests {
             r#type: "feat".into(),
             scope: None,
             description: "something".into(),
-            body: String::new(),
-            footers: vec![],
+            body: String::new().into(),
+            footers: vec![].into(),
             breaking: false,
-            issues: vec![],
-            co_authors: co.iter().map(|s| s.to_string()).collect(),
+            issues: vec![].into(),
+            co_authors: co.iter().map(|s| EcoString::from(*s)).collect(),
             type_cfg: None,
             index: 0,
         }

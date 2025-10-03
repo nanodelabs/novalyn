@@ -7,7 +7,7 @@ fn mk(summary: &str) -> RawCommit {
         id: "x".into(),
         short_id: "x".into(),
         summary: summary.into(),
-        body: String::new(),
+        body: String::new().into(),
         author_name: "A".into(),
         author_email: "a@b.c".into(),
         timestamp: 0,
@@ -21,7 +21,7 @@ fn scope_mapping_replacement_and_removal() {
         scope_map: Some({
             let mut m = std::collections::BTreeMap::new();
             m.insert("core".into(), "runtime".into()); // replacement
-            m.insert("temp".into(), String::new()); // removal
+            m.insert("temp".into(), String::new().into()); // removal
             m
         }),
         ..Default::default()
@@ -36,7 +36,7 @@ fn scope_mapping_replacement_and_removal() {
         mk("fix(temp): fix"),
         mk("docs(other): doc"),
     ];
-    let parsed = parse_and_classify(commits, &cfg);
+    let parsed = parse_and_classify(commits.into(), &cfg);
     let mut core_mapped = false;
     let mut temp_removed = false;
     for c in parsed {
