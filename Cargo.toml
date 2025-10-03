@@ -29,7 +29,7 @@ name = "parse_performance"
 anyhow = "1"
 clap = { version = "4", features = ["derive", "wrap_help", "unicode", "env"] }
 demand = "1.7"
-ecow = "0.2"
+ecow = { version = "0.2", features = ["serde"] }
 foldhash = "0.2"
 git-conventional = "0.12"
 # TODO: Switch to gix ecosystem
