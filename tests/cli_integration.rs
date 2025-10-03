@@ -62,8 +62,7 @@ fn cli_generate_no_git_repo() {
     let mut cmd = Command::cargo_bin("changelogen").unwrap();
     cmd.current_dir(temp.path());
     cmd.arg("generate");
-    cmd.assert()
-        .failure();
+    cmd.assert().failure();
 }
 
 #[test]
@@ -72,14 +71,12 @@ fn cli_release_no_git_repo() {
     let mut cmd = Command::cargo_bin("changelogen").unwrap();
     cmd.current_dir(temp.path());
     cmd.arg("release");
-    cmd.assert()
-        .failure();
+    cmd.assert().failure();
 }
 
 #[test]
 fn cli_shell_completion_bash() {
     let mut cmd = Command::cargo_bin("changelogen").unwrap();
     cmd.arg("completions").arg("bash");
-    cmd.assert()
-        .success();
+    cmd.assert().success();
 }
