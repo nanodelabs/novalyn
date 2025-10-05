@@ -1,4 +1,4 @@
-# justfile for changelogen-rs development
+# justfile for novalyn development
 
 tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-codspeed cargo-insta"
 
@@ -111,4 +111,4 @@ watch:
 # Create a release build and run the binary
 release:
     cargo build --release
-    @echo "{{ BLUE + BOLD }}Release binary:{{ NORMAL }} {{ UNDERLINE + CYAN }}target/release/changelogen{{ NORMAL }}"
+    @echo "{{ BLUE + BOLD }}Release binary:{{ NORMAL }} {{ UNDERLINE + CYAN }}target/release/novalyn{{ NORMAL }}"

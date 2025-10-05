@@ -54,7 +54,7 @@ pub fn parse_and_classify(
     commits: EcoVec<RawCommit>,
     cfg: &ResolvedConfig,
 ) -> EcoVec<ParsedCommit> {
-    let threshold = std::env::var("CHANGELOGEN_PARALLEL_THRESHOLD")
+    let threshold = std::env::var("NOVALYN_PARALLEL_THRESHOLD")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(50);

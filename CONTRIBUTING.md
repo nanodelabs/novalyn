@@ -1,6 +1,6 @@
-# Contributing to changelogen-rs
+# Contributing to novalyn
 
-Thank you for your interest in contributing to changelogen-rs! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to novalyn! This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -25,8 +25,8 @@ Thank you for your interest in contributing to changelogen-rs! This document pro
 ### Clone and Build
 
 ```bash
-git clone https://github.com/MuntasirSZN/changelogen-rs
-cd changelogen-rs
+git clone https://github.com/nanodelabs/novalyn
+cd novalyn
 cargo build --all --locked
 ```
 
@@ -282,16 +282,16 @@ The tool can bump its own version! Use the `release` command:
 
 ```bash
 # Dry run first to preview
-changelogen release --dry-run
+novalyn release --dry-run
 
 # Create release with automatic version bump
-changelogen release
+novalyn release
 
 # Or specify explicit version
-changelogen release --new-version 1.2.3
+novalyn release --new-version 1.2.3
 
 # With signed tag
-changelogen release --sign
+novalyn release --sign
 ```
 
 This will:
@@ -311,7 +311,7 @@ If you need to release manually:
 vim Cargo.toml  # Bump version field
 
 # 2. Generate changelog
-changelogen generate --write
+novalyn generate --write
 
 # 3. Commit changes
 git add Cargo.toml CHANGELOG.md
@@ -347,10 +347,10 @@ After tagging, create a GitHub release:
 
 ```bash
 # Using the tool (requires GITHUB_TOKEN)
-changelogen github v1.2.3
+novalyn github v1.2.3
 
 # Or manually via GitHub UI
-# 1. Go to https://github.com/MuntasirSZN/changelogen-rs/releases/new
+# 1. Go to https://github.com/nanodelabs/novalyn/releases/new
 # 2. Select tag v1.2.3
 # 3. Copy content from CHANGELOG.md for release notes
 # 4. Publish
@@ -372,8 +372,8 @@ See task 80 (Section 12.5) in [tasks.md](tasks.md) for NAPI-RS integration statu
 
 ### Post-release
 
-1. **Verify installation**: `cargo install changelogen --version 1.2.3`
-1. **Test published crate**: In a new directory, `cargo install changelogen && changelogen --version`
+1. **Verify installation**: `cargo install novalyn --version 1.2.3`
+1. **Test published crate**: In a new directory, `cargo install novalyn && novalyn --version`
 1. **Update documentation**: Ensure README reflects new version capabilities
 1. **Announce**: Create announcement issue/discussion if significant changes
 

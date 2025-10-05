@@ -1,4 +1,4 @@
-use changelogen::git::*;
+use novalyn::git::*;
 use std::fs;
 use tempfile::TempDir;
 

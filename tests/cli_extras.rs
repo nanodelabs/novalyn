@@ -1,9 +1,9 @@
-use changelogen::cli::Cli;
+use novalyn::cli::Cli;
 use clap::Parser;
 
 #[test]
 fn unknown_subcommand_error() {
-    let res = Cli::try_parse_from(["changelogen", "bogus"]);
+    let res = Cli::try_parse_from(["novalyn", "bogus"]);
     assert!(res.is_err());
 }
 

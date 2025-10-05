@@ -1,8 +1,8 @@
 use assert_fs::TempDir;
-use changelogen::authors::{Author, AuthorOptions, Authors};
-use changelogen::config::{LoadOptions, load_config};
-use changelogen::git::RawCommit;
-use changelogen::parse::parse_and_classify;
+use novalyn::authors::{Author, AuthorOptions, Authors};
+use novalyn::config::{LoadOptions, load_config};
+use novalyn::git::RawCommit;
+use novalyn::parse::parse_and_classify;
 use ecow::{EcoString, EcoVec};
 
 fn mk_commit(name: &str, email: &str, co_authors: &[&str]) -> RawCommit {

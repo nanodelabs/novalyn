@@ -1,6 +1,6 @@
 # Performance Documentation
 
-This document tracks the performance characteristics of changelogen-rs and provides benchmark results for key operations.
+This document tracks the performance characteristics of novalyn and provides benchmark results for key operations.
 
 ## Benchmark Suite
 
@@ -167,17 +167,17 @@ Based on the implementation:
 
 ### Parallel Processing Threshold
 
-The `CHANGELOGEN_PARALLEL_THRESHOLD` environment variable controls when to use parallel processing:
+The `NOVALYN_PARALLEL_THRESHOLD` environment variable controls when to use parallel processing:
 
 ```bash
 # Default: 50 commits
-CHANGELOGEN_PARALLEL_THRESHOLD=50 changelogen release
+NOVALYN_PARALLEL_THRESHOLD=50 novalyn release
 
 # Always sequential (useful for debugging)
-CHANGELOGEN_PARALLEL_THRESHOLD=10000 changelogen release
+NOVALYN_PARALLEL_THRESHOLD=10000 novalyn release
 
 # Aggressive parallelism
-CHANGELOGEN_PARALLEL_THRESHOLD=10 changelogen release
+NOVALYN_PARALLEL_THRESHOLD=10 novalyn release
 ```
 
 **Recommendation**: The default threshold of 50 commits provides good balance between:
@@ -274,7 +274,7 @@ valgrind --tool=massif target/release/deps/parse_performance-*
 
 # Time profiling
 cargo build --release
-time ./target/release/changelogen release --dry-run
+time ./target/release/novalyn release --dry-run
 ```
 
 ## CI Performance Tracking

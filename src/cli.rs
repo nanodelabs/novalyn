@@ -23,7 +23,7 @@ pub fn run() -> Result<ExitCode> {
             clap_complete::generate(
                 completions.shell,
                 &mut cmd,
-                "changelogen",
+                "novalyn",
                 &mut std::io::stdout(),
             );
             ExitCode::Success

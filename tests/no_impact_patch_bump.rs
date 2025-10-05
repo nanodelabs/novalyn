@@ -1,6 +1,6 @@
-use changelogen::config::LoadOptions;
-use changelogen::git::RawCommit;
-use changelogen::parse::{BumpKind, infer_version, parse_and_classify};
+use novalyn::config::LoadOptions;
+use novalyn::git::RawCommit;
+use novalyn::parse::{BumpKind, infer_version, parse_and_classify};
 use semver::Version;
 
 fn mk(summary: &str) -> RawCommit {
@@ -18,7 +18,7 @@ fn mk(summary: &str) -> RawCommit {
 #[test]
 fn no_impact_commits_patch_bump() {
     let td = tempfile::tempdir().unwrap();
-    let cfg = changelogen::config::load_config(LoadOptions {
+    let cfg = novalyn::config::load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
     })

@@ -1,5 +1,5 @@
-use changelogen::git::add_and_commit;
-use changelogen::pipeline::{ExitCode, ReleaseOptions, run_release};
+use novalyn::git::add_and_commit;
+use novalyn::pipeline::{ExitCode, ReleaseOptions, run_release};
 use tempfile::TempDir;
 
 fn init_repo() -> (TempDir, git2::Repository) {

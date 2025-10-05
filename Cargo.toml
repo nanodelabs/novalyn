@@ -1,11 +1,11 @@
 [package]
-name = "changelogen"
+name = "novalyn"
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.85"
 description = "💅 Beautiful Changelogs using Conventional Commits"
 readme = "README.md"
-repository = "https://github.com/MuntasirSZN/changelogen-rs"
+repository = "https://github.com/nanodelabs/novalyn"
 license = "MIT"
 keywords = [
   "changelog",
@@ -18,7 +18,7 @@ keywords = [
 categories = ["command-line-utilities", "development-tools"]
 
 [lib]
-name = "changelogen"
+name = "novalyn"
 path = "src/lib.rs"
 
 [[bench]]

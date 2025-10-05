@@ -1,4 +1,4 @@
-use changelogen::{
+use novalyn::{
     config::{ResolvedConfig, default_types},
     git::RawCommit,
     parse::ParsedCommit,

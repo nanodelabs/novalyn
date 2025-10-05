@@ -2,7 +2,7 @@ use clap::{ArgAction, Args, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "changelogen",
+    name = "novalyn",
     version,
     about = "Generate changelogs from conventional commits."
 )]

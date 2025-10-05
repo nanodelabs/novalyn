@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
-use changelogen::config::{LoadOptions, load_config};
-use changelogen::git::RawCommit;
-use changelogen::parse::{BumpKind, infer_version, parse_and_classify};
+use novalyn::config::{LoadOptions, load_config};
+use novalyn::git::RawCommit;
+use novalyn::parse::{BumpKind, infer_version, parse_and_classify};
 use semver::Version;
 
 fn mk(summary: &str) -> RawCommit {

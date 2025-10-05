@@ -1,4 +1,4 @@
-use changelogen::repository::{
+use novalyn::repository::{
     Provider, ReferenceKind, Repository, format_compare_changes, format_reference,
 };
 

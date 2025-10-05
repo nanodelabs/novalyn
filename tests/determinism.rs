@@ -1,9 +1,9 @@
 use assert_fs::TempDir;
-use changelogen::config::{LoadOptions, load_config};
-use changelogen::git::{RawCommit, add_and_commit, create_tag};
-use changelogen::parse::parse_and_classify;
-use changelogen::pipeline::{ReleaseOptions, run_release};
-use changelogen::render::render_release_block;
+use novalyn::config::{LoadOptions, load_config};
+use novalyn::git::{RawCommit, add_and_commit, create_tag};
+use novalyn::parse::parse_and_classify;
+use novalyn::pipeline::{ReleaseOptions, run_release};
+use novalyn::render::render_release_block;
 
 fn create_test_commits() -> Vec<RawCommit> {
     vec![
@@ -89,7 +89,7 @@ fn repeated_render_identical() {
     let prev_version = semver::Version::new(0, 9, 0);
 
     // Render multiple times
-    let ctx1 = changelogen::render::RenderContext {
+    let ctx1 = novalyn::render::RenderContext {
         commits: &parsed,
         version: &version,
         previous_version: Some(&prev_version),
@@ -102,7 +102,7 @@ fn repeated_render_identical() {
 
     let output1 = render_release_block(&ctx1);
 
-    let ctx2 = changelogen::render::RenderContext {
+    let ctx2 = novalyn::render::RenderContext {
         commits: &parsed,
         version: &version,
         previous_version: Some(&prev_version),

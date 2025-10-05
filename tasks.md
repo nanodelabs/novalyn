@@ -1,4 +1,4 @@
-# changelogen-rs Task Breakdown (Parity Port of @unjs/changelogen)
+# novalyn Task Breakdown (Parity Port of @unjs/changelogen)
 
 Purpose: Actionable, ordered task list to implement the Rust parity version (no generic templating; fixed layout). Mirrors JS behavior while adapting to both Cargo and npm packaging via NAPI-RS.\
 Reference Specs: parity spec (sections indicated as §), JS source inventory.
@@ -31,9 +31,9 @@ ______________________________________________________________________
 ## 1. Configuration Layer (§5, §6, §15)
 
 6. [x] Implement defaults map exactly matching JS config.ts (types + emojis + semver).
-1. [x] Support config file `changelogen.toml`.
-1. [x] Support fallback `[package.metadata.changelogen]` in Cargo.toml.
-1. [x] Implement environment token resolution precedence (CHANGELOGEN_TOKENS_GITHUB > GITHUB_TOKEN > GH_TOKEN).
+1. [x] Support config file `novalyn.toml`.
+1. [x] Support fallback `[package.metadata.novalyn]` in Cargo.toml.
+1. [x] Implement environment token resolution precedence (NOVALYN_TOKENS_GITHUB > GITHUB_TOKEN > GH_TOKEN).
 1. [x] Implement overlay merge order: defaults < file(s) < CLI overrides.
 1. [x] Support disabling a type via boolean false (TOML loader logic).
 1. [x] Validate `newVersion` (semver parse).

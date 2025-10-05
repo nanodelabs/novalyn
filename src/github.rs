@@ -56,7 +56,7 @@ pub async fn get_username_from_email(
 
     let resp = client
         .get(&search_url)
-        .header("User-Agent", "changelogen-rs")
+        .header("User-Agent", "novalyn")
         .bearer_auth(token)
         .send()
         .await
@@ -120,7 +120,7 @@ pub async fn sync_release(
     debug!("github_get_tag" = %get_url, "attempting fetch existing release");
     let existing = client
         .get(&get_url)
-        .header("User-Agent", "changelogen-rs")
+        .header("User-Agent", "novalyn")
         .bearer_auth(token)
         .send()
         .await
@@ -144,7 +144,7 @@ pub async fn sync_release(
         };
         let resp = client
             .post(&releases_base)
-            .header("User-Agent", "changelogen-rs")
+            .header("User-Agent", "novalyn")
             .bearer_auth(token)
             .json(&payload)
             .send()
@@ -186,7 +186,7 @@ pub async fn sync_release(
         let patch_url = format!("{}/{}", releases_base, data.id);
         let resp = client
             .patch(&patch_url)
-            .header("User-Agent", "changelogen-rs")
+            .header("User-Agent", "novalyn")
             .bearer_auth(token)
             .json(&UpdateRelease { body })
             .send()

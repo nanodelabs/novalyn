@@ -1,6 +1,6 @@
-use changelogen::config::{LoadOptions, load_config};
-use changelogen::git::RawCommit;
-use changelogen::parse::parse_and_classify;
+use novalyn::config::{LoadOptions, load_config};
+use novalyn::git::RawCommit;
+use novalyn::parse::parse_and_classify;
 use std::env;
 use tempfile::TempDir;
 
@@ -34,13 +34,13 @@ fn parallel_vs_sequential_identical_output() {
 
     // Test sequential processing
     unsafe {
-        env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "1000"); // Force sequential
+        env::set_var("NOVALYN_PARALLEL_THRESHOLD", "1000"); // Force sequential
     }
     let sequential_result = parse_and_classify(commits.clone().into(), &cfg);
 
     // Test parallel processing
     unsafe {
-        env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "50"); // Force parallel
+        env::set_var("NOVALYN_PARALLEL_THRESHOLD", "50"); // Force parallel
     }
     let parallel_result = parse_and_classify(commits.into(), &cfg);
 
@@ -56,7 +56,7 @@ fn parallel_vs_sequential_identical_output() {
 
     // Clean up env var
     unsafe {
-        env::remove_var("CHANGELOGEN_PARALLEL_THRESHOLD");
+        env::remove_var("NOVALYN_PARALLEL_THRESHOLD");
     }
 }
 
@@ -71,7 +71,7 @@ fn parallel_threshold_respected() {
 
     // Set high threshold to force sequential mode
     unsafe {
-        env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "200");
+        env::set_var("NOVALYN_PARALLEL_THRESHOLD", "200");
     }
     let commits = create_test_commits(10);
     let result = parse_and_classify(commits.into(), &cfg);
@@ -80,6 +80,6 @@ fn parallel_threshold_respected() {
     assert!(result.len() <= 10); // Some commits might be filtered
 
     unsafe {
-        env::remove_var("CHANGELOGEN_PARALLEL_THRESHOLD");
+        env::remove_var("NOVALYN_PARALLEL_THRESHOLD");
     }
 }

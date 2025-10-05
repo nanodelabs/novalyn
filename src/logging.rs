@@ -9,7 +9,7 @@ pub fn init(verbosity: usize) {
         2 => "debug",
         _ => "trace",
     };
-    let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| format!("changelogen={level}"));
+    let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| format!("novalyn={level}"));
     let _ = tracing_subscriber::registry()
         .with(EnvFilter::new(filter))
         .with(fmt::layer().with_target(true))

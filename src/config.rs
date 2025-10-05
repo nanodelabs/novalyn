@@ -120,18 +120,18 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     let mut raw_stack: Vec<RawConfig> = Vec::new();
 
     // defaults placeholder (empty RawConfig means rely on default types below)
-    // 1. changelogen.toml
-    if let Some(path) = find_file(opts.cwd, "changelogen.toml") {
+    // 1. novalyn.toml
+    if let Some(path) = find_file(opts.cwd, "novalyn.toml") {
         match load_file(&path) {
             Ok(rc) => {
                 source_file = Some(path.clone());
                 raw_stack.push(rc);
             }
-            Err(e) => warnings.push(format!("Failed to load changelogen.toml: {e}").into()),
+            Err(e) => warnings.push(format!("Failed to load novalyn.toml: {e}").into()),
         }
     }
 
-    // 2. Cargo.toml [package.metadata.changelogen]
+    // 2. Cargo.toml [package.metadata.novalyn]
     if let Some(cargo_path) = find_file(opts.cwd, "Cargo.toml") {
         match fs::read_to_string(&cargo_path) {
             Ok(s) => {
@@ -279,19 +279,19 @@ fn extract_metadata_block(cargo_toml: &str, warnings: &mut EcoVec<EcoString>) ->
     };
     if let Some(pkg) = doc.get("package")
         && let Some(meta) = pkg.get("metadata")
-        && let Some(cl) = meta.get("changelogen")
+        && let Some(cl) = meta.get("novalyn")
     {
         let cl_str = cl.to_string();
         return match toml_edit::de::from_str::<RawConfig>(&cl_str.to_string()) {
             Ok(rc) => {
                 // ensure we deserialized a table
                 if rc.types_override.is_none() && !cl.is_table() {
-                    warnings.push("metadata.changelogen not a table".into());
+                    warnings.push("metadata.novalyn not a table".into());
                 }
                 Some(rc)
             }
             Err(e) => {
-                warnings.push(format!("Failed to parse metadata.changelogen: {e}").into());
+                warnings.push(format!("Failed to parse metadata.novalyn: {e}").into());
                 None
             }
         };
@@ -300,7 +300,7 @@ fn extract_metadata_block(cargo_toml: &str, warnings: &mut EcoVec<EcoString>) ->
 }
 
 fn resolve_github_token() -> Option<EcoString> {
-    for key in ["CHANGELOGEN_TOKENS_GITHUB", "GITHUB_TOKEN", "GH_TOKEN"] {
+    for key in ["NOVALYN_TOKENS_GITHUB", "GITHUB_TOKEN", "GH_TOKEN"] {
         if let Ok(v) = std::env::var(key)
             && !v.is_empty()
         {
@@ -312,7 +312,7 @@ fn resolve_github_token() -> Option<EcoString> {
 
 pub fn log_warnings(cfg: &ResolvedConfig) {
     for w in &cfg.warnings {
-        warn!(target = "changelogen::config", "{w}");
+        warn!(target = "novalyn::config", "{w}");
     }
 }
 

@@ -1,8 +1,8 @@
-# Copilot Instructions for changelogen-rs
+# Copilot Instructions for novalyn
 
 ## Project Overview
 
-This is changelogen-rs, a Rust implementation of the `@unjs/changelogen` JavaScript library. The goal is to create a **parity port** that generates identical changelog output while leveraging Rust's performance and safety benefits.
+This is novalyn, a Rust implementation of the `@unjs/changelogen` JavaScript library. The goal is to create a **parity port** that generates identical changelog output while leveraging Rust's performance and safety benefits.
 
 ### Key Characteristics
 
@@ -10,7 +10,7 @@ This is changelogen-rs, a Rust implementation of the `@unjs/changelogen` JavaScr
 - **Changelog generation**: Parses conventional commits and generates beautiful markdown changelogs
 - **CLI tool**: Built with clap for command-line usage
 - **Git integration**: Uses git2 for repository operations
-- **Configuration-driven**: Supports `changelogen.toml` and `Cargo.toml` metadata
+- **Configuration-driven**: Supports `novalyn.toml` and `Cargo.toml` metadata
 
 ## Development Workflow
 
@@ -92,8 +92,8 @@ Make sure it follows the conventional commits specification at <https://www.conv
 
 ### Supported Formats
 
-1. `changelogen.toml` in project root
-1. `[package.metadata.changelogen]` in `Cargo.toml`
+1. `novalyn.toml` in project root
+1. `[package.metadata.novalyn]` in `Cargo.toml`
 1. CLI arguments (highest precedence)
 
 ### Environment Variables

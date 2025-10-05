@@ -1,5 +1,5 @@
-use changelogen::github::sync_release;
-use changelogen::repository::Repository;
+use novalyn::github::sync_release;
+use novalyn::repository::Repository;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -10,7 +10,7 @@ mod wiremock_helpers {
 
     pub fn setup() {
         INIT.call_once(|| {
-            changelogen::init_crypto_provider();
+            novalyn::init_crypto_provider();
         });
     }
 }

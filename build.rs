@@ -13,7 +13,7 @@ fn main() -> std::io::Result<()> {
     fs::create_dir_all(&completion_out_dir)?;
 
     for shell in Shell::value_variants() {
-        generate_to(*shell, &mut cmd, "changelogen", &completion_out_dir)?;
+        generate_to(*shell, &mut cmd, "novalyn", &completion_out_dir)?;
     }
 
     let man_out_dir = Path::new(&var("OUT_DIR").unwrap()).join("man");

@@ -1,6 +1,6 @@
-use changelogen::config::{LoadOptions, load_config};
-use changelogen::git::RawCommit;
-use changelogen::parse::parse_and_classify;
+use novalyn::config::{LoadOptions, load_config};
+use novalyn::git::RawCommit;
+use novalyn::parse::parse_and_classify;
 use divan::{AllocProfiler, Bencher};
 use mimalloc_safe::MiMalloc;
 use std::env;
@@ -53,7 +53,7 @@ fn parse_sequential(bencher: Bencher, size: usize) {
     bencher
         .with_inputs(|| {
             unsafe {
-                env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10000");
+                env::set_var("NOVALYN_PARALLEL_THRESHOLD", "10000");
             } // Force sequential
             commits.clone()
         })
@@ -74,7 +74,7 @@ fn parse_parallel(bencher: Bencher, size: usize) {
     bencher
         .with_inputs(|| {
             unsafe {
-                env::set_var("CHANGELOGEN_PARALLEL_THRESHOLD", "10");
+                env::set_var("NOVALYN_PARALLEL_THRESHOLD", "10");
             } // Force parallel
             commits.clone()
         })
@@ -97,7 +97,7 @@ fn version_inference(bencher: Bencher, size: usize) {
     bencher
         .with_inputs(|| (previous_version.clone(), parsed.clone()))
         .bench_values(|(prev_version, parsed_commits)| {
-            changelogen::parse::infer_version(&prev_version, &parsed_commits, None)
+            novalyn::parse::infer_version(&prev_version, &parsed_commits, None)
         });
 }
 
@@ -118,7 +118,7 @@ fn render_block(bencher: Bencher, size: usize) {
 
     bencher
         .with_inputs(|| {
-            changelogen::render::RenderContext {
+            novalyn::render::RenderContext {
                 commits: &parsed,
                 version: &current_version,
                 previous_version: Some(&previous_version),
@@ -129,7 +129,7 @@ fn render_block(bencher: Bencher, size: usize) {
                 current_ref: "HEAD",
             }
         })
-        .bench_values(|rc| changelogen::render::render_release_block(&rc));
+        .bench_values(|rc| novalyn::render::render_release_block(&rc));
 }
 
 fn main() {

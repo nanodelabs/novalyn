@@ -1,4 +1,4 @@
-use changelogen::logging;
+use novalyn::logging;
 
 #[test]
 fn smoke_log_initialization() {

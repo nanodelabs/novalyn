@@ -1,6 +1,6 @@
-use changelogen::config::{LoadOptions, RawConfig};
-use changelogen::git::RawCommit;
-use changelogen::parse::parse_and_classify;
+use novalyn::config::{LoadOptions, RawConfig};
+use novalyn::git::RawCommit;
+use novalyn::parse::parse_and_classify;
 
 fn mk(summary: &str) -> RawCommit {
     RawCommit {
@@ -26,7 +26,7 @@ fn scope_mapping_replacement_and_removal() {
         }),
         ..Default::default()
     };
-    let cfg = changelogen::config::load_config(LoadOptions {
+    let cfg = novalyn::config::load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: Some(cli),
     })

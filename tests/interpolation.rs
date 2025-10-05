@@ -1,4 +1,4 @@
-use changelogen::parse::interpolate;
+use novalyn::parse::interpolate;
 use jiff::civil::Date;
 use semver::Version;
 

@@ -1,4 +1,4 @@
-# Parity Spec: changelogen-rs vs @unjs/changelogen
+# Parity Spec: novalyn vs @unjs/changelogen
 
 **Goal**: Achieve output parity (format, ordering, inference) with the JS version while adapting to Rust tooling (Cargo, git2) and keeping a fixed template (no user templating in MVP).
 
@@ -53,26 +53,26 @@ Both implementations use identical default types with same ordering:
 Identical precedence order:
 
 1. **CLI arguments** (highest priority)
-1. **changelogen.toml** in project root
-1. **Cargo.toml** `[package.metadata.changelogen]` section (Rust) / **package.json** (JS)
+1. **novalyn.toml** in project root
+1. **Cargo.toml** `[package.metadata.novalyn]` section (Rust) / **package.json** (JS)
 1. **Defaults** (lowest priority)
 
 **Rust specifics**:
 
 - Uses TOML instead of JSON/JS for configuration files
-- Supports both `changelogen.toml` and `Cargo.toml` embedding
+- Supports both `novalyn.toml` and `Cargo.toml` embedding
 
 ### Environment Variables
 
 Token resolution precedence (identical):
 
-1. `CHANGELOGEN_TOKENS_GITHUB`
+1. `NOVALYN_TOKENS_GITHUB`
 1. `GITHUB_TOKEN`
 1. `GH_TOKEN`
 
 **Additional Rust variable**:
 
-- `CHANGELOGEN_PARALLEL_THRESHOLD`: Control parallel parsing (default: 50)
+- `NOVALYN_PARALLEL_THRESHOLD`: Control parallel parsing (default: 50)
 
 ______________________________________________________________________
 
@@ -324,7 +324,7 @@ ______________________________________________________________________
 | Feature          | JS Version                       | Rust Version                       | Rationale                |
 | ---------------- | -------------------------------- | ---------------------------------- | ------------------------ |
 | Config format    | JS/JSON                          | TOML                               | Rust ecosystem standard  |
-| Config file      | `package.json` or `.changelogrc` | `Cargo.toml` or `changelogen.toml` | Cargo integration        |
+| Config file      | `package.json` or `.changelogrc` | `Cargo.toml` or `novalyn.toml` | Cargo integration        |
 | Parallel parsing | Not available                    | Available (rayon)                  | Performance optimization |
 | Package manager  | npm                              | Cargo (+ npm via NAPI-RS planned)  | Native Rust tooling      |
 

@@ -1,6 +1,6 @@
 use std::fs;
 
-use changelogen::config::{self, LoadOptions, RawConfig};
+use novalyn::config::{self, LoadOptions, RawConfig};
 use insta::assert_yaml_snapshot;
 
 fn temp_dir() -> tempfile::TempDir {
@@ -33,9 +33,9 @@ fn default_config_snapshot() {
 #[test]
 fn precedence_cli_over_file() {
     let dir = temp_dir();
-    // write changelogen.toml overriding feat title
+    // write novalyn.toml overriding feat title
     fs::write(
-        dir.path().join("changelogen.toml"),
+        dir.path().join("novalyn.toml"),
         "[types.feat]\ntitle='Features A'\n",
     )
     .unwrap();
@@ -66,7 +66,7 @@ fn precedence_cli_over_file() {
 #[test]
 fn disabling_type_boolean_false() {
     let dir = temp_dir();
-    fs::write(dir.path().join("changelogen.toml"), "[types]\nfeat=false\n").unwrap();
+    fs::write(dir.path().join("novalyn.toml"), "[types]\nfeat=false\n").unwrap();
     let cfg = config::load_config(LoadOptions {
         cwd: dir.path(),
         cli_overrides: None,
@@ -81,7 +81,7 @@ fn env_token_precedence() {
     let dir = temp_dir();
     // set lower precedence tokens first
     unsafe {
-        std::env::remove_var("CHANGELOGEN_TOKENS_GITHUB");
+        std::env::remove_var("NOVALYN_TOKENS_GITHUB");
         std::env::set_var("GH_TOKEN", "gh_low");
         std::env::set_var("GITHUB_TOKEN", "gh_mid");
     }
@@ -92,7 +92,7 @@ fn env_token_precedence() {
     .unwrap();
     assert_eq!(cfg_mid.github_token.as_deref(), Some("gh_mid"));
     unsafe {
-        std::env::set_var("CHANGELOGEN_TOKENS_GITHUB", "gh_high");
+        std::env::set_var("NOVALYN_TOKENS_GITHUB", "gh_high");
     }
     let cfg_high = config::load_config(LoadOptions {
         cwd: dir.path(),

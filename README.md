@@ -1,8 +1,8 @@
-# changelogen-rs
+# novalyn
 
 💅 **Beautiful Changelogs using Conventional Commits** - Rust port of [@unjs/changelogen](https://github.com/unjs/changelogen)
 
-[![CI](https://github.com/MuntasirSZN/changelogen-rs/workflows/CI/badge.svg)](https://github.com/MuntasirSZN/changelogen-rs/actions)
+[![CI](https://github.com/nanodelabs/novalyn/workflows/CI/badge.svg)](https://github.com/nanodelabs/novalyn/actions)
 
 ## Status
 
@@ -29,21 +29,21 @@ See [tasks.md](tasks.md) for detailed roadmap and implementation status.
 
 ```bash
 # Install from source (cargo publish pending)
-git clone https://github.com/MuntasirSZN/changelogen-rs
-cd changelogen-rs
+git clone https://github.com/nanodelabs/novalyn
+cd novalyn
 cargo install --path .
 
 # Basic usage
-changelogen show                    # Show next version
-changelogen generate                # Generate changelog block  
-changelogen generate --write        # Update CHANGELOG.md
-changelogen release                 # Full release pipeline (tag + changelog)
-changelogen --help                  # See all options
+novalyn show                    # Show next version
+novalyn generate                # Generate changelog block  
+novalyn generate --write        # Update CHANGELOG.md
+novalyn release                 # Full release pipeline (tag + changelog)
+novalyn --help                  # See all options
 ```
 
 ## Configuration
 
-Create `changelogen.toml` in your project root:
+Create `novalyn.toml` in your project root:
 
 ```toml
 # Customize commit types
@@ -65,7 +65,7 @@ semver = "patch"
 github = "${GITHUB_TOKEN}"
 ```
 
-Or use `[package.metadata.changelogen]` in `Cargo.toml`.
+Or use `[package.metadata.novalyn]` in `Cargo.toml`.
 
 ## Differences from JS Version
 
@@ -74,7 +74,7 @@ Or use `[package.metadata.changelogen]` in `Cargo.toml`.
 | Feature                  | JavaScript Version               | Rust Version                       | Notes                                    |
 | ------------------------ | -------------------------------- | ---------------------------------- | ---------------------------------------- |
 | **Configuration**        | JSON/JS files                    | TOML files                         | Rust ecosystem standard                  |
-| **Config location**      | `package.json` or `.changelogrc` | `changelogen.toml` or `Cargo.toml` | Cargo integration                        |
+| **Config location**      | `package.json` or `.changelogrc` | `novalyn.toml` or `Cargo.toml` | Cargo integration                        |
 | **Parallel processing**  | Single-threaded                  | Optional multi-threaded (rayon)    | Performance optimization for large repos |
 | **Package distribution** | npm                              | Cargo (npm via NAPI-RS planned)    | Native Rust tooling                      |
 | **Binary size**          | Node.js required (~50MB+)        | Static binary (~5MB)               | No runtime dependency                    |
@@ -126,7 +126,7 @@ cargo bench
 ### Environment Variables
 
 ```bash
-CHANGELOGEN_PARALLEL_THRESHOLD=50  # Parallel processing threshold (default: 50)
+NOVALYN_PARALLEL_THRESHOLD=50  # Parallel processing threshold (default: 50)
 RUST_LOG=debug                     # Enable debug logging
 GITHUB_TOKEN=xxx                   # GitHub API token for release sync
 ```

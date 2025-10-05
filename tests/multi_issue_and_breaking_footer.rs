@@ -1,6 +1,6 @@
-use changelogen::config::LoadOptions;
-use changelogen::git::RawCommit;
-use changelogen::parse::parse_and_classify;
+use novalyn::config::LoadOptions;
+use novalyn::git::RawCommit;
+use novalyn::parse::parse_and_classify;
 
 fn mk(summary: &str, body: &str) -> RawCommit {
     RawCommit {
@@ -17,7 +17,7 @@ fn mk(summary: &str, body: &str) -> RawCommit {
 #[test]
 fn extracts_multiple_issues_grouped_and_body() {
     let td = tempfile::tempdir().unwrap();
-    let cfg = changelogen::config::load_config(LoadOptions {
+    let cfg = novalyn::config::load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
     })
