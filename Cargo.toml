@@ -84,7 +84,7 @@ clap_mangen = "0.2.29"
 [target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies]
 mimalloc-safe = { version = "0.1.54", default-features = false, features = [
   "extended",
-  "secure",
+  "no_opt_arch",
 ] }
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
