@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       - name: Spell Check Repo
-        uses: crate-ci/typos@master
+        uses: crate-ci/typos@7436548694def3314aacd93ed06c721b1f91ea04 # v1.37.2
