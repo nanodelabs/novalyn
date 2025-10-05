@@ -81,15 +81,15 @@ clap_complete = "4.5.58"
 clap_complete_nushell = "4.5.8"
 clap_mangen = "0.2.29"
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+mimalloc-safe = { version = "0.1.54", default-features = false, features = [
+  "extended",
+] }
+
 [target.'cfg(target_arch = "aarch64")'.dependencies]
 mimalloc-safe = { version = "0.1.54", default-features = false, features = [
   "extended",
   "no_opt_arch",
-] }
-
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-mimalloc-safe = { version = "0.1.54", default-features = false, features = [
-  "extended",
 ] }
 
 [target.'cfg(target_env = "msvc")'.dependencies]
@@ -100,3 +100,9 @@ mimalloc-safe = { version = "0.1.54", default-features = false, features = [
 
 [features]
 default = []
+
+[profile.release]
+opt-level = 3
+strip = "debuginfo"
+lto = "fat"
+codegen-units = 1
