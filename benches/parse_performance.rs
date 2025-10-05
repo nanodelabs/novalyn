@@ -1,13 +1,13 @@
 use divan::{AllocProfiler, Bencher};
-use mimalloc_safe::MiMalloc;
+// use mimalloc_safe::MiMalloc;
 use novalyn::config::{LoadOptions, load_config};
 use novalyn::git::RawCommit;
 use novalyn::parse::parse_and_classify;
 use std::env;
 use tempfile::TempDir;
 
-#[global_allocator]
-static GLOBAL: AllocProfiler<MiMalloc> = AllocProfiler::new(MiMalloc);
+// #[global_allocator]
+// static GLOBAL: AllocProfiler<MiMalloc> = AllocProfiler::new(MiMalloc);
 
 fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
     let commit_types = ["feat", "fix", "docs", "style", "refactor", "test", "chore"];
