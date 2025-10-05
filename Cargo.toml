@@ -37,7 +37,6 @@ git-conventional = "0.12"
 # TODO: Switch to gix ecosystem
 git2 = "0.20"
 jiff = "0.2"
-mimalloc-safe = "0.1.54"
 once_cell = "1"
 rayon = "1"
 regex = "1"
@@ -81,6 +80,23 @@ clap = { version = "4.5.48", features = [
 clap_complete = "4.5.58"
 clap_complete_nushell = "4.5.8"
 clap_mangen = "0.2.29"
+
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+mimalloc-safe = { version = "0.1.54", default-features = false, features = [
+  "extended",
+  "no_opt_arch",
+] }
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+mimalloc-safe = { version = "0.1.54", default-features = false, features = [
+  "extended",
+] }
+
+[target.'cfg(target_env = "msvc")'.dependencies]
+mimalloc-safe = { version = "0.1.54", default-features = false, features = [
+  "extended",
+  "override",
+] }
 
 [features]
 default = []
