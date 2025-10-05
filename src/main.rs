@@ -1,9 +1,9 @@
 #![forbid(unsafe_code)]
 
-// use mimalloc_safe::MiMalloc;
+use mimalloc_safe::MiMalloc;
 
-// #[global_allocator]
-// static GLOBAL: MiMalloc = MiMalloc;
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 pub use novalyn as lib;
 
