@@ -31,7 +31,7 @@ cargo nextest run
 cargo test --doc
 ```
 
-Make sure it follows the conventional commits specification at https://www.conventionalcommits.org/.
+Make sure it follows the conventional commits specification at <https://www.conventionalcommits.org/>.
 
 ### Quality Gates
 
