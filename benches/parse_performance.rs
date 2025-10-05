@@ -1,8 +1,8 @@
+use divan::{AllocProfiler, Bencher};
+use mimalloc_safe::MiMalloc;
 use novalyn::config::{LoadOptions, load_config};
 use novalyn::git::RawCommit;
 use novalyn::parse::parse_and_classify;
-use divan::{AllocProfiler, Bencher};
-use mimalloc_safe::MiMalloc;
 use std::env;
 use tempfile::TempDir;
 

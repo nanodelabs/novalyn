@@ -1,5 +1,5 @@
-use novalyn::cli::Cli;
 use clap::Parser;
+use novalyn::cli::Cli;
 
 #[test]
 fn unknown_subcommand_error() {

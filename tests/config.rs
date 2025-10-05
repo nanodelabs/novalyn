@@ -1,7 +1,7 @@
 use std::fs;
 
-use novalyn::config::{self, LoadOptions, RawConfig};
 use insta::assert_yaml_snapshot;
+use novalyn::config::{self, LoadOptions, RawConfig};
 
 fn temp_dir() -> tempfile::TempDir {
     tempfile::tempdir().unwrap()
