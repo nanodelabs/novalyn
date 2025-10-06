@@ -65,7 +65,7 @@ urlencoding = "2"
 [dev-dependencies]
 assert_cmd = "2"
 assert_fs = "1"
-divan = { package = "codspeed-divan-compat", version = "4.0.2" }
+divan = { package = "codspeed-divan-compat", version = "*" }
 insta = { version = "1", features = ["yaml"] }
 predicates = "3"
 proptest = "1"
