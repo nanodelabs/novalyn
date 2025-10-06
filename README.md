@@ -71,13 +71,13 @@ Or use `[package.metadata.novalyn]` in `Cargo.toml`.
 
 ### Intentional Differences
 
-| Feature                  | JavaScript Version               | Rust Version                       | Notes                                    |
-| ------------------------ | -------------------------------- | ---------------------------------- | ---------------------------------------- |
-| **Configuration**        | JSON/JS files                    | TOML files                         | Rust ecosystem standard                  |
-| **Config location**      | `package.json` or `.changelogrc` | `novalyn.toml` or `Cargo.toml` | Cargo integration                        |
-| **Parallel processing**  | Single-threaded                  | Optional multi-threaded (rayon)    | Performance optimization for large repos |
-| **Package distribution** | npm                              | Cargo (npm via NAPI-RS planned)    | Native Rust tooling                      |
-| **Binary size**          | Node.js required (~50MB+)        | Static binary (~5MB)               | No runtime dependency                    |
+| Feature                  | JavaScript Version               | Rust Version                    | Notes                                    |
+| ------------------------ | -------------------------------- | ------------------------------- | ---------------------------------------- |
+| **Configuration**        | JSON/JS files                    | TOML files                      | Rust ecosystem standard                  |
+| **Config location**      | `package.json` or `.changelogrc` | `novalyn.toml` or `Cargo.toml`  | Cargo integration                        |
+| **Parallel processing**  | Single-threaded                  | Optional multi-threaded (rayon) | Performance optimization for large repos |
+| **Package distribution** | npm                              | Cargo (npm via NAPI-RS planned) | Native Rust tooling                      |
+| **Binary size**          | Node.js required (~50MB+)        | Static binary (~5MB)            | No runtime dependency                    |
 
 ### Parity Guarantees
 

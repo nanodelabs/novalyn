@@ -321,12 +321,12 @@ ______________________________________________________________________
 
 ### Intentional Differences
 
-| Feature          | JS Version                       | Rust Version                       | Rationale                |
-| ---------------- | -------------------------------- | ---------------------------------- | ------------------------ |
-| Config format    | JS/JSON                          | TOML                               | Rust ecosystem standard  |
-| Config file      | `package.json` or `.changelogrc` | `Cargo.toml` or `novalyn.toml` | Cargo integration        |
-| Parallel parsing | Not available                    | Available (rayon)                  | Performance optimization |
-| Package manager  | npm                              | Cargo (+ npm via NAPI-RS planned)  | Native Rust tooling      |
+| Feature          | JS Version                       | Rust Version                      | Rationale                |
+| ---------------- | -------------------------------- | --------------------------------- | ------------------------ |
+| Config format    | JS/JSON                          | TOML                              | Rust ecosystem standard  |
+| Config file      | `package.json` or `.changelogrc` | `Cargo.toml` or `novalyn.toml`    | Cargo integration        |
+| Parallel parsing | Not available                    | Available (rayon)                 | Performance optimization |
+| Package manager  | npm                              | Cargo (+ npm via NAPI-RS planned) | Native Rust tooling      |
 
 ### Must-Have Parity
 

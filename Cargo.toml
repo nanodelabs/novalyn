@@ -33,13 +33,12 @@ clap_complete_nushell = "4.5.8"
 demand = "1.7"
 ecow = { version = "0.2", features = ["serde"] }
 foldhash = "0.2"
-git-conventional = "0.12"
 # TODO: Switch to gix ecosystem
 git2 = "0.20"
 jiff = "0.2"
+memchr = "2"
 once_cell = "1"
 rayon = "1"
-regex = "1"
 reqwest = { version = "0.12", default-features = false, features = [
   "http2",
   "json",
@@ -66,7 +65,7 @@ urlencoding = "2"
 [dev-dependencies]
 assert_cmd = "2"
 assert_fs = "1"
-divan = { package = "codspeed-divan-compat", version = "3.0.5" }
+divan = { package = "codspeed-divan-compat", version = "4.0.2" }
 insta = { version = "1", features = ["yaml"] }
 predicates = "3"
 proptest = "1"

@@ -190,15 +190,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
-name = "bincode"
-version = "1.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "bindgen"
 version = "0.72.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -389,12 +380,13 @@ dependencies = [
 
 [[package]]
 name = "codspeed"
-version = "3.0.5"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35584c5fcba8059780748866387fb97c5a203bcfc563fc3d0790af406727a117"
+checksum = "b520a5f5816577235477565f6fac8e986f490cddfb20e9ecec9eeaed6b97e479"
 dependencies = [
  "anyhow",
- "bincode",
+ "bindgen",
+ "cc",
  "colored",
  "glob",
  "libc",
@@ -407,20 +399,22 @@ dependencies = [
 
 [[package]]
 name = "codspeed-divan-compat"
-version = "3.0.5"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adf64eda57508448d59efd940bad62ede7c50b0d451a150b8d6a0eca642792a6"
+checksum = "eb5cd6de27575283c0a94d9ea44473177909bc94dcc611b632a9ab50df49fd26"
 dependencies = [
+ "clap",
  "codspeed",
  "codspeed-divan-compat-macros",
  "codspeed-divan-compat-walltime",
+ "regex",
 ]
 
 [[package]]
 name = "codspeed-divan-compat-macros"
-version = "3.0.5"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "058167258e819b16a4ba601fdfe270349ef191154758dbce122c62a698f70ba8"
+checksum = "aaa185b62719b4864c0250e98818b8e06f57698dc654375eaecfd0e019ff9e76"
 dependencies = [
  "divan-macros",
  "itertools 0.14.0",
@@ -432,9 +426,9 @@ dependencies = [
 
 [[package]]
 name = "codspeed-divan-compat-walltime"
-version = "3.0.5"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48f9866ee3a4ef9d2868823ea5811886763af244f2df584ca247f49281c43f1f"
+checksum = "211b8944c0477eb89376b08fcfb35e71176ec51f35bed9d6649da542b9a5098b"
 dependencies = [
  "cfg-if",
  "clap",
@@ -831,16 +825,6 @@ name = "gimli"
 version = "0.32.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e629b9b98ef3dd8afe6ca2bd0f89306cec16d43d907889945bc5d6687f2f13c7"
-
-[[package]]
-name = "git-conventional"
-version = "0.12.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6a949b7fcc81df22526032dcddb006e78c8575e47b0e7ba57d9960570a57bc4"
-dependencies = [
- "unicase",
- "winnow",
-]
 
 [[package]]
 name = "git2"
@@ -1443,9 +1427,9 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.29.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46"
+checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -1484,16 +1468,15 @@ dependencies = [
  "demand",
  "ecow",
  "foldhash",
- "git-conventional",
  "git2",
  "insta",
  "jiff",
+ "memchr",
  "mimalloc-safe",
  "once_cell",
  "predicates",
  "proptest",
  "rayon",
- "regex",
  "reqwest",
  "rustls",
  "scc",

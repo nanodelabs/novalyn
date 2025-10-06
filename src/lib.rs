@@ -5,6 +5,7 @@ pub mod changelog;
 pub mod cli;
 pub mod cli_def;
 pub mod config;
+pub mod conventional;
 pub mod error;
 pub mod git;
 pub mod github;
