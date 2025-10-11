@@ -4,3 +4,13 @@
 lcov.info
 *.profraw
 *.profdata
+
+# npm/NAPI artifacts
+node_modules/
+*.node
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+.npm/
+.yarn/
+dist/

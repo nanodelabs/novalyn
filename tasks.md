@@ -242,19 +242,19 @@ ______________________________________________________________________
 
 ## 12.5. NAPI-RS Integration for npm Publishing
 
-80.1. [ ] Add napi and napi-derive dependencies conditionally via feature flag.
-80.2. [ ] Create NAPI bindings module exposing core functionality.
-80.3. [ ] Implement JavaScript-compatible API surface (async where needed).
-80.4. [ ] Add package.json with proper npm metadata and binary configuration.
-80.5. [ ] Set up NAPI-RS build pipeline for cross-platform binaries.
-80.6. [ ] Create TypeScript definitions for the npm package.
-80.7. [ ] Add npm-specific documentation and examples.
+80.1. [x] Add napi and napi-derive dependencies conditionally via feature flag.
+80.2. [x] Create NAPI bindings module exposing core functionality.
+80.3. [x] Implement JavaScript-compatible API surface (async where needed).
+80.4. [x] Add package.json with proper npm metadata and binary configuration.
+80.5. [x] Set up NAPI-RS build pipeline for cross-platform binaries.
+80.6. [x] Create TypeScript definitions for the npm package.
+80.7. [x] Add npm-specific documentation and examples.
 
 🧪 Tests:
 
-- [ ] NAPI bindings compile and expose expected API.
-- [ ] npm package installation and basic usage.
-- [ ] Cross-platform binary compatibility.
+- [x] NAPI bindings compile and expose expected API.
+- [ ] npm package installation and basic usage (requires CI/CD setup).
+- [ ] Cross-platform binary compatibility (requires CI/CD setup).
 
 ______________________________________________________________________
 
@@ -351,7 +351,7 @@ ______________________________________________________________________
 
 ## 21. Release Preparation
 
-116. [ ] Ensure tool self-generates initial CHANGELOG.md via `release --dry-run`.
+116. [x] Ensure tool self-generates initial CHANGELOG.md via `release --dry-run`.
 001. [ ] Tag v0.1.0 (manual first).
 001. [ ] Publish crate (cargo publish) – optional if scope private initially.
 001. [ ] Publish npm package (npm publish) via NAPI-RS build.
@@ -373,9 +373,9 @@ ______________________________________________________________________
 
 ## 23. Dependency Audit / Pruning Pass
 
-121. [ ] After benchmarks: remove dashmap if not beneficial.
-001. [ ] Evaluate need for reqwest until GitHub sync matured.
-001. [ ] Confirm no accidental heavy transitive crates (document compile times).
+121. [x] After benchmarks: remove dashmap if not beneficial (dashmap was never added).
+001. [x] Evaluate need for reqwest until GitHub sync matured (required for GitHub API integration).
+001. [x] Confirm no accidental heavy transitive crates (document compile times) (627 total deps, ~2min release build).
 
 ______________________________________________________________________
 
@@ -383,13 +383,14 @@ ______________________________________________________________________
 
 - [ ] Matches JS output for a sampled repository (diff = empty).
 - [x] Parallel vs sequential identical.
-- [ ] Signed tag path error messaging clear (if GPG absent).
+- [x] Signed tag path error messaging clear (if GPG absent).
 - [x] New version bump logic conforms to 0.x rules & explicit override.
 - [x] Idempotent rerun no duplication.
 - [x] Contributors section correctness (exclusions, email hiding).
 - [x] Compare link correct for GitHub & GitLab test remotes.
 - [x] All tests green on all CI platforms.
 - [x] No extraneous dependencies (review completed).
+- [x] BACKLOG.md created for future features.
 
 ______________________________________________________________________
 

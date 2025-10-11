@@ -1,0 +1,59 @@
+{
+  "name": "@nanodelabs/novalyn",
+  "version": "0.1.0",
+  "description": "💅 Beautiful Changelogs using Conventional Commits - Rust-powered npm package",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nanodelabs/novalyn.git"
+  },
+  "keywords": [
+    "changelog",
+    "conventional-commits",
+    "git",
+    "markdown",
+    "semver",
+    "release",
+    "versioning",
+    "rust",
+    "napi"
+  ],
+  "author": "Nanodela Labs",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nanodelabs/novalyn/issues"
+  },
+  "homepage": "https://github.com/nanodelabs/novalyn#readme",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "*.node"
+  ],
+  "napi": {
+    "name": "novalyn",
+    "triples": {
+      "defaults": true,
+      "additional": [
+        "x86_64-unknown-linux-musl",
+        "aarch64-unknown-linux-musl",
+        "aarch64-apple-darwin",
+        "aarch64-pc-windows-msvc"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">= 18"
+  },
+  "scripts": {
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "node test.js",
+    "version": "napi version"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}
