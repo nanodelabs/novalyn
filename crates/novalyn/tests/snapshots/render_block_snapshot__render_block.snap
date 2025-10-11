@@ -1,0 +1,11 @@
+---
+source: tests/render_block_snapshot.rs
+expression: txt
+---
+## v1.2.0
+
+### ✨ Features
+* ✨: add A
+
+### 🐞 Bug Fixes
+* 🐞: bug B
