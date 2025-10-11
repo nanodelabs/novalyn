@@ -1,0 +1,22 @@
+[package]
+name = "novalyn-napi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "NAPI-RS bindings for novalyn - Beautiful Changelogs using Conventional Commits"
+repository.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+novalyn = { path = "../novalyn" }
+napi.workspace = true
+napi-derive.workspace = true
+ecow.workspace = true
+semver.workspace = true
+toml_edit.workspace = true
+
+[build-dependencies]
+napi-build.workspace = true

@@ -1,32 +1,16 @@
-[package]
-name = "novalyn"
+[workspace]
+resolver = "2"
+members = ["crates/novalyn", "crates/novalyn-napi"]
+
+[workspace.package]
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.85"
-description = "💅 Beautiful Changelogs using Conventional Commits"
-readme = "README.md"
-repository = "https://github.com/nanodelabs/novalyn"
 license = "MIT"
-keywords = [
-  "changelog",
-  "cli",
-  "conventional-commit",
-  "generator",
-  "git",
-  "markdown",
-]
-categories = ["command-line-utilities", "development-tools"]
+repository = "https://github.com/nanodelabs/novalyn"
 
-[lib]
-name = "novalyn"
-path = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
-
-[[bench]]
-harness = false
-name = "parse_performance"
-
-[dependencies]
+[workspace.dependencies]
+# Core dependencies
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env", "unicode", "wrap_help"] }
 clap_complete = "4.5.58"
@@ -34,7 +18,6 @@ clap_complete_nushell = "4.5.8"
 demand = "1.7"
 ecow = { version = "0.2", features = ["serde"] }
 foldhash = "0.2"
-# TODO: Switch to gix ecosystem
 git2 = "0.20"
 jiff = "0.2"
 memchr = "2"
@@ -50,7 +33,6 @@ reqwest = { version = "0.12", default-features = false, features = [
 rustls = { version = "0.23.32", default-features = false, features = [
   "aws_lc_rs",
 ] }
-# TODO: future with gix
 scc = "3.3.1"
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
@@ -63,11 +45,15 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 unicode-normalization = "0.1"
 urlencoding = "2"
 
-# Optional dependencies for npm packaging via NAPI-RS
-napi = { version = "3", optional = true, default-features = false, features = ["napi8", "tokio_rt"] }
-napi-derive = { version = "3", optional = true }
+# Platform-specific dependencies
+mimalloc-safe = { version = "0.1.54", default-features = false }
 
-[dev-dependencies]
+# NAPI dependencies
+napi = { version = "3", default-features = false, features = ["napi8", "tokio_rt"] }
+napi-derive = "3"
+napi-build = "2"
+
+# Dev dependencies
 assert_cmd = "2"
 assert_fs = "1"
 divan = { package = "codspeed-divan-compat", version = "*" }
@@ -77,34 +63,8 @@ proptest = "1"
 tempfile = "3"
 wiremock = "0.6"
 
-[build-dependencies]
-clap = { version = "4.5.48", features = [
-  "derive",
-] }
-clap_complete = "4.5.58"
-clap_complete_nushell = "4.5.8"
+# Build dependencies
 clap_mangen = "0.2.29"
-
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-mimalloc-safe = { version = "0.1.54", default-features = false, features = [
-  "extended",
-] }
-
-[target.'cfg(target_arch = "aarch64")'.dependencies]
-mimalloc-safe = { version = "0.1.54", default-features = false, features = [
-  "extended",
-  "no_opt_arch",
-] }
-
-[target.'cfg(target_env = "msvc")'.dependencies]
-mimalloc-safe = { version = "0.1.54", default-features = false, features = [
-  "extended",
-  "override",
-] }
-
-[features]
-default = []
-napi = ["dep:napi", "dep:napi-derive"]
 
 [profile.release]
 opt-level = 3

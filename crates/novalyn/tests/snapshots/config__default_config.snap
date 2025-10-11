@@ -1,0 +1,60 @@
+---
+source: tests/config.rs
+assertion_line: 13
+expression: "cfg.types.iter().map(|t|\n(&t.key, &t.title, &t.emoji, format!(\"{:?}\", t.semver),\nt.enabled)).collect::<Vec<_>>()"
+---
+- - feat
+  - Features
+  - ✨
+  - Minor
+  - true
+- - fix
+  - Bug Fixes
+  - 🐞
+  - Patch
+  - true
+- - perf
+  - Performance
+  - ⚡️
+  - Patch
+  - true
+- - docs
+  - Documentation
+  - 📚
+  - None
+  - true
+- - refactor
+  - Refactors
+  - 🛠
+  - Patch
+  - true
+- - style
+  - Styles
+  - 🎨
+  - None
+  - true
+- - test
+  - Tests
+  - 🧪
+  - None
+  - true
+- - build
+  - Build System
+  - 📦
+  - None
+  - true
+- - ci
+  - Continuous Integration
+  - 👷
+  - None
+  - true
+- - chore
+  - Chores
+  - 🧹
+  - None
+  - true
+- - revert
+  - Reverts
+  - ⏪
+  - Patch
+  - true

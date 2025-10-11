@@ -4,6 +4,9 @@
   "description": "💅 Beautiful Changelogs using Conventional Commits - Rust-powered npm package",
   "main": "index.js",
   "types": "index.d.ts",
+  "bin": {
+    "novalyn": "./cli/novalyn"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/nanodelabs/novalyn.git"
@@ -28,32 +31,41 @@
   "files": [
     "index.js",
     "index.d.ts",
-    "*.node"
+    "*.node",
+    "cli/"
   ],
   "napi": {
-    "name": "novalyn",
-    "triples": {
-      "defaults": true,
-      "additional": [
-        "x86_64-unknown-linux-musl",
-        "aarch64-unknown-linux-musl",
-        "aarch64-apple-darwin",
-        "aarch64-pc-windows-msvc"
-      ]
-    }
+    "binaryName": "novalyn",
+    "package": {
+      "name": "@nanodelabs/novalyn"
+    },
+    "targets": [
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-musl",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc"
+    ]
   },
   "engines": {
     "node": ">= 18"
   },
   "scripts": {
-    "build": "napi build --platform --release",
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release --strip",
     "build:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish -t npm",
-    "test": "node test.js",
+    "prepublishOnly": "napi prepublish -t npm && bun run copy-cli",
+    "copy-cli": "bun scripts/copy-cli.ts",
+    "test": "bun test",
+    "universal": "napi universal",
     "version": "napi version"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.0.0"
+    "@napi-rs/cli": "^3.0.0-alpha.68",
+    "@types/bun": "latest"
   },
-  "packageManager": "npm@10.0.0"
+  "packageManager": "bun@1.1.38"
 }

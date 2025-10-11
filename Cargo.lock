@@ -1576,8 +1576,6 @@ dependencies = [
  "jiff",
  "memchr",
  "mimalloc-safe",
- "napi",
- "napi-derive",
  "once_cell",
  "predicates",
  "proptest",
@@ -1597,6 +1595,19 @@ dependencies = [
  "unicode-normalization",
  "urlencoding",
  "wiremock",
+]
+
+[[package]]
+name = "novalyn-napi"
+version = "0.0.0"
+dependencies = [
+ "ecow",
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "novalyn",
+ "semver",
+ "toml_edit",
 ]
 
 [[package]]

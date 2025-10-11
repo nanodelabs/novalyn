@@ -14,3 +14,6 @@ pnpm-debug.log
 .npm/
 .yarn/
 dist/
+
+# CLI binaries copied for npm distribution
+crates/novalyn-napi/cli/

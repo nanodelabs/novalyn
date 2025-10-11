@@ -2,19 +2,45 @@
 
 > 💅 Beautiful Changelogs using Conventional Commits - Rust-powered npm package
 
-This is the npm distribution of novalyn, providing the same powerful changelog generation capabilities as the Rust CLI but accessible from JavaScript/TypeScript projects.
+This is the npm distribution of novalyn, providing the same powerful changelog generation capabilities as the Rust CLI. This package includes:
+- **JavaScript/TypeScript API** for programmatic use
+- **CLI binary** for command-line usage
 
 ## Installation
 
 ```bash
+# Using Bun (recommended)
+bun add @nanodelabs/novalyn
+
+# Using npm
 npm install @nanodelabs/novalyn
-# or
+
+# Using yarn
 yarn add @nanodelabs/novalyn
-# or
+
+# Using pnpm
 pnpm add @nanodelabs/novalyn
 ```
 
-## Quick Start
+## CLI Usage
+
+The package includes the `novalyn` CLI binary:
+
+```bash
+# Show next version
+npx novalyn show
+
+# Generate changelog
+npx novalyn generate
+
+# Full release
+npx novalyn release
+
+# See all options
+npx novalyn --help
+```
+
+## Programmatic Usage
 
 ### TypeScript
 
@@ -196,6 +222,24 @@ Or use the CLI from this npm package:
 
 ```bash
 npx @nanodelabs/novalyn --help
+```
+
+## Development
+
+This package is built using Bun and NAPI-RS:
+
+```bash
+# Install dependencies
+bun install
+
+# Build NAPI bindings
+bun run build
+
+# Build the CLI binary (from workspace root)
+cd ../.. && cargo build --release -p novalyn
+
+# Copy CLI to npm package
+cd crates/novalyn-napi && bun run copy-cli
 ```
 
 ## License

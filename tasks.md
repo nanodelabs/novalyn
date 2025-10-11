@@ -383,7 +383,7 @@ ______________________________________________________________________
 
 - [ ] Matches JS output for a sampled repository (diff = empty).
 - [x] Parallel vs sequential identical.
-- [x] Signed tag path error messaging clear (if GPG absent).
+- [ ] Signed tag path error messaging clear (if GPG absent).
 - [x] New version bump logic conforms to 0.x rules & explicit override.
 - [x] Idempotent rerun no duplication.
 - [x] Contributors section correctness (exclusions, email hiding).

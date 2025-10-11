@@ -1,13 +1,12 @@
-//! NAPI bindings for npm package distribution
+//! NAPI-RS bindings for novalyn
 //!
-//! This module provides JavaScript-compatible bindings for core novalyn functionality
-//! using NAPI-RS. It enables novalyn to be published and consumed as an npm package
-//! while maintaining the performance benefits of Rust.
+//! This crate provides JavaScript/Node.js bindings for novalyn functionality,
+//! enabling npm package distribution while maintaining performance benefits of Rust.
 
-use crate::pipeline::{run_release, ReleaseOptions};
-use ecow::{eco_vec, EcoString};
+use ecow::{EcoString, eco_vec};
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
+use novalyn::pipeline::{ReleaseOptions, run_release};
 use std::path::PathBuf;
 
 /// JavaScript-compatible configuration options

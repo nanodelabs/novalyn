@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "napi"), forbid(unsafe_code))]
+#![forbid(unsafe_code)]
 
 pub mod authors;
 pub mod changelog;
@@ -15,9 +15,6 @@ pub mod pipeline;
 pub mod render;
 pub mod repository;
 pub mod shells;
-
-#[cfg(feature = "napi")]
-pub mod napi_bindings;
 
 /// Initialize the rustls cryptographic provider.
 /// This must be called before using any TLS functionality (e.g., reqwest with wiremock).
