@@ -1,5 +1,6 @@
 use ecow::{EcoString, EcoVec};
-use git2::{Oid, Repository, StatusOptions};
+use gix::Repository;
+use gix::date::parse::TimeBuf;
 
 #[derive(Debug, Clone)]
 pub struct RawCommit {
@@ -12,31 +13,45 @@ pub struct RawCommit {
     pub timestamp: i64,
 }
 
-pub fn detect_repo(path: &std::path::Path) -> Result<Repository, git2::Error> {
-    Repository::discover(path)
+pub fn detect_repo(path: &std::path::Path) -> anyhow::Result<Repository> {
+    gix::discover(path).map_err(anyhow::Error::from)
 }
 
-pub fn last_tag(repo: &Repository) -> Result<Option<EcoString>, git2::Error> {
-    let tags = repo.tag_names(None)?;
+pub fn last_tag(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
+    use gix::object::Kind;
     let mut latest: Option<(EcoString, i64, semver::Version)> = None;
-    for name_opt in tags.iter() {
-        let name = match name_opt {
-            Some(n) => n,
-            None => continue,
+    let refs = repo.references().map_err(anyhow::Error::from)?;
+    for result in refs.all()? {
+        let mut tag_ref = match result {
+            Ok(r) => r,
+            Err(_) => continue,
         };
-        let ver_str = name.trim_start_matches('v');
-        if let Ok(parsed) = semver::Version::parse(ver_str)
-            && let Ok(oid) = repo.refname_to_id(&format!("refs/tags/{}", name))
-            && let Ok(object) = repo.find_object(oid, None)
-            && let Ok(commit) = object.peel_to_commit()
-        {
-            let time = commit.time().seconds();
-            match &latest {
-                None => latest = Some((name.into(), time, parsed)),
-                Some((_, lt_time, lt_ver)) => {
-                    if time > *lt_time || (time == *lt_time && &parsed > lt_ver) {
-                        latest = Some((name.into(), time, parsed));
-                    }
+        let name_bstr = tag_ref.name().as_bstr();
+        if !name_bstr.starts_with(b"refs/tags/") {
+            continue;
+        }
+        let tag_name_bstr = &name_bstr[b"refs/tags/".len()..];
+        let tag_name = String::from_utf8_lossy(tag_name_bstr).to_string();
+        let ver_str = tag_name.trim_start_matches('v');
+        let parsed = match semver::Version::parse(ver_str) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+        // Peel to commit for annotated tags, or use target for lightweight
+        let target_commit_oid = match tag_ref.peel_to_kind(Kind::Commit) {
+            Ok(obj) => obj.id,
+            Err(_) => continue,
+        };
+        let commit = match repo.find_commit(target_commit_oid) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        let time = commit.time().map(|t| t.seconds).unwrap_or(0);
+        match &latest {
+            None => latest = Some((tag_name.clone().into(), time, parsed)),
+            Some((_, lt_time, lt_ver)) => {
+                if time > *lt_time || (time == *lt_time && &parsed > lt_ver) {
+                    latest = Some((tag_name.clone().into(), time, parsed));
                 }
             }
         }
@@ -44,154 +59,258 @@ pub fn last_tag(repo: &Repository) -> Result<Option<EcoString>, git2::Error> {
     Ok(latest.map(|(n, _, _)| n))
 }
 
-pub fn current_ref(repo: &Repository) -> Result<Option<EcoString>, git2::Error> {
-    let head = match repo.head() {
-        Ok(h) => h,
-        Err(e) => {
-            return if e.code() == git2::ErrorCode::UnbornBranch {
-                Ok(None)
-            } else {
-                Err(e)
-            };
-        }
-    };
-    if head.is_branch() {
-        return Ok(head.shorthand().map(|s| s.into()));
+pub fn current_ref(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
+    let head = repo.head().map_err(anyhow::Error::from)?;
+    if head.is_unborn() {
+        return Ok(None);
     }
-    // detached: see if it points at a tag
-    let oid = head.target();
-    if let Some(oid) = oid {
-        let tags = repo.tag_names(None)?;
-        for name_opt in tags.iter() {
-            if let Some(name) = name_opt
-                && let Ok(tag_oid) = repo.refname_to_id(&format!("refs/tags/{}", name))
-                && tag_oid == oid
-            {
-                return Ok(Some(name.into()));
+    if head.is_detached() {
+        if let Some(target_id) = head.id() {
+            let refs = repo.references().map_err(anyhow::Error::from)?;
+            for result in refs.all()? {
+                let tag_ref = match result {
+                    Ok(r) => r,
+                    Err(_) => continue,
+                };
+                let name_bstr = tag_ref.name().as_bstr();
+                if name_bstr.starts_with(b"refs/tags/") {
+                    if let Some(tag_oid) = tag_ref.target().try_id() {
+                        if *tag_oid == *target_id {
+                            let tag_name_bstr = &name_bstr[b"refs/tags/".len()..];
+                            let tag_name = String::from_utf8_lossy(tag_name_bstr).to_string();
+                            return Ok(Some(tag_name.into()));
+                        }
+                    }
+                }
             }
+            return Ok(Some(format!("DETACHED@{:?}", target_id).into()));
         }
+    } else if let Some(name) = head.referent_name() {
+        let branch_bstr = name.as_bstr();
+        let branch = branch_bstr
+            .strip_prefix(b"refs/heads/")
+            .unwrap_or(branch_bstr);
+        return Ok(Some(String::from_utf8_lossy(branch).to_string().into()));
     }
-    Ok(Some(
-        format!(
-            "DETACHED@{}",
-            oid.map(|o| o.to_string()).unwrap_or_default()
-        )
-        .into(),
-    ))
+    Ok(None)
 }
 
 pub fn commits_between(
     repo: &Repository,
     from: Option<&str>,
     to: &str,
-) -> Result<EcoVec<RawCommit>, git2::Error> {
-    let to_obj = repo.revparse_single(to)?;
-    let to_commit = to_obj.peel_to_commit()?;
-
-    let mut revwalk = repo.revwalk()?;
-    revwalk.push(to_commit.id())?;
-    if let Some(from_ref) = from
-        && let Ok(from_obj) = repo.revparse_single(from_ref)
-    {
-        revwalk.hide(from_obj.id())?;
-    }
-    revwalk.set_sorting(git2::Sort::TOPOLOGICAL | git2::Sort::TIME)?;
-
+) -> anyhow::Result<EcoVec<RawCommit>> {
     let mut commits: EcoVec<RawCommit> = EcoVec::new();
-    for oid_res in revwalk {
-        if let Ok(oid) = oid_res
-            && let Ok(commit) = repo.find_commit(oid)
-        {
-            commits.push(to_raw_commit(&commit));
+    let to_obj = repo.rev_parse_single(to).map_err(anyhow::Error::from)?;
+    let to_id = to_obj.object()?.peel_to_kind(gix::object::Kind::Commit)?.id;
+    let mut walk = repo.rev_walk([to_id]);
+    if let Some(from_rev) = from {
+        let from_obj = repo
+            .rev_parse_single(from_rev)
+            .map_err(anyhow::Error::from)?;
+        let from_id = from_obj
+            .object()?
+            .peel_to_kind(gix::object::Kind::Commit)?
+            .id;
+        walk = walk.with_hidden([from_id]);
+    }
+    for commit_info in walk.all()? {
+        let commit_id = commit_info?.id;
+        let commit = repo.find_commit(commit_id)?;
+        match to_raw_commit(&commit) {
+            Ok(raw) => commits.push(raw),
+            Err(e) => {
+                tracing::warn!("Skipping commit {}: {}", commit.id(), e);
+                continue;
+            }
         }
     }
-    commits.make_mut().reverse(); // chronological oldest->newest
+    commits.make_mut().reverse();
     Ok(commits)
 }
 
-fn to_raw_commit(commit: &git2::Commit) -> RawCommit {
+fn to_raw_commit(commit: &gix::Commit) -> anyhow::Result<RawCommit> {
     let id = commit.id().to_string().into();
     let short_id = commit.id().to_string()[0..7].to_string().into();
-    let message = commit.message().unwrap_or("");
+    let message_bstr = commit
+        .message_raw()
+        .map_err(|e| anyhow::anyhow!("missing commit message: {}", e))?;
+    let message = String::from_utf8_lossy(message_bstr).to_string();
     let mut lines = message.lines();
     let summary = lines.next().unwrap_or("").into();
     let body = lines.collect::<Vec<_>>().join("\n").into();
-    let sig = commit.author();
-    let time = commit.time();
-    RawCommit {
+    let author = commit
+        .author()
+        .map_err(|e| anyhow::anyhow!("missing author: {}", e))?;
+    let author_name = String::from_utf8_lossy(author.name).to_string().into();
+    let author_email = String::from_utf8_lossy(author.email).to_string().into();
+    let timestamp = commit.time().map(|t| t.seconds).unwrap_or(0);
+    Ok(RawCommit {
         id,
         short_id,
         summary,
         body,
-        author_name: sig.name().unwrap_or("").into(),
-        author_email: sig.email().unwrap_or("").into(),
-        timestamp: time.seconds(),
-    }
+        author_name,
+        author_email,
+        timestamp,
+    })
 }
 
-pub fn is_dirty(repo: &Repository, include_untracked: bool) -> Result<bool, git2::Error> {
-    let mut opts = StatusOptions::new();
-    opts.include_untracked(include_untracked);
-    let statuses = repo.statuses(Some(&mut opts))?;
-    for entry in statuses.iter() {
-        let s = entry.status();
-        if s.intersects(
-            git2::Status::WT_MODIFIED
-                | git2::Status::WT_DELETED
-                | git2::Status::WT_RENAMED
-                | git2::Status::WT_TYPECHANGE
-                | git2::Status::INDEX_NEW
-                | git2::Status::INDEX_MODIFIED
-                | git2::Status::INDEX_DELETED
-                | git2::Status::INDEX_RENAMED
-                | git2::Status::INDEX_TYPECHANGE
-                | git2::Status::WT_NEW,
-        ) {
+pub fn is_dirty(repo: &Repository) -> anyhow::Result<bool> {
+    // Use gix's status functionality to check for changes
+    let status_platform = repo.status(gix::progress::Discard)?;
+
+    // Get status iterator and check for any worktree changes
+    let status_iter = status_platform.into_iter(None)?;
+
+    // Check for any IndexWorktree status entries (uncommitted changes)
+    for status_item in status_iter {
+        let item = status_item?;
+        // Only IndexWorktree items indicate uncommitted changes (dirty state)
+        if matches!(item, gix::status::Item::IndexWorktree(_)) {
             return Ok(true);
         }
+        // TreeIndex items are changes between HEAD and index (already staged)
+        // We don't consider those as "dirty" - only unstaged changes matter
     }
     Ok(false)
 }
 
-pub fn add_and_commit(repo: &Repository, message: &str) -> Result<Oid, git2::Error> {
-    let mut index = repo.index()?;
-    index.add_all(["*"].iter(), git2::IndexAddOption::DEFAULT, None)?;
-    index.write()?;
-    let tree_id = index.write_tree()?;
-    let tree = repo.find_tree(tree_id)?;
+pub fn add_and_commit(repo: &mut Repository, message: &str) -> anyhow::Result<gix::ObjectId> {
+    // Get the working directory
+    let workdir = repo
+        .workdir()
+        .ok_or_else(|| anyhow::anyhow!("No working directory"))?;
 
-    let sig = repo.signature()?;
-    let parent_commits: Vec<git2::Commit> = match repo.head() {
-        Ok(head) => {
-            if let Some(oid) = head.target() {
-                vec![repo.find_commit(oid)?]
-            } else {
-                vec![]
+    // Start with empty tree or current HEAD tree
+    let base_tree_id = if let Ok(head) = repo.head() {
+        if let Some(head_id) = head.id() {
+            // Get the tree from HEAD commit
+            let head_commit = repo.find_object(head_id)?.peel_to_commit()?;
+            head_commit.tree_id()?.detach()
+        } else {
+            repo.empty_tree().id
+        }
+    } else {
+        repo.empty_tree().id
+    };
+
+    // Create tree editor
+    let mut tree_editor = repo.edit_tree(base_tree_id)?;
+
+    // Get the status to find files to add
+    let status_platform = repo.status(gix::progress::Discard)?;
+    let status_iter = status_platform.into_iter(None)?;
+
+    // Process status items to find files to add
+    for status_item in status_iter {
+        let item = status_item?;
+
+        // Only process IndexWorktree items (files that need to be staged)
+        if let gix::status::Item::IndexWorktree(worktree_item) = item {
+            let path = worktree_item.rela_path();
+            let full_path = workdir.join(std::path::Path::new(std::str::from_utf8(path)?));
+
+            if full_path.is_file() {
+                // Read file and create blob
+                let content = std::fs::read(&full_path)?;
+                let blob_id = repo.write_blob(&content)?;
+
+                // Add to tree
+                tree_editor.upsert(path, gix::object::tree::EntryKind::Blob, blob_id)?;
             }
         }
-        Err(_) => vec![],
+        // Skip TreeIndex items - those are already staged
+    }
+
+    // Write the tree
+    let tree_id = tree_editor.write()?.detach();
+
+    // Create commit signature
+    let sig_ref = repo.committer_or_set_generic_fallback()?;
+    let sig = sig_ref.to_owned()?;
+    let mut time_buf = gix::date::parse::TimeBuf::default();
+    let sig_ref_borrowed = sig.to_ref(&mut time_buf);
+
+    // Get parent commits
+    let parents: Vec<gix::ObjectId> = if let Ok(head) = repo.head() {
+        if let Some(head_id) = head.id() {
+            vec![head_id.into()]
+        } else {
+            vec![]
+        }
+    } else {
+        vec![]
     };
-    let parents: Vec<&git2::Commit> = parent_commits.iter().collect();
-    let oid = repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &parents)?;
-    Ok(oid)
+
+    // Create the commit
+    let commit_id = repo.commit_as(
+        sig_ref_borrowed,
+        sig_ref_borrowed,
+        "HEAD",
+        message,
+        tree_id,
+        parents,
+    )?;
+
+    // Update the index to match the committed tree so the worktree appears clean
+    // Create a new index from the committed tree and write it to the index file
+    let mut new_index = repo.index_from_tree(&tree_id)?;
+    new_index.write(gix::index::write::Options::default())?;
+
+    Ok(commit_id.detach())
 }
 
 pub fn create_tag(
-    repo: &Repository,
+    repo: &mut Repository,
     name: &str,
     message: &str,
     annotated: bool,
-) -> Result<Oid, git2::Error> {
-    let head = repo.head()?;
-    let target = head.peel(git2::ObjectType::Commit)?;
-    let commit = target
-        .into_commit()
-        .map_err(|_| git2::Error::from_str("HEAD is not a commit"))?;
-    let sig = repo.signature()?;
+) -> anyhow::Result<gix::ObjectId> {
+    // Extract head commit id and signature before mutable borrow
+    // Get head commit id without holding a reference to head_commit
+    let head_commit_id = repo.head_id().map_err(anyhow::Error::from)?.detach();
     if annotated {
-        repo.tag(name, commit.as_object(), &sig, message, false)
+        let sig_ref = repo
+            .committer_or_set_generic_fallback()
+            .map_err(anyhow::Error::from)?;
+        let sig = sig_ref.to_owned().map_err(anyhow::Error::from)?;
+
+        let mut time_buf = TimeBuf::default();
+        let sig_ref_borrowed = sig.to_ref(&mut time_buf);
+
+        let tag_ref = repo
+            .tag(
+                name,
+                head_commit_id,
+                gix::object::Kind::Commit,
+                Some(sig_ref_borrowed),
+                message,
+                gix::refs::transaction::PreviousValue::MustNotExist,
+            )
+            .map_err(anyhow::Error::from)?;
+        Ok(tag_ref.target().id().to_owned())
     } else {
-        repo.reference(&format!("refs/tags/{}", name), commit.id(), false, message)?;
-        Ok(commit.id())
+        let tag_ref = repo
+            .tag_reference(
+                name,
+                head_commit_id,
+                gix::refs::transaction::PreviousValue::MustNotExist,
+            )
+            .map_err(anyhow::Error::from)?;
+        Ok(tag_ref.target().id().to_owned())
     }
+}
+
+pub fn init_repo(path: &std::path::Path) -> anyhow::Result<Repository> {
+    // Initialize repository at path
+    let mut repo = gix::init(path)?;
+
+    // Set user configuration
+    let mut config = repo.config_snapshot_mut();
+    config.set_raw_value(&gix::config::tree::User::NAME, "Tester")?;
+    config.set_raw_value(&gix::config::tree::User::EMAIL, "tester@example.com")?;
+    config.commit()?;
+
+    Ok(repo)
 }

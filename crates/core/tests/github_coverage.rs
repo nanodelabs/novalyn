@@ -60,8 +60,8 @@ fn test_github_error_display() {
 }
 
 #[tokio::test]
-#[ignore = "requires rustls provider initialization"]
 async fn test_get_username_with_custom_api_base() {
+    novalyn_core::init_crypto_provider();
     // Test that api_base parameter is respected
     let result = get_username_from_email(
         "test@example.com",
@@ -76,8 +76,8 @@ async fn test_get_username_with_custom_api_base() {
 }
 
 #[tokio::test]
-#[ignore = "requires rustls provider initialization"]
 async fn test_sync_release_with_custom_api_base() {
+    novalyn_core::init_crypto_provider();
     let repo = Repository::parse("https://github.com/owner/repo.git").unwrap();
 
     // Test that api_base parameter is respected

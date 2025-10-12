@@ -32,19 +32,19 @@ ______________________________________________________________________
 
 Both implementations use identical default types with same ordering:
 
-| Type       | Title                  | Emoji | Semver Impact |
+| Type | Title | Emoji | Semver Impact |
 | ---------- | ---------------------- | ----- | ------------- |
-| `feat`     | Features               | ✨    | minor         |
-| `fix`      | Bug Fixes              | 🐞    | patch         |
-| `perf`     | Performance            | ⚡️    | patch         |
-| `docs`     | Documentation          | 📚    | none          |
-| `refactor` | Refactors              | 🛠     | patch         |
-| `style`    | Styles                 | 🎨    | none          |
-| `test`     | Tests                  | 🧪    | none          |
-| `build`    | Build System           | 📦    | none          |
-| `ci`       | Continuous Integration | 👷    | none          |
-| `chore`    | Chores                 | 🧹    | none          |
-| `revert`   | Reverts                | ⏪    | patch         |
+| `feat` | Features | ✨ | minor |
+| `fix` | Bug Fixes | 🐞 | patch |
+| `perf` | Performance | ⚡️ | patch |
+| `docs` | Documentation | 📚 | none |
+| `refactor` | Refactors | 🛠 | patch |
+| `style` | Styles | 🎨 | none |
+| `test` | Tests | 🧪 | none |
+| `build` | Build System | 📦 | none |
+| `ci` | Continuous Integration | 👷 | none |
+| `chore` | Chores | 🧹 | none |
+| `revert` | Reverts | ⏪ | patch |
 
 **Implementation**: `src/config.rs::default_types()`
 
@@ -160,12 +160,12 @@ ______________________________________________________________________
 
 Identical semver impact calculation:
 
-| Condition                                   | Impact |
+| Condition | Impact |
 | ------------------------------------------- | ------ |
-| Breaking change (`!` or `BREAKING CHANGE:`) | major  |
-| feat commit                                 | minor  |
-| fix/perf commit                             | patch  |
-| docs/style/test/ci/build commit             | none   |
+| Breaking change (`!` or `BREAKING CHANGE:`) | major |
+| feat commit | minor |
+| fix/perf commit | patch |
+| docs/style/test/ci/build commit | none |
 
 ### Pre-1.0 Adjustment
 
@@ -173,19 +173,19 @@ For versions where `major == 0`:
 
 | JS Impact | Version 0.x Impact |
 | --------- | ------------------ |
-| major →   | minor              |
-| minor →   | patch              |
-| patch →   | patch              |
+| major → | minor |
+| minor → | patch |
+| patch → | patch |
 
 **Example**: `0.5.0` with breaking change → `0.6.0` (not `1.0.0`)
 
 ### Default Bump Behavior
 
-| Scenario                                    | JS Version   | Rust Version | Status       |
+| Scenario | JS Version | Rust Version | Status |
 | ------------------------------------------- | ------------ | ------------ | ------------ |
-| No commits at all                           | No change    | No change    | ✅ Identical |
-| Commits with all `none` impact (e.g., docs) | Patch bump   | Patch bump   | ✅ Identical |
-| Override version provided                   | Use override | Use override | ✅ Identical |
+| No commits at all | No change | No change | ✅ Identical |
+| Commits with all `none` impact (e.g., docs) | Patch bump | Patch bump | ✅ Identical |
+| Override version provided | Use override | Use override | ✅ Identical |
 
 **Implementation**: `src/parse.rs::infer_version()`
 
@@ -321,12 +321,12 @@ ______________________________________________________________________
 
 ### Intentional Differences
 
-| Feature          | JS Version                       | Rust Version                      | Rationale                |
+| Feature | JS Version | Rust Version | Rationale |
 | ---------------- | -------------------------------- | --------------------------------- | ------------------------ |
-| Config format    | JS/JSON                          | TOML                              | Rust ecosystem standard  |
-| Config file      | `package.json` or `.changelogrc` | `Cargo.toml` or `novalyn.toml`    | Cargo integration        |
-| Parallel parsing | Not available                    | Available (rayon)                 | Performance optimization |
-| Package manager  | npm                              | Cargo (+ npm via NAPI-RS planned) | Native Rust tooling      |
+| Config format | JS/JSON | TOML | Rust ecosystem standard |
+| Config file | `package.json` or `.changelogrc` | `Cargo.toml` or `novalyn.toml` | Cargo integration |
+| Parallel parsing | Not available | Available (rayon) | Performance optimization |
+| Package manager | npm | Cargo (+ npm via NAPI-RS planned) | Native Rust tooling |
 
 ### Must-Have Parity
 

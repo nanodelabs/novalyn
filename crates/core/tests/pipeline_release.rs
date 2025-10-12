@@ -2,20 +2,17 @@ use novalyn_core::git::add_and_commit;
 use novalyn_core::pipeline::{ExitCode, ReleaseOptions, run_release};
 use tempfile::TempDir;
 
-fn init_repo() -> (TempDir, git2::Repository) {
+fn init_repo() -> (TempDir, gix::Repository) {
     let td = TempDir::new().unwrap();
-    let repo = git2::Repository::init(td.path()).unwrap();
-    let mut cfg = repo.config().unwrap();
-    cfg.set_str("user.name", "Tester").unwrap();
-    cfg.set_str("user.email", "tester@example.com").unwrap();
+    let repo = novalyn_core::git::init_repo(td.path()).unwrap();
     (td, repo)
 }
 
 #[test]
 fn dry_run_leaves_changelog_untouched() {
-    let (td, repo) = init_repo();
+    let (td, mut repo) = init_repo();
     std::fs::write(td.path().join("a.txt"), "1").unwrap();
-    add_and_commit(&repo, "feat: one").unwrap();
+    add_and_commit(&mut repo, "feat: one").unwrap();
     let outcome = run_release(ReleaseOptions {
         cwd: td.path().into(),
         from: None,
@@ -38,9 +35,9 @@ fn dry_run_leaves_changelog_untouched() {
 
 #[test]
 fn exit_code_no_change() {
-    let (td, repo) = init_repo();
+    let (td, mut repo) = init_repo();
     std::fs::write(td.path().join("a.txt"), "1").unwrap();
-    add_and_commit(&repo, "feat: one").unwrap();
+    add_and_commit(&mut repo, "feat: one").unwrap();
     // First real run
     let outcome1 = run_release(ReleaseOptions {
         cwd: td.path().into(),

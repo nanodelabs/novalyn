@@ -14,7 +14,7 @@ categories.workspace = true
 anyhow.workspace = true
 ecow.workspace = true
 foldhash.workspace = true
-git2.workspace = true
+gix.workspace = true
 jiff.workspace = true
 memchr.workspace = true
 once_cell.workspace = true
@@ -41,3 +41,16 @@ predicates.workspace = true
 proptest.workspace = true
 tempfile.workspace = true
 wiremock.workspace = true
+
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+mimalloc-safe.workspace = true
+
+[target.'cfg(target_arch = "aarch64")'.dev-dependencies]
+mimalloc-safe = { workspace = true, features = [
+  "no_opt_arch",
+] }
+
+[target.'cfg(target_env = "msvc")'.dev-dependencies]
+mimalloc-safe = { workspace = true, features = [
+  "override",
+] }

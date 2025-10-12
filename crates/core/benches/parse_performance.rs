@@ -1,8 +1,8 @@
 use divan::{AllocProfiler, Bencher};
 use mimalloc_safe::MiMalloc;
-use novalyn::config::{LoadOptions, load_config};
-use novalyn::git::RawCommit;
-use novalyn::parse::parse_and_classify;
+use novalyn_core::config::{LoadOptions, load_config};
+use novalyn_core::git::RawCommit;
+use novalyn_core::parse::parse_and_classify;
 use std::env;
 use tempfile::TempDir;
 
@@ -97,7 +97,7 @@ fn version_inference(bencher: Bencher, size: usize) {
     bencher
         .with_inputs(|| (previous_version.clone(), parsed.clone()))
         .bench_values(|(prev_version, parsed_commits)| {
-            novalyn::parse::infer_version(&prev_version, &parsed_commits, None)
+            novalyn_core::parse::infer_version(&prev_version, &parsed_commits, None)
         });
 }
 
@@ -118,7 +118,7 @@ fn render_block(bencher: Bencher, size: usize) {
 
     bencher
         .with_inputs(|| {
-            novalyn::render::RenderContext {
+            novalyn_core::render::RenderContext {
                 commits: &parsed,
                 version: &current_version,
                 previous_version: Some(&previous_version),
@@ -129,7 +129,7 @@ fn render_block(bencher: Bencher, size: usize) {
                 current_ref: "HEAD",
             }
         })
-        .bench_values(|rc| novalyn::render::render_release_block(&rc));
+        .bench_values(|rc| novalyn_core::render::render_release_block(&rc));
 }
 
 fn main() {

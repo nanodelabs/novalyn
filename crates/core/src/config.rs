@@ -319,32 +319,32 @@ pub fn log_warnings(cfg: &ResolvedConfig) {
 fn detect_repository(cwd: &Path, warnings: &mut EcoVec<EcoString>) -> Option<repo_mod::Repository> {
     // crate path valid when used as library
     // Open git repo; if not a git repository, silently return None (git layer will handle hard error later)
-    let repo = match git2::Repository::discover(cwd) {
+    let repo = match gix::open(cwd) {
         Ok(r) => r,
         Err(_) => return None,
     };
     // Preferred remote: origin, else first
-    let remotes = match repo.remotes() {
-        Ok(r) => r,
-        Err(e) => {
-            warnings.push(format!("Failed to list git remotes: {e}").into());
-            return None;
-        }
-    };
+
+    // FIX: gix::Repository::remote_names() returns BTreeSet<Cow<'_, BStr>>, not Result
+    // So we should use:
+    let remotes = repo.remote_names();
     let mut chosen: Option<String> = None;
-    if remotes.iter().any(|n| n == Some("origin"))
-        && let Ok(remote) = repo.find_remote("origin")
-        && let Some(url) = remote.url()
-    {
-        chosen = Some(url.to_string());
-    }
-    if chosen.is_none() {
-        for name in remotes.iter().flatten() {
-            if let Ok(remote) = repo.find_remote(name)
-                && let Some(url) = remote.url()
-            {
+    // Look for "origin" remote first
+    if remotes.iter().any(|name| name.as_ref() == b"origin") {
+        if let Ok(remote) = repo.find_remote("origin") {
+            if let Some(url) = remote.url(gix::remote::Direction::Fetch) {
                 chosen = Some(url.to_string());
-                break;
+            }
+        }
+    }
+    // Fallback: use first available remote
+    if chosen.is_none() {
+        for name in remotes.iter() {
+            if let Ok(remote) = repo.find_remote(name.as_ref()) {
+                if let Some(url) = remote.url(gix::remote::Direction::Fetch) {
+                    chosen = Some(url.to_string());
+                    break;
+                }
             }
         }
     }

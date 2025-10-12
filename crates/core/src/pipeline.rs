@@ -65,8 +65,8 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     debug!(types = cfg.types.len(), "config_loaded");
 
     // 2. Detect git repo & current ref
-    let repo = git::detect_repo(&opts.cwd)?;
-    if opts.clean && git::is_dirty(&repo, true)? {
+    let mut repo = git::detect_repo(&opts.cwd)?;
+    if opts.clean && git::is_dirty(&repo)? {
         anyhow::bail!("working tree dirty (use --clean to enforce cleanliness or commit changes)");
     }
     let head = opts.to.clone().unwrap_or_else(|| "HEAD".into());
@@ -181,7 +181,7 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
             let tag_msg = format!("v{}", next_version);
             let _ = {
                 let _span = tracing::span!(tracing::Level::DEBUG, "tag").entered();
-                git::create_tag(&repo, &tag_name, &tag_msg, true)
+                git::create_tag(&mut repo, &tag_name, &tag_msg, true)
             };
         }
     }

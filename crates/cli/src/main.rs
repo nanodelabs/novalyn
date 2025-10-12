@@ -7,7 +7,8 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 pub use novalyn as lib;
 
-fn main() {
+#[tokio::main(flavor = "multi_thread")]
+async fn main() {
     novalyn_core::init_crypto_provider();
     match lib::cli::run() {
         Ok(exit_code) => std::process::exit(exit_code as i32),

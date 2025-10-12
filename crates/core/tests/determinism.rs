@@ -122,25 +122,38 @@ fn repeated_render_identical() {
 #[test]
 fn repeated_full_pipeline_identical() {
     let td = TempDir::new().unwrap();
-    let repo = git2::Repository::init(td.path()).unwrap();
+    std::process::Command::new("git")
+        .arg("init")
+        .arg(td.path())
+        .output()
+        .unwrap();
 
     // Set up git config
-    let mut cfg = repo.config().unwrap();
-    cfg.set_str("user.name", "Test").unwrap();
-    cfg.set_str("user.email", "test@example.com").unwrap();
+    std::process::Command::new("git")
+        .current_dir(td.path())
+        .args(["config", "user.name", "Test"])
+        .output()
+        .unwrap();
+    std::process::Command::new("git")
+        .current_dir(td.path())
+        .args(["config", "user.email", "test@example.com"])
+        .output()
+        .unwrap();
+
+    let mut repo = novalyn_core::git::detect_repo(td.path()).unwrap();
 
     // Create some commits
     std::fs::write(td.path().join("a.txt"), "1").unwrap();
-    add_and_commit(&repo, "feat: initial feature").unwrap();
+    add_and_commit(&mut repo, "feat: initial feature").unwrap();
 
     std::fs::write(td.path().join("b.txt"), "2").unwrap();
-    add_and_commit(&repo, "fix: bug fix").unwrap();
+    add_and_commit(&mut repo, "fix: bug fix").unwrap();
 
     // Tag the first release
-    create_tag(&repo, "v0.1.0", "v0.1.0", true).unwrap();
+    create_tag(&mut repo, "v0.1.0", "v0.1.0", true).unwrap();
 
     std::fs::write(td.path().join("c.txt"), "3").unwrap();
-    add_and_commit(&repo, "feat: new feature").unwrap();
+    add_and_commit(&mut repo, "feat: new feature").unwrap();
 
     // Run release pipeline multiple times with dry-run
     let opts1 = ReleaseOptions {

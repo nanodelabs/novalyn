@@ -18,12 +18,6 @@ impl From<anyhow::Error> for NovalynError {
     }
 }
 
-impl From<git2::Error> for NovalynError {
-    fn from(e: git2::Error) -> Self {
-        Self::Git(e.to_string())
-    }
-}
-
 impl From<std::io::Error> for NovalynError {
     fn from(e: std::io::Error) -> Self {
         Self::Io(e.to_string())

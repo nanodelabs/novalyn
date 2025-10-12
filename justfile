@@ -5,10 +5,10 @@ tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-
 # Commands
 
 format := "cargo fmt --all"
-clippy := "cargo clippy --all-targets --all-features"
+clippy := "cargo clippy --all-targets --all-features --workspace"
 coverage := "cargo llvm-cov --all-features --workspace"
 build := "cargo build --all --locked"
-nextest := "cargo nextest run --all-features --locked"
+nextest := "cargo nextest run --all-features --workspace --locked"
 
 # Default recipe (shows help)
 _default:
@@ -39,8 +39,8 @@ build-release:
     {{ build }} --release
 
 # Run tests with nextest
-test:
-    {{ nextest }}
+test *FLAGS:
+    {{ nextest }} {{ FLAGS }}
     cargo test --doc --locked
 
 # Run tests without doc tests

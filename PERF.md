@@ -90,54 +90,54 @@ The following baseline results were captured on local hardware after the custom 
 
 #### Parse Sequential (single-threaded)
 
-| Commits | Before   | After        | **Speedup**  |
+| Commits | Before | After | **Speedup** |
 | ------- | -------- | ------------ | ------------ |
-| 10      | 21.73 µs | **6.605 µs** | **3.29x** ⚡ |
-| 50      | 104.7 µs | **29.46 µs** | **3.55x** ⚡ |
-| 100     | 214.5 µs | **58.57 µs** | **3.66x** ⚡ |
-| 500     | 555.3 µs | **299.1 µs** | **1.86x** ⚡ |
+| 10 | 21.73 µs | **6.605 µs** | **3.29x** ⚡ |
+| 50 | 104.7 µs | **29.46 µs** | **3.55x** ⚡ |
+| 100 | 214.5 µs | **58.57 µs** | **3.66x** ⚡ |
+| 500 | 555.3 µs | **299.1 µs** | **1.86x** ⚡ |
 
 **Key insight**: Parsing is now **3-4x faster** across all workload sizes!
 
 #### Parse Parallel (rayon, threshold=10)
 
-| Commits | Before   | After        | **Speedup**  |
+| Commits | Before | After | **Speedup** |
 | ------- | -------- | ------------ | ------------ |
-| 50      | 248.3 µs | **128.8 µs** | **1.93x** ⚡ |
-| 100     | 235.3 µs | **240.4 µs** | ~same        |
-| 500     | 711.5 µs | **476.9 µs** | **1.49x** ⚡ |
+| 50 | 248.3 µs | **128.8 µs** | **1.93x** ⚡ |
+| 100 | 235.3 µs | **240.4 µs** | ~same |
+| 500 | 711.5 µs | **476.9 µs** | **1.49x** ⚡ |
 
 **Key insight**: Parallel parsing benefits are amplified by the faster sequential parser.
 
 #### Memory Usage (500 commits, sequential)
 
-| Metric          | Before   | After        | **Improvement**      |
+| Metric | Before | After | **Improvement** |
 | --------------- | -------- | ------------ | -------------------- |
 | Total Allocated | 259.4 KB | **86.31 KB** | **67% reduction** 💾 |
-| Allocations     | 3,645    | **1,170**    | **68% fewer** 💾     |
-| Peak Memory     | 176.5 KB | **176.5 KB** | unchanged            |
+| Allocations | 3,645 | **1,170** | **68% fewer** 💾 |
+| Peak Memory | 176.5 KB | **176.5 KB** | unchanged |
 
 **Key insight**: Massive memory reduction through zero-copy parsing and smart allocations.
 
 #### Version Inference
 
-| Commits | Median   |
+| Commits | Median |
 | ------- | -------- |
-| 10      | 25.45 ns |
-| 50      | 99.95 ns |
-| 100     | 193.4 ns |
-| 500     | 920.2 ns |
+| 10 | 25.45 ns |
+| 50 | 99.95 ns |
+| 100 | 193.4 ns |
+| 500 | 920.2 ns |
 
 **Key insight**: Extremely fast O(n) operation with minimal overhead.
 
 #### Render Block (markdown generation)
 
-| Commits | Median   |
+| Commits | Median |
 | ------- | -------- |
-| 10      | 2.849 µs |
-| 50      | 9.466 µs |
-| 100     | 16.92 µs |
-| 500     | 65.9 µs  |
+| 10 | 2.849 µs |
+| 50 | 9.466 µs |
+| 100 | 16.92 µs |
+| 500 | 65.9 µs |
 
 **Key insight**: Rendering remains fast with linear scaling.
 
