@@ -1,6 +1,6 @@
-use novalyn_core::config::{LoadOptions, SemverImpact, load_config, default_types};
-use tempfile::TempDir;
+use novalyn_core::config::{LoadOptions, SemverImpact, default_types, load_config};
 use std::fs;
+use tempfile::TempDir;
 
 #[test]
 fn test_load_config_with_novalyn_toml() {

@@ -1,14 +1,14 @@
 use divan::{AllocProfiler, Bencher};
+use ecow::EcoString;
 use mimalloc_safe::MiMalloc;
 use novalyn_core::authors::{AuthorOptions, Authors};
 use novalyn_core::changelog::write_or_update_changelog;
 use novalyn_core::config::{LoadOptions, load_config};
+use novalyn_core::conventional::parse_commit_fast;
 use novalyn_core::git::RawCommit;
 use novalyn_core::parse::{ParsedCommit, parse_and_classify};
-use novalyn_core::conventional::parse_commit_fast;
-use ecow::EcoString;
-use tempfile::TempDir;
 use std::collections::HashMap;
+use tempfile::TempDir;
 
 #[global_allocator]
 static GLOBAL: AllocProfiler<MiMalloc> = AllocProfiler::new(MiMalloc);
@@ -110,7 +110,8 @@ fn changelog_write(bencher: Bencher, block_count: usize) {
 
     bencher.bench(|| {
         for i in 0..block_count {
-            let block: EcoString = format!("## v1.{}.0\n\n### Features\n\n* Added feature {}\n", i, i).into();
+            let block: EcoString =
+                format!("## v1.{}.0\n\n### Features\n\n* Added feature {}\n", i, i).into();
             let _ = write_or_update_changelog(td.path(), &block);
         }
     });

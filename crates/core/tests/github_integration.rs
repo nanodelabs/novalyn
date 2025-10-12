@@ -1,7 +1,7 @@
 use novalyn_core::github::{GithubError, get_username_from_email, sync_release};
 use novalyn_core::repository::{Provider, Repository};
-use wiremock::{Mock, MockServer, ResponseTemplate};
 use wiremock::matchers::{method, path, query_param};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn setup() {
     // Initialize crypto provider required by reqwest
@@ -16,11 +16,9 @@ async fn test_get_username_from_email_success() {
     Mock::given(method("GET"))
         .and(path("/search/users"))
         .and(query_param("q", "test@example.com+in:email"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "items": [{"login": "testuser", "email": "test@example.com"}]
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "items": [{"login": "testuser", "email": "test@example.com"}]
+        })))
         .mount(&mock_server)
         .await;
 
@@ -42,11 +40,9 @@ async fn test_get_username_from_email_not_found() {
 
     Mock::given(method("GET"))
         .and(path("/search/users"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "items": []
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "items": []
+        })))
         .mount(&mock_server)
         .await;
 
@@ -100,12 +96,10 @@ async fn test_sync_release_create_new() {
     // Mock POST to create new release
     Mock::given(method("POST"))
         .and(path("/repos/test/repo/releases"))
-        .respond_with(
-            ResponseTemplate::new(201).set_body_json(serde_json::json!({
-                "html_url": "https://github.com/test/repo/releases/tag/v1.0.0",
-                "tag_name": "v1.0.0"
-            })),
-        )
+        .respond_with(ResponseTemplate::new(201).set_body_json(serde_json::json!({
+            "html_url": "https://github.com/test/repo/releases/tag/v1.0.0",
+            "tag_name": "v1.0.0"
+        })))
         .mount(&mock_server)
         .await;
 
@@ -140,25 +134,21 @@ async fn test_sync_release_update_existing() {
     // Mock GET to check if release exists (returns existing release)
     Mock::given(method("GET"))
         .and(path("/repos/test/repo/releases/tags/v1.0.0"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "id": 123,
-                "html_url": "https://github.com/test/repo/releases/tag/v1.0.0",
-                "tag_name": "v1.0.0"
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": 123,
+            "html_url": "https://github.com/test/repo/releases/tag/v1.0.0",
+            "tag_name": "v1.0.0"
+        })))
         .mount(&mock_server)
         .await;
 
     // Mock PATCH to update existing release
     Mock::given(method("PATCH"))
         .and(path("/repos/test/repo/releases/123"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "html_url": "https://github.com/test/repo/releases/tag/v1.0.0",
-                "tag_name": "v1.0.0"
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "html_url": "https://github.com/test/repo/releases/tag/v1.0.0",
+            "tag_name": "v1.0.0"
+        })))
         .mount(&mock_server)
         .await;
 

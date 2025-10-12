@@ -116,12 +116,7 @@ impl Authors {
         let email_indices: Vec<(usize, String)> = authors_vec
             .iter()
             .enumerate()
-            .filter_map(|(idx, author)| {
-                author
-                    .email
-                    .as_ref()
-                    .map(|e| (idx, e.to_string()))
-            })
+            .filter_map(|(idx, author)| author.email.as_ref().map(|e| (idx, e.to_string())))
             .collect();
 
         // Resolve all emails concurrently
