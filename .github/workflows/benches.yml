@@ -26,4 +26,4 @@ jobs:
         uses: CodSpeedHQ/action@3959e9e296ef25296e93e32afcc97196f966e57f # v4.1.0
         with:
           mode: instrumentation
-          run: cargo codspeed run
+          run: cargo codspeed run novalyn_core
