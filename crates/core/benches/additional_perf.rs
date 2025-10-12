@@ -6,7 +6,7 @@ use novalyn_core::changelog::write_or_update_changelog;
 use novalyn_core::config::{LoadOptions, load_config};
 use novalyn_core::conventional::parse_commit_fast;
 use novalyn_core::git::RawCommit;
-use novalyn_core::parse::{ParsedCommit, parse_and_classify};
+use novalyn_core::parse::parse_and_classify;
 use std::collections::HashMap;
 use tempfile::TempDir;
 

@@ -10,7 +10,7 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
-[[benches]]
+[[bench]]
 harness = false
 name = "additional_perf"
 

@@ -188,21 +188,23 @@ title = "File Config"
     )
     .unwrap();
 
-    let mut cli_override = novalyn_core::config::RawConfig::default();
-    cli_override.types_override = Some(
-        [(
-            "feat".into(),
-            novalyn_core::config::TypeToggleOrConfig::Config(
-                novalyn_core::config::TypeConfigPartial {
-                    title: Some("CLI Override".into()),
-                    emoji: None,
-                    semver: None,
-                },
-            ),
-        )]
-        .into_iter()
-        .collect(),
-    );
+    let cli_override = novalyn_core::config::RawConfig {
+        types_override: Some(
+            [(
+                "feat".into(),
+                novalyn_core::config::TypeToggleOrConfig::Config(
+                    novalyn_core::config::TypeConfigPartial {
+                        title: Some("CLI Override".into()),
+                        emoji: None,
+                        semver: None,
+                    },
+                ),
+            )]
+            .into_iter()
+            .collect(),
+        ),
+        ..Default::default()
+    };
 
     let cfg = load_config(LoadOptions {
         cwd: dir.path(),
