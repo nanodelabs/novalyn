@@ -10,6 +10,10 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[[bench]]
+harness = false
+name = "parse_performance"
+
 [dependencies]
 anyhow.workspace = true
 ecow.workspace = true
