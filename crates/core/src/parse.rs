@@ -4,6 +4,10 @@ use crate::git::RawCommit;
 use ecow::{EcoString, EcoVec};
 use rayon::prelude::*;
 
+/// A parsed conventional commit with classified type and metadata.
+///
+/// Contains both the original raw commit data and extracted conventional
+/// commit fields like type, scope, breaking changes, and issue references.
 #[derive(Debug, Clone)]
 pub struct ParsedCommit {
     pub raw: RawCommit,
@@ -16,9 +20,14 @@ pub struct ParsedCommit {
     pub issues: EcoVec<u64>,
     pub co_authors: EcoVec<EcoString>,
     pub type_cfg: Option<TypeConfigResolved>,
-    pub index: usize, // original chronological order position for deterministic ordering
+    /// Original chronological order position for deterministic ordering
+    pub index: usize,
 }
 
+/// Semantic version bump type inferred from commits.
+///
+/// Determines how the version number should be incremented based on
+/// conventional commit types and breaking changes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BumpKind {
     Major,
@@ -39,6 +48,17 @@ impl BumpKind {
     }
 }
 
+/// Parse and classify commits using either sequential or parallel processing.
+///
+/// Automatically chooses between sequential and parallel processing based on
+/// the number of commits and the `NOVALYN_PARALLEL_THRESHOLD` environment variable.
+///
+/// # Arguments
+/// * `commits` - Raw commits from git repository
+/// * `cfg` - Resolved configuration with commit type definitions
+///
+/// # Returns
+/// Parsed and classified commits, preserving chronological order
 pub fn parse_and_classify(
     commits: EcoVec<RawCommit>,
     cfg: &ResolvedConfig,
@@ -55,6 +75,9 @@ pub fn parse_and_classify(
     }
 }
 
+/// Parse and classify commits sequentially in a single thread.
+///
+/// Used for small commit batches where parallel overhead exceeds benefits.
 fn parse_and_classify_sequential(
     commits: EcoVec<RawCommit>,
     cfg: &ResolvedConfig,
@@ -77,6 +100,10 @@ fn parse_and_classify_sequential(
     out
 }
 
+/// Parse and classify commits in parallel using rayon.
+///
+/// Processes commits concurrently while preserving original chronological order.
+/// Each commit is parsed and classified independently, then sorted back by index.
 fn parse_and_classify_parallel(
     commits: EcoVec<RawCommit>,
     cfg: &ResolvedConfig,
@@ -109,7 +136,10 @@ fn parse_and_classify_parallel(
     parsed
 }
 
-// Parse a single raw commit using our ultra-fast parser
+/// Parse a single raw commit using our ultra-fast zero-copy parser.
+///
+/// Delegates to the optimized `parse_commit_fast` function for actual parsing,
+/// then wraps the result in a `ParsedCommit` with metadata.
 #[inline]
 fn parse_one(rc: &RawCommit) -> ParsedCommit {
     let parsed = parse_commit_fast(rc);
@@ -129,6 +159,9 @@ fn parse_one(rc: &RawCommit) -> ParsedCommit {
     }
 }
 
+/// Classify a parsed commit by matching its type against configured types.
+///
+/// Sets the `type_cfg` field if a matching type is found in the configuration.
 fn classify(pc: &mut ParsedCommit, cfg: &ResolvedConfig) {
     // Apply scope_map if provided (exact match)
     if let Some(sc) = &mut pc.scope {
@@ -147,6 +180,9 @@ fn classify(pc: &mut ParsedCommit, cfg: &ResolvedConfig) {
     }
 }
 
+/// Determine if a parsed commit should be kept in the changelog.
+///
+/// Commits are kept if they have a valid type configuration.
 fn should_keep(pc: &ParsedCommit) -> bool {
     if let Some(tc) = &pc.type_cfg {
         if !tc.enabled {
@@ -242,6 +278,21 @@ pub fn bump_cargo_version(
     Ok(())
 }
 
+/// Interpolate template variables in a string.
+///
+/// Supports the following placeholders:
+/// - `{{from}}` - Previous version
+/// - `{{to}}` - New version  
+/// - `{{date}}` - Release date in ISO format
+///
+/// # Arguments
+/// * `template` - Template string with placeholders
+/// * `previous` - Previous version
+/// * `new_version` - New version
+/// * `date` - Release date
+///
+/// # Returns
+/// Interpolated string
 pub fn interpolate(
     template: &str,
     previous: &semver::Version,

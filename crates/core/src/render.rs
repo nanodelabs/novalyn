@@ -6,6 +6,9 @@ use crate::{
 };
 use ecow::{EcoString, EcoVec};
 
+/// Context for rendering a changelog release block.
+///
+/// Contains all data needed to generate formatted markdown output.
 #[derive(Debug)]
 pub struct RenderContext<'a> {
     pub version: &'a semver::Version,
@@ -15,9 +18,24 @@ pub struct RenderContext<'a> {
     pub repo: Option<&'a Repository>,
     pub cfg: &'a ResolvedConfig,
     pub previous_tag: Option<&'a str>,
+    /// Current git reference (branch or tag name)
     pub current_ref: &'a str,
 }
 
+/// Render a changelog release block in markdown format.
+///
+/// Generates a formatted release section with:
+/// - Version header with compare link
+/// - Commits grouped by type (features, fixes, etc.)
+/// - Breaking change indicators
+/// - Issue references with links
+/// - Contributors section
+///
+/// # Arguments
+/// * `ctx` - Render context with commits, version, and configuration
+///
+/// # Returns
+/// Formatted markdown release block as a string
 pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
     let mut out = String::new();
     // Header
