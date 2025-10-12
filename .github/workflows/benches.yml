@@ -21,7 +21,7 @@ jobs:
           cache-target: release
           bins: cargo-codspeed
       - name: Build the benchmark target(s)
-        run: cargo codspeed build
+        run: cargo codspeed build -p novalyn_core
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@3959e9e296ef25296e93e32afcc97196f966e57f # v4.1.0
         with:
