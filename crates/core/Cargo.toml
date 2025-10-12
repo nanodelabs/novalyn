@@ -20,6 +20,7 @@ name = "parse_performance"
 
 [dependencies]
 anyhow.workspace = true
+demand.workspace = true
 ecow.workspace = true
 foldhash.workspace = true
 futures.workspace = true

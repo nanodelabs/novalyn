@@ -9,29 +9,37 @@ use crate::{
 use anyhow::Result;
 use ecow::{EcoString, EcoVec};
 use tracing::{debug, info, instrument, warn};
+use demand::Confirm;
 
 /// Interactive confirmation prompt for release operations.
 ///
-/// When `yes_flag` is true, auto-confirms without user interaction.
-/// This function currently auto-confirms in all cases and will be enhanced
-/// with interactive prompting using the `demand` crate in future versions.
+/// Uses the `demand` crate to display a confirmation dialog in the terminal
+/// unless `yes_flag` is true, in which case it auto-confirms without user interaction.
 ///
 /// # Arguments
 /// * `message` - Prompt message to display/log
-/// * `yes_flag` - If true, skip interactive prompt
+/// * `yes_flag` - If true, skip interactive prompt and auto-confirm
 ///
 /// # Returns
-/// `Ok(true)` if confirmed, `Ok(false)` if declined, `Err` on prompt error
+/// `Ok(true)` if confirmed, `Ok(false)` if declined or cancelled, `Err` on prompt error
 fn confirm_action(message: &str, yes_flag: bool) -> Result<bool> {
     if yes_flag {
         tracing::debug!("Auto-confirming: {}", message);
         return Ok(true);
     }
 
-    // TODO: Implement interactive prompts using the `demand` crate
-    // For now, we auto-confirm all prompts when --yes is not specified
-    tracing::info!("Would prompt: {} (auto-confirming)", message);
-    Ok(true)
+    let confirm = Confirm::new(message).affirmative("Yes").negative("No");
+    match confirm.run() {
+        Ok(choice) => Ok(choice),
+        Err(e) => {
+            if e.kind() == std::io::ErrorKind::Interrupted {
+                tracing::info!("Prompt cancelled by user");
+                Ok(false)
+            } else {
+                Err(e.into())
+            }
+        }
+    }
 }
 
 /// Exit codes returned by release pipeline.
