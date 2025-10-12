@@ -2421,6 +2421,7 @@ dependencies = [
  "codspeed-divan-compat",
  "ecow",
  "foldhash 0.2.0",
+ "futures",
  "gix",
  "insta",
  "jiff",

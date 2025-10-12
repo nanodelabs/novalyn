@@ -22,6 +22,7 @@ name = "parse_performance"
 anyhow.workspace = true
 ecow.workspace = true
 foldhash.workspace = true
+futures.workspace = true
 gix.workspace = true
 jiff.workspace = true
 memchr.workspace = true

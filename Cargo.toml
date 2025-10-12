@@ -32,6 +32,7 @@ demand = "1.7"
 divan = { package = "codspeed-divan-compat", version = "*" }
 ecow = { version = "0.2", features = ["serde"] }
 foldhash = "0.2"
+futures = "0.3"
 gix = { version = "0.73.0", default-features = false, features = [
   "max-control",
   "pack-cache-lru-dynamic",

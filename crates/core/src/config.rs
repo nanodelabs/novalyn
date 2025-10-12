@@ -10,34 +10,60 @@ use semver::Version;
 use serde::Deserialize;
 use tracing::warn;
 
+/// Configuration for commit type display and classification.
+///
+/// Can be either a boolean toggle or a full configuration object.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum TypeToggleOrConfig {
-    Disabled(bool), // false means disabled, true treated as default object
+    /// false means disabled, true treated as default object
+    Disabled(bool),
+    /// Full configuration with custom title, emoji, and semver impact
     Config(TypeConfigPartial),
 }
 
+/// Partial configuration for a commit type (from TOML).
+///
+/// All fields are optional to allow incremental configuration.
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct TypeConfigPartial {
+    /// Display title for this commit type
     pub title: Option<EcoString>,
+    /// Emoji prefix for changelog entries
     pub emoji: Option<EcoString>,
-    pub semver: Option<EcoString>, // major | minor | patch | none
+    /// Semantic version impact: "major" | "minor" | "patch" | "none"
+    pub semver: Option<EcoString>,
 }
 
+/// Fully resolved configuration for a commit type.
+///
+/// All fields have concrete values after merging defaults and user config.
 #[derive(Debug, Clone)]
 pub struct TypeConfigResolved {
+    /// Unique identifier for the commit type (e.g., "feat", "fix")
     pub key: EcoString,
+    /// Display title for changelog sections
     pub title: EcoString,
+    /// Emoji prefix for entries
     pub emoji: EcoString,
+    /// Semantic versioning impact
     pub semver: SemverImpact,
+    /// Whether this type is enabled for display
     pub enabled: bool,
 }
 
+/// Semantic version impact level for a commit type.
+///
+/// Determines how a commit affects version number incrementation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SemverImpact {
+    /// Breaking changes - increment major version
     Major,
+    /// New features - increment minor version
     Minor,
+    /// Bug fixes - increment patch version
     Patch,
+    /// No version impact
     None,
 }
 
@@ -110,10 +136,26 @@ pub fn default_types() -> Vec<TypeConfigResolved> {
 }
 
 pub struct LoadOptions<'a> {
+    /// Working directory to search for config files
     pub cwd: &'a Path,
+    /// Optional CLI-provided configuration overrides
     pub cli_overrides: Option<RawConfig>,
 }
 
+/// Load and merge configuration from multiple sources.
+///
+/// Configuration precedence (highest to lowest):
+/// 1. CLI overrides
+/// 2. Cargo.toml [package.metadata.novalyn]
+/// 3. novalyn.toml
+/// 4. Built-in defaults
+///
+/// # Arguments
+/// * `opts` - Load options specifying paths and overrides
+///
+/// # Returns
+/// * `Ok(ResolvedConfig)` - Fully merged configuration
+/// * `Err` - Critical configuration error (warnings stored in config)
 pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     let mut warnings = EcoVec::new();
     let mut source_file = None;
@@ -252,6 +294,13 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     })
 }
 
+/// Load a TOML configuration file.
+///
+/// # Arguments
+/// * `path` - Path to TOML file
+///
+/// # Returns
+/// Parsed configuration or error with context
 fn load_file(path: &Path) -> Result<RawConfig> {
     let txt = fs::read_to_string(path).with_context(|| format!("Reading {path:?}"))?;
     let rc: RawConfig =
@@ -259,6 +308,14 @@ fn load_file(path: &Path) -> Result<RawConfig> {
     Ok(rc)
 }
 
+/// Find a configuration file in the given directory.
+///
+/// # Arguments
+/// * `cwd` - Directory to search
+/// * `name` - Filename to look for
+///
+/// # Returns
+/// Full path if file exists, None otherwise
 fn find_file(cwd: &Path, name: &str) -> Option<PathBuf> {
     let candidate = cwd.join(name);
     if candidate.exists() {
@@ -268,6 +325,14 @@ fn find_file(cwd: &Path, name: &str) -> Option<PathBuf> {
     }
 }
 
+/// Extract [package.metadata.novalyn] block from Cargo.toml.
+///
+/// # Arguments
+/// * `cargo_toml` - Cargo.toml file content
+/// * `warnings` - Vector to append warnings to
+///
+/// # Returns
+/// Parsed configuration if present, None if not found or invalid
 fn extract_metadata_block(cargo_toml: &str, warnings: &mut EcoVec<EcoString>) -> Option<RawConfig> {
     // parse using toml_edit to avoid losing formatting
     let doc: toml_edit::DocumentMut = match cargo_toml.parse() {
@@ -299,6 +364,12 @@ fn extract_metadata_block(cargo_toml: &str, warnings: &mut EcoVec<EcoString>) ->
     None
 }
 
+/// Resolve GitHub token from environment variables.
+///
+/// Checks in order: CHANGELOGEN_TOKENS_GITHUB, GITHUB_TOKEN, GH_TOKEN
+///
+/// # Returns
+/// Token if found in environment, None otherwise
 fn resolve_github_token() -> Option<EcoString> {
     for key in ["NOVALYN_TOKENS_GITHUB", "GITHUB_TOKEN", "GH_TOKEN"] {
         if let Ok(v) = std::env::var(key)
@@ -310,12 +381,26 @@ fn resolve_github_token() -> Option<EcoString> {
     None
 }
 
+/// Log configuration warnings using the tracing framework.
+///
+/// # Arguments
+/// * `cfg` - Configuration containing warnings to log
 pub fn log_warnings(cfg: &ResolvedConfig) {
     for w in &cfg.warnings {
         warn!(target = "novalyn::config", "{w}");
     }
 }
 
+/// Attempt to detect git repository information.
+///
+/// Tries to parse remote URL and detect repository provider (GitHub, GitLab, etc.)
+///
+/// # Arguments
+/// * `cwd` - Directory to search for repository
+/// * `warnings` - Vector to append warnings to
+///
+/// # Returns
+/// Repository information if detected, None otherwise
 fn detect_repository(cwd: &Path, warnings: &mut EcoVec<EcoString>) -> Option<repo_mod::Repository> {
     // crate path valid when used as library
     // Open git repo; if not a git repository, silently return None (git layer will handle hard error later)

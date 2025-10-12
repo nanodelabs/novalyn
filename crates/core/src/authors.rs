@@ -96,23 +96,49 @@ impl Authors {
         }
     }
 
-    /// Resolve email addresses to GitHub handles using GitHub API.
+    /// Resolve email addresses to GitHub handles using GitHub API concurrently.
+    ///
     /// This modifies author names in place, replacing emails with @handles when found.
+    /// Uses concurrent requests to resolve multiple emails in parallel for better performance.
+    ///
+    /// # Arguments
+    /// * `token` - GitHub API token for authentication
+    ///
+    /// # Returns
+    /// * `Ok(())` - All resolutions completed (some may have failed silently)
+    /// * `Err` - Critical error during resolution
     pub async fn resolve_github_handles(&mut self, token: &str) -> Result<(), String> {
         use crate::github::get_username_from_email;
+        use futures::future::join_all;
 
-        // Make EcoVec mutable to iterate and modify
+        // Collect all emails to resolve
         let authors_vec = self.list.make_mut();
-        for author in authors_vec.iter_mut() {
-            if let Some(ref email) = author.email {
-                if let Ok(Some(handle)) =
-                    get_username_from_email(email.as_str(), Some(token), None).await
-                {
-                    // Replace name with GitHub handle
-                    author.name = handle;
-                }
+        let email_indices: Vec<(usize, String)> = authors_vec
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, author)| {
+                author
+                    .email
+                    .as_ref()
+                    .map(|e| (idx, e.to_string()))
+            })
+            .collect();
+
+        // Resolve all emails concurrently
+        let futures: Vec<_> = email_indices
+            .iter()
+            .map(|(_, email)| get_username_from_email(email.as_str(), Some(token), None))
+            .collect();
+
+        let results = join_all(futures).await;
+
+        // Update authors with resolved handles
+        for ((idx, _), result) in email_indices.iter().zip(results.iter()) {
+            if let Ok(Some(handle)) = result {
+                authors_vec[*idx].name = handle.clone();
             }
         }
+
         Ok(())
     }
 }

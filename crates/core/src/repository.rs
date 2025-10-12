@@ -1,23 +1,46 @@
 use ecow::EcoString;
 use std::fmt;
 
+/// Repository hosting provider.
+///
+/// Determines URL formats for issues, PRs, commits, and compare views.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Provider {
+    /// GitHub
     GitHub,
+    /// GitLab
     GitLab,
+    /// Bitbucket
     Bitbucket,
+    /// Other or unknown provider
     Other,
 }
 
+impl fmt::Display for Provider {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Provider::GitHub => write!(f, "GitHub"),
+            Provider::GitLab => write!(f, "GitLab"),
+            Provider::Bitbucket => write!(f, "Bitbucket"),
+            Provider::Other => write!(f, "Other"),
+        }
+    }
+}
+
+/// Git repository information parsed from remote URL.
+///
+/// Contains provider, host, owner, and project name for URL formatting.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Repository {
     pub host: EcoString,
     pub owner: EcoString,
     pub name: EcoString,
     pub provider: Provider,
+    /// Original remote URL
     pub original: EcoString,
 }
 
+/// Type of git reference for URL formatting.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum ReferenceKind {
     PullRequest,
