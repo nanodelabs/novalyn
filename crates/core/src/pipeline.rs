@@ -10,26 +10,46 @@ use anyhow::Result;
 use ecow::{EcoString, EcoVec};
 use tracing::{debug, info, instrument, warn};
 
-/// Simple confirmation prompt that respects the --yes flag
+/// Interactive confirmation prompt for release operations.
+///
+/// When `yes_flag` is true, auto-confirms without user interaction.
+/// This function currently auto-confirms in all cases and will be enhanced
+/// with interactive prompting using the `demand` crate in future versions.
+///
+/// # Arguments
+/// * `message` - Prompt message to display/log
+/// * `yes_flag` - If true, skip interactive prompt
+///
+/// # Returns
+/// `Ok(true)` if confirmed, `Ok(false)` if declined, `Err` on prompt error
 fn confirm_action(message: &str, yes_flag: bool) -> Result<bool> {
     if yes_flag {
         tracing::debug!("Auto-confirming: {}", message);
         return Ok(true);
     }
 
-    // For now, just log and return true. In a full implementation,
-    // this would use the `demand` crate to show interactive prompts.
-    tracing::info!("Would prompt: {} (assuming yes for now)", message);
+    // TODO: Implement interactive prompts using the `demand` crate
+    // For now, we auto-confirm all prompts when --yes is not specified
+    tracing::info!("Would prompt: {} (auto-confirming)", message);
     Ok(true)
 }
 
+/// Exit codes returned by release pipeline.
+///
+/// Following standard Unix conventions for process exit codes.
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExitCode {
+    /// Successful release operation
     Success = 0,
+    /// No changes detected (idempotent run)
     NoChange = 3,
 }
 
+/// Configuration options for release pipeline execution.
+///
+/// Controls all aspects of changelog generation, version bumping,
+/// and git operations.
 pub struct ReleaseOptions {
     pub cwd: std::path::PathBuf,
     pub from: Option<EcoString>,
@@ -42,19 +62,48 @@ pub struct ReleaseOptions {
     pub clean: bool,
     pub sign: bool,
     pub yes: bool,
+    /// Whether to resolve author emails to GitHub handles
     pub github_alias: bool,
+    /// GitHub API token for handle resolution
     pub github_token: Option<EcoString>,
 }
 
+/// Result of a release pipeline execution.
+///
+/// Contains information about the generated release including version,
+/// file paths, and operation status.
 pub struct ReleaseOutcome {
     pub version: semver::Version,
     pub previous: Option<semver::Version>,
     pub wrote: bool,
     pub changelog_path: std::path::PathBuf,
     pub commit_count: usize,
+    /// Process exit code
     pub exit: ExitCode,
 }
 
+/// Execute the complete release pipeline.
+///
+/// Orchestrates all steps of changelog generation:
+/// 1. Load configuration
+/// 2. Detect git repository and commits
+/// 3. Parse and classify conventional commits
+/// 4. Infer semantic version
+/// 5. Collect and resolve authors
+/// 6. Render changelog block
+/// 7. Write to CHANGELOG.md
+/// 8. Update Cargo.toml version
+/// 9. Create git commit and tag
+///
+/// # Arguments
+/// * `opts` - Release configuration options
+///
+/// # Returns
+/// * `Ok(ReleaseOutcome)` - Successful release with details
+/// * `Err` - Pipeline error occurred
+///
+/// # Errors
+/// Returns error if configuration loading, git operations, or file writes fail
 #[instrument(skip_all, fields(cwd = %opts.cwd.display()))]
 pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     // 1. Load config (inject CLI overrides for new_version & author flags in future)

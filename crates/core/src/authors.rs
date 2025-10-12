@@ -10,26 +10,45 @@ type FastHashSet<T> = std::collections::HashSet<T, foldhash::quality::RandomStat
 static HASH_BUILDER: Lazy<foldhash::quality::RandomState> =
     Lazy::new(foldhash::quality::RandomState::default);
 
+/// Represents a commit author with their name and optional email.
+///
+/// Authors are deduplicated based on normalized name and email combinations.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Author {
+    /// Author's display name (may be GitHub handle if resolved via API)
     pub name: EcoString,
+    /// Author's email address (hidden if configured)
     pub email: Option<EcoString>,
 }
 
+/// Collection of deduplicated authors from commit history.
+///
+/// Authors are collected from both primary commit authors and co-authors.
 #[derive(Debug, Clone, Default)]
 pub struct Authors {
+    /// Deduplicated list of authors
     pub list: EcoVec<Author>,
+    /// Whether author section should be omitted from output
     pub suppressed: bool,
 }
 
+/// Configuration options for author collection and display.
+///
+/// Controls filtering, email hiding, aliasing, and GitHub handle resolution.
 #[derive(Debug, Clone)]
 pub struct AuthorOptions {
-    pub exclude: EcoVec<EcoString>, // names or emails exact match
-    pub hide_author_email: bool,    // redact email if true
-    pub no_authors: bool,           // suppress entirely
-    pub aliases: FastHashMap<EcoString, EcoString>, // map old identity to new (name or email)
-    pub github_token: Option<String>, // GitHub token for email->handle resolution
-    pub enable_github_aliasing: bool, // whether to resolve emails to @handles
+    /// Exact names or emails to exclude from author list
+    pub exclude: EcoVec<EcoString>,
+    /// Whether to hide email addresses in output
+    pub hide_author_email: bool,
+    /// Whether to suppress the entire authors section
+    pub no_authors: bool,
+    /// Map old identities to new ones (for author aliasing)
+    pub aliases: FastHashMap<EcoString, EcoString>,
+    /// GitHub API token for email-to-handle resolution
+    pub github_token: Option<String>,
+    /// Whether to resolve emails to @handles via GitHub API
+    pub enable_github_aliasing: bool,
 }
 
 impl Default for AuthorOptions {
@@ -156,6 +175,13 @@ fn push_author<'a>(
     });
 }
 
+/// Parse a co-author line in the format "Name <email>".
+///
+/// # Arguments
+/// * `line` - Co-author line to parse
+///
+/// # Returns
+/// `Some((name, email))` if successfully parsed, `None` otherwise
 fn parse_co_author_line(line: &str) -> Option<(&str, &str)> {
     // Format: Name <email>
     let line = line.trim();

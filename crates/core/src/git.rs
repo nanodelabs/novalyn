@@ -2,6 +2,10 @@ use ecow::{EcoString, EcoVec};
 use gix::Repository;
 use gix::date::parse::TimeBuf;
 
+/// A raw commit extracted from the git repository.
+///
+/// Contains essential commit metadata needed for changelog generation.
+/// This is a lightweight representation optimized for performance.
 #[derive(Debug, Clone)]
 pub struct RawCommit {
     pub id: EcoString,
@@ -10,13 +14,37 @@ pub struct RawCommit {
     pub body: EcoString,
     pub author_name: EcoString,
     pub author_email: EcoString,
+    /// Unix timestamp of commit
     pub timestamp: i64,
 }
 
+/// Detect and open a git repository at the given path.
+///
+/// Searches for a .git directory starting from the given path and
+/// walking up the directory tree.
+///
+/// # Arguments
+/// * `path` - Starting directory for repository search
+///
+/// # Returns
+/// * `Ok(Repository)` - Successfully opened repository
+/// * `Err` - No repository found or access error
 pub fn detect_repo(path: &std::path::Path) -> anyhow::Result<Repository> {
     gix::discover(path).map_err(anyhow::Error::from)
 }
 
+/// Find the most recent semantic version tag in the repository.
+///
+/// Scans all tags matching semantic versioning format (with optional 'v' prefix)
+/// and returns the most recent one based on commit timestamp and version comparison.
+///
+/// # Arguments
+/// * `repo` - Git repository to search
+///
+/// # Returns
+/// * `Ok(Some(tag_name))` - Most recent semantic version tag
+/// * `Ok(None)` - No semantic version tags found
+/// * `Err` - Repository access error
 pub fn last_tag(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
     use gix::object::Kind;
     let mut latest: Option<(EcoString, i64, semver::Version)> = None;
@@ -59,6 +87,17 @@ pub fn last_tag(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
     Ok(latest.map(|(n, _, _)| n))
 }
 
+/// Get the current HEAD reference name.
+///
+/// Returns the current branch name, tag name, or detached HEAD identifier.
+///
+/// # Arguments
+/// * `repo` - Git repository
+///
+/// # Returns
+/// * `Ok(Some(ref_name))` - Reference name (branch, tag, or detached HEAD)
+/// * `Ok(None)` - Unborn HEAD (no commits yet)
+/// * `Err` - Repository access error
 pub fn current_ref(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
     let head = repo.head().map_err(anyhow::Error::from)?;
     if head.is_unborn() {
@@ -95,6 +134,19 @@ pub fn current_ref(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
     Ok(None)
 }
 
+/// Collect all commits between two references.
+///
+/// Performs a git log operation from `from` (exclusive) to `to` (inclusive).
+/// If `from` is None, collects all commits up to `to`.
+///
+/// # Arguments
+/// * `repo` - Git repository
+/// * `from` - Optional starting reference (exclusive)
+/// * `to` - Ending reference (inclusive)
+///
+/// # Returns
+/// * `Ok(commits)` - Vector of raw commits in chronological order (oldest first)
+/// * `Err` - Git operation error
 pub fn commits_between(
     repo: &Repository,
     from: Option<&str>,
@@ -156,6 +208,17 @@ fn to_raw_commit(commit: &gix::Commit) -> anyhow::Result<RawCommit> {
     })
 }
 
+/// Check if the working tree has uncommitted changes.
+///
+/// Examines both staged and unstaged changes in the repository.
+///
+/// # Arguments
+/// * `repo` - Git repository
+///
+/// # Returns
+/// * `Ok(true)` - Working tree has uncommitted changes
+/// * `Ok(false)` - Working tree is clean
+/// * `Err` - Git operation error
 pub fn is_dirty(repo: &Repository) -> anyhow::Result<bool> {
     // Use gix's status functionality to check for changes
     let status_platform = repo.status(gix::progress::Discard)?;

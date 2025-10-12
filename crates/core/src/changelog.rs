@@ -1,8 +1,63 @@
 use ecow::EcoString;
 use std::path::Path;
+use tokio::fs;
 
-/// Write or prepend the new release block to CHANGELOG.md.
-/// Returns Ok(true) if file changed, false if idempotent (identical top block already present).
+/// Write or prepend a new release block to CHANGELOG.md asynchronously.
+///
+/// This function handles idempotent updates - if the exact same release block
+/// already exists at the top of the changelog, no write occurs.
+///
+/// # Arguments
+/// * `path` - Directory containing CHANGELOG.md
+/// * `new_block` - New release block to prepend
+///
+/// # Returns
+/// * `Ok(true)` - File was modified with new content
+/// * `Ok(false)` - File unchanged (idempotent operation)
+/// * `Err` - I/O error occurred
+pub async fn write_or_update_changelog_async(
+    path: &Path,
+    new_block: &EcoString,
+) -> std::io::Result<bool> {
+    let file_path = path.join("CHANGELOG.md");
+    let existing = fs::read_to_string(&file_path)
+        .await
+        .unwrap_or_else(|_| "# Changelog\n".into());
+    let mut normalized_new = new_block.trim_end().to_string();
+    normalized_new.push('\n');
+
+    // Extract current first block (skip optional title line beginning with '# ' but not '## ')
+    let top_block = extract_top_block(&existing);
+    if let Some(tb) = top_block {
+        if tb.trim_end() == normalized_new.trim_end() {
+            return Ok(false);
+        }
+    }
+
+    // Direct quick check: if existing (after possible title) already begins with normalized_new
+    let existing_after_title = existing
+        .strip_prefix("# Changelog\n")
+        .unwrap_or(existing.as_str());
+    if existing_after_title.starts_with(&normalized_new) {
+        return Ok(false);
+    }
+
+    // Prepend new block before existing content (keeping single newline separation)
+    let mut out = String::new();
+    out.push_str(&normalized_new);
+    if !existing.starts_with('#') {
+        // unlikely
+        out.push('\n');
+    }
+    out.push_str(&existing);
+    fs::write(&file_path, out).await?;
+    Ok(true)
+}
+
+/// Synchronous version for backward compatibility.
+///
+/// Consider using `write_or_update_changelog_async` for better performance
+/// when in an async context.
 pub fn write_or_update_changelog(path: &Path, new_block: &EcoString) -> std::io::Result<bool> {
     let file_path = path.join("CHANGELOG.md");
     let existing = std::fs::read_to_string(&file_path).unwrap_or_else(|_| "# Changelog\n".into());
@@ -34,6 +89,16 @@ pub fn write_or_update_changelog(path: &Path, new_block: &EcoString) -> std::io:
     Ok(true)
 }
 
+/// Extract the top release block from a changelog file.
+///
+/// Parses the changelog to find the first `## ` header and all content
+/// until the next `## ` header.
+///
+/// # Arguments
+/// * `existing` - Changelog file content
+///
+/// # Returns
+/// The top release block if found, None if no release blocks exist
 fn extract_top_block(existing: &str) -> Option<EcoString> {
     let mut lines = existing.lines().peekable();
     // Skip single title line if present
