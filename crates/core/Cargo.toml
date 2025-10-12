@@ -14,6 +14,10 @@ categories.workspace = true
 harness = false
 name = "additional_perf"
 
+[[bench]]
+harness = false
+name = "parse_performance"
+
 [dependencies]
 anyhow.workspace = true
 ecow.workspace = true

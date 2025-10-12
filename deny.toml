@@ -5,10 +5,7 @@
 # Use v2 configuration format
 version = 2
 # Ignore advisories for specific IDs
-ignore = [
-  # paste crate is unmaintained but used only by dev dependency cargo-deny
-  "RUSTSEC-2024-0436",
-]
+ignore = []
 
 [licenses]
 # Use v2 configuration format
@@ -27,6 +24,7 @@ allow = [
   "Unicode-3.0",
   "OpenSSL",
   "Zlib",
+  "MPL-2.0",
 ]
 # Confidence threshold for license detection
 confidence-threshold = 0.8
