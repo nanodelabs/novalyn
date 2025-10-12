@@ -1,0 +1,45 @@
+[package]
+name = "novalyn"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "💅 Beautiful Changelogs using Conventional Commits"
+readme.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+novalyn_core = { path = "../core" }
+anyhow.workspace = true
+clap.workspace = true
+clap_complete.workspace = true
+clap_complete_nushell.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+assert_cmd.workspace = true
+assert_fs.workspace = true
+insta.workspace = true
+predicates.workspace = true
+
+[build-dependencies]
+clap.workspace = true
+clap_complete.workspace = true
+clap_complete_nushell.workspace = true
+clap_mangen.workspace = true
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+mimalloc-safe.workspace = true
+
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+mimalloc-safe = { workspace = true, features = [
+  "no_opt_arch",
+] }
+
+[target.'cfg(target_env = "msvc")'.dependencies]
+mimalloc-safe = { workspace = true, features = [
+  "override",
+] }
+
