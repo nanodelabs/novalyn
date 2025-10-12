@@ -1,4 +1,4 @@
-use novalyn::repository::{
+use novalyn_core::repository::{
     Provider, ReferenceKind, Repository, format_compare_changes, format_reference,
 };
 

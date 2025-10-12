@@ -1,4 +1,4 @@
-use novalyn::{
+use novalyn_core::{
     config::{ResolvedConfig, default_types},
     git::RawCommit,
     parse::ParsedCommit,

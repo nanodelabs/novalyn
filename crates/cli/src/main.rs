@@ -8,12 +8,11 @@ static GLOBAL: MiMalloc = MiMalloc;
 pub use novalyn as lib;
 
 fn main() {
-    lib::init_crypto_provider();
+    novalyn_core::init_crypto_provider();
     match lib::cli::run() {
         Ok(exit_code) => std::process::exit(exit_code as i32),
         Err(e) => {
-            // Format error to stderr with proper message
-            if let Some(err) = e.downcast_ref::<lib::error::NovalynError>() {
+            if let Some(err) = e.downcast_ref::<novalyn_core::error::NovalynError>() {
                 eprintln!("novalyn: {}", err);
                 std::process::exit(err.exit_code());
             } else {

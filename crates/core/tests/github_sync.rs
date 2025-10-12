@@ -1,5 +1,5 @@
-use novalyn::github::sync_release;
-use novalyn::repository::Repository;
+use novalyn_core::github::sync_release;
+use novalyn_core::repository::Repository;
 use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -10,7 +10,7 @@ mod wiremock_helpers {
 
     pub fn setup() {
         INIT.call_once(|| {
-            novalyn::init_crypto_provider();
+            novalyn_core::init_crypto_provider();
         });
     }
 }

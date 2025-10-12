@@ -1,4 +1,4 @@
-use novalyn::git::{add_and_commit, create_tag};
+use novalyn_core::git::{add_and_commit, create_tag};
 use tempfile::TempDir;
 
 fn init_repo() -> (TempDir, git2::Repository) {

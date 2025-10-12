@@ -1,7 +1,7 @@
 use std::fs;
 use std::process::Command;
 
-use novalyn::config::{self, LoadOptions};
+use novalyn_core::config::{self, LoadOptions};
 
 fn init_git(dir: &std::path::Path, remote: &str) {
     // Initialize repo via git command (simpler than git2 for author identity config)

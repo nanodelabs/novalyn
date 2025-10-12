@@ -1,6 +1,6 @@
-use novalyn::config::LoadOptions;
-use novalyn::git::RawCommit;
-use novalyn::parse::parse_and_classify;
+use novalyn_core::config::LoadOptions;
+use novalyn_core::git::RawCommit;
+use novalyn_core::parse::parse_and_classify;
 
 fn mk(summary: &str) -> RawCommit {
     RawCommit {
@@ -17,7 +17,7 @@ fn mk(summary: &str) -> RawCommit {
 #[test]
 fn filters_chore_deps_variants() {
     let td = tempfile::tempdir().unwrap();
-    let cfg = novalyn::config::load_config(LoadOptions {
+    let cfg = novalyn_core::config::load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
     })
@@ -35,7 +35,7 @@ fn filters_chore_deps_variants() {
 #[test]
 fn keeps_breaking_chore_deps() {
     let td = tempfile::tempdir().unwrap();
-    let cfg = novalyn::config::load_config(LoadOptions {
+    let cfg = novalyn_core::config::load_config(LoadOptions {
         cwd: td.path(),
         cli_overrides: None,
     })

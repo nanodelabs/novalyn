@@ -1,5 +1,5 @@
-use novalyn::config::{LoadOptions, load_config};
-use novalyn::error::NovalynError;
+use novalyn_core::config::{LoadOptions, load_config};
+use novalyn_core::error::NovalynError;
 use std::fs;
 use tempfile::TempDir;
 
@@ -25,7 +25,7 @@ fn config_parse_failure() {
 fn no_git_repo_detection() {
     let td = TempDir::new().unwrap();
     // This directory has no .git - should be handled gracefully by git layer
-    let result = novalyn::git::detect_repo(td.path());
+    let result = novalyn_core::git::detect_repo(td.path());
 
     // Should fail cleanly without panic
     assert!(result.is_err());

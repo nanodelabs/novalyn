@@ -1,6 +1,6 @@
-use novalyn::config::{LoadOptions, load_config};
-use novalyn::git::RawCommit;
-use novalyn::parse::parse_and_classify;
+use novalyn_core::config::{LoadOptions, load_config};
+use novalyn_core::git::RawCommit;
+use novalyn_core::parse::parse_and_classify;
 use std::env;
 use tempfile::TempDir;
 

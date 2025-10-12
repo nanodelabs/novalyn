@@ -1,5 +1,5 @@
 use jiff::civil::Date;
-use novalyn::parse::interpolate;
+use novalyn_core::parse::interpolate;
 use semver::Version;
 
 #[test]

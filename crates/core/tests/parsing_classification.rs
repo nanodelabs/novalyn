@@ -1,7 +1,7 @@
 use assert_fs::TempDir;
-use novalyn::config::{LoadOptions, load_config};
-use novalyn::git::RawCommit;
-use novalyn::parse::{ParsedCommit, parse_and_classify};
+use novalyn_core::config::{LoadOptions, load_config};
+use novalyn_core::git::RawCommit;
+use novalyn_core::parse::{ParsedCommit, parse_and_classify};
 
 fn mk_commit(summary: &str, body: &str) -> RawCommit {
     RawCommit {

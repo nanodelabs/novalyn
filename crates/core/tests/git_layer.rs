@@ -1,4 +1,4 @@
-use novalyn::git::*;
+use novalyn_core::git::*;
 use std::fs;
 use tempfile::TempDir;
 

@@ -10,52 +10,19 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
-[lib]
-name = "novalyn"
-path = "src/lib.rs"
-
-[[bench]]
-harness = false
-name = "parse_performance"
-
 [dependencies]
+novalyn_core = { path = "../core" }
 anyhow.workspace = true
 clap.workspace = true
 clap_complete.workspace = true
 clap_complete_nushell.workspace = true
-demand.workspace = true
-ecow.workspace = true
-foldhash.workspace = true
-# TODO: Switch to gix ecosystem
-git2.workspace = true
-jiff.workspace = true
-memchr.workspace = true
-once_cell.workspace = true
-rayon.workspace = true
-reqwest.workspace = true
-rustls.workspace = true
-# TODO: future with gix
-scc.workspace = true
-semver.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
-tokio.workspace = true
-toml_edit.workspace = true
-tracing.workspace = true
 tracing-subscriber.workspace = true
-unicode-normalization.workspace = true
-urlencoding.workspace = true
 
 [dev-dependencies]
 assert_cmd.workspace = true
 assert_fs.workspace = true
-divan.workspace = true
 insta.workspace = true
 predicates.workspace = true
-proptest.workspace = true
-tempfile.workspace = true
-wiremock.workspace = true
 
 [build-dependencies]
 clap.workspace = true

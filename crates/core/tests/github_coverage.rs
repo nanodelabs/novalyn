@@ -1,5 +1,5 @@
-use novalyn::github::{GithubError, get_username_from_email, sync_release};
-use novalyn::repository::Repository;
+use novalyn_core::github::{GithubError, get_username_from_email, sync_release};
+use novalyn_core::repository::Repository;
 
 #[tokio::test]
 async fn test_get_username_no_token() {

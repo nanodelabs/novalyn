@@ -1,9 +1,9 @@
 use assert_fs::TempDir;
 use ecow::{EcoString, EcoVec};
-use novalyn::authors::{Author, AuthorOptions, Authors};
-use novalyn::config::{LoadOptions, load_config};
-use novalyn::git::RawCommit;
-use novalyn::parse::parse_and_classify;
+use novalyn_core::authors::{Author, AuthorOptions, Authors};
+use novalyn_core::config::{LoadOptions, load_config};
+use novalyn_core::git::RawCommit;
+use novalyn_core::parse::parse_and_classify;
 
 fn mk_commit(name: &str, email: &str, co_authors: &[&str]) -> RawCommit {
     let mut body = String::new();

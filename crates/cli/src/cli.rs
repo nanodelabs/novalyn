@@ -1,11 +1,13 @@
-use crate::{
-    github, logging,
-    pipeline::{ExitCode, ReleaseOptions, run_release},
-};
+use crate::logging;
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_complete;
-use ecow::EcoVec;
+use novalyn_core::{
+    ecow::EcoVec,
+    github,
+    pipeline::{ExitCode, ReleaseOptions, run_release},
+    semver, tokio,
+};
 
 pub use crate::cli_def::{Cli, Commands, Completions};
 
@@ -166,7 +168,7 @@ pub fn run() -> Result<ExitCode> {
                 String::new()
             };
             // attempt repo detection via config layer
-            let cfg = crate::config::load_config(crate::config::LoadOptions {
+            let cfg = novalyn_core::config::load_config(novalyn_core::config::LoadOptions {
                 cwd: &cwd,
                 cli_overrides: None,
             })?;
