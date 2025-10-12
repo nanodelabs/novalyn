@@ -8,7 +8,8 @@ include!("src/cli_def.rs");
 
 fn main() -> std::io::Result<()> {
     let mut cmd = Cli::command();
-    let completion_out_dir = Path::new(&var("OUT_DIR").unwrap()).join("completions");
+    let out_dir = var("OUT_DIR").unwrap();
+    let completion_out_dir = Path::new(&out_dir).join("completions");
 
     fs::create_dir_all(&completion_out_dir)?;
 
@@ -16,7 +17,7 @@ fn main() -> std::io::Result<()> {
         generate_to(*shell, &mut cmd, "novalyn", &completion_out_dir)?;
     }
 
-    let man_out_dir = Path::new(&var("OUT_DIR").unwrap()).join("man");
+    let man_out_dir = Path::new(&out_dir).join("man");
     fs::create_dir_all(&man_out_dir)?;
 
     // Generate man pages for main command and all subcommands
