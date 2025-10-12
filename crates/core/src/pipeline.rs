@@ -7,9 +7,9 @@ use crate::{
 };
 
 use anyhow::Result;
+use demand::Confirm;
 use ecow::{EcoString, EcoVec};
 use tracing::{debug, info, instrument, warn};
-use demand::Confirm;
 
 /// Interactive confirmation prompt for release operations.
 ///
