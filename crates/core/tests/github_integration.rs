@@ -1,4 +1,4 @@
-use novalyn_core::github::{get_username_from_email, sync_release, GithubError};
+use novalyn_core::github::{GithubError, get_username_from_email, sync_release};
 use novalyn_core::repository::{Provider, Repository};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -23,11 +23,9 @@ async fn test_get_username_from_email_success() {
     // Mock the GitHub search endpoint - match just the path, let query params vary
     Mock::given(method("GET"))
         .and(path("/search/users"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "items": [{"login": "testuser", "email": "test@example.com"}]
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "items": [{"login": "testuser", "email": "test@example.com"}]
+        })))
         .mount(&mock_server)
         .await;
 
@@ -49,11 +47,9 @@ async fn test_get_username_from_email_not_found() {
 
     Mock::given(method("GET"))
         .and(path("/search/users"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "items": []
-            })),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "items": []
+        })))
         .mount(&mock_server)
         .await;
 
