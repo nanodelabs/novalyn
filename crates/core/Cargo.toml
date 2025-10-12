@@ -10,6 +10,10 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[[benches]]
+harness = false
+name = "additional_perf"
+
 [dependencies]
 anyhow.workspace = true
 ecow.workspace = true
