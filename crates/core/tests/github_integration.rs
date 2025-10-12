@@ -1,24 +1,33 @@
-use novalyn_core::github::{GithubError, get_username_from_email, sync_release};
+use novalyn_core::github::{get_username_from_email, sync_release, GithubError};
 use novalyn_core::repository::{Provider, Repository};
-use wiremock::matchers::{method, path, query_param};
+use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-fn setup() {
-    // Initialize crypto provider required by reqwest
-    novalyn_core::init_crypto_provider();
+// Helper module for wiremock tests that require rustls initialization
+mod wiremock_helpers {
+    use std::sync::Once;
+    static INIT: Once = Once::new();
+
+    pub fn setup() {
+        INIT.call_once(|| {
+            novalyn_core::init_crypto_provider();
+        });
+    }
 }
 
 #[tokio::test]
 async fn test_get_username_from_email_success() {
-    setup();
+    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
+    // Mock the GitHub search endpoint - match just the path, let query params vary
     Mock::given(method("GET"))
         .and(path("/search/users"))
-        .and(query_param("q", "test@example.com+in:email"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "items": [{"login": "testuser", "email": "test@example.com"}]
-        })))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "items": [{"login": "testuser", "email": "test@example.com"}]
+            })),
+        )
         .mount(&mock_server)
         .await;
 
@@ -35,14 +44,16 @@ async fn test_get_username_from_email_success() {
 
 #[tokio::test]
 async fn test_get_username_from_email_not_found() {
-    setup();
+    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     Mock::given(method("GET"))
         .and(path("/search/users"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "items": []
-        })))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "items": []
+            })),
+        )
         .mount(&mock_server)
         .await;
 
@@ -83,7 +94,7 @@ async fn test_sync_release_not_github() {
 
 #[tokio::test]
 async fn test_sync_release_create_new() {
-    setup();
+    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     // Mock GET to check if release exists (returns 404)
@@ -128,7 +139,7 @@ async fn test_sync_release_create_new() {
 
 #[tokio::test]
 async fn test_sync_release_update_existing() {
-    setup();
+    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     // Mock GET to check if release exists (returns existing release)

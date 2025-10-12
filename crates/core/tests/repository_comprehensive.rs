@@ -24,7 +24,7 @@ fn test_provider_display() {
 fn test_format_reference_issue_github() {
     let repo = make_repo(Provider::GitHub, "github.com", "user", "project");
 
-    let result = format_reference(Some(&repo), ReferenceKind::Issue, "123");
+    let result = format_reference(Some(&repo), ReferenceKind::Issue, "#123");
     assert_eq!(
         result.as_str(),
         "[#123](https://github.com/user/project/issues/123)"
@@ -35,10 +35,10 @@ fn test_format_reference_issue_github() {
 fn test_format_reference_issue_gitlab() {
     let repo = make_repo(Provider::GitLab, "gitlab.com", "user", "project");
 
-    let result = format_reference(Some(&repo), ReferenceKind::Issue, "456");
+    let result = format_reference(Some(&repo), ReferenceKind::Issue, "#456");
     assert_eq!(
         result.as_str(),
-        "[#456](https://gitlab.com/user/project/-/issues/456)"
+        "[#456](https://gitlab.com/user/project/issues/456)"
     );
 }
 
@@ -46,7 +46,7 @@ fn test_format_reference_issue_gitlab() {
 fn test_format_reference_pr_github() {
     let repo = make_repo(Provider::GitHub, "github.com", "user", "project");
 
-    let result = format_reference(Some(&repo), ReferenceKind::PullRequest, "789");
+    let result = format_reference(Some(&repo), ReferenceKind::PullRequest, "#789");
     assert_eq!(
         result.as_str(),
         "[#789](https://github.com/user/project/pull/789)"
@@ -66,7 +66,7 @@ fn test_format_reference_commit_github() {
 
 #[test]
 fn test_format_reference_without_repo() {
-    let result = format_reference(None, ReferenceKind::Issue, "123");
+    let result = format_reference(None, ReferenceKind::Issue, "#123");
     assert_eq!(result.as_str(), "#123");
 }
 
