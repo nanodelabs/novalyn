@@ -4,21 +4,33 @@ use tracing::{debug, instrument, warn};
 
 use crate::repository::Repository;
 
+/// Information about a GitHub release operation.
+///
+/// Contains details about whether a release was created, updated, or skipped.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReleaseInfo {
+    /// Release tag name
     pub tag: EcoString,
+    /// Release URL
     pub url: EcoString,
+    /// Whether a new release was created
     pub created: bool,
+    /// Whether an existing release was updated
     pub updated: bool,
+    /// Whether the operation was skipped (no token)
     pub skipped: bool,
 }
 
+/// GitHub user information from API.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitHubUser {
+    /// GitHub username/handle
     pub login: EcoString,
+    /// User's email address (if available)
     pub email: Option<EcoString>,
 }
 
+/// Errors that can occur during GitHub API operations.
 #[derive(Debug, thiserror::Error)]
 pub enum GithubError {
     #[error("no repository information available for github sync")]
