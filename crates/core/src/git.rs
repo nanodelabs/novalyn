@@ -169,7 +169,7 @@ pub fn commits_between(
             .id;
         walk = walk.with_hidden([from_id]);
     }
-    
+
     for commit_info in walk.all()? {
         let commit_id = commit_info?.id;
         let commit = repo.find_commit(commit_id)?;

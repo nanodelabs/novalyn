@@ -62,11 +62,8 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
         .enumerate()
         .filter(|(_, tc)| tc.enabled)
         .filter_map(|(idx, tc)| {
-            let mut candidates: Vec<&ParsedCommit> = ctx
-                .commits
-                .iter()
-                .filter(|c| c.r#type == tc.key)
-                .collect();
+            let mut candidates: Vec<&ParsedCommit> =
+                ctx.commits.iter().filter(|c| c.r#type == tc.key).collect();
 
             if candidates.is_empty() {
                 return None;
