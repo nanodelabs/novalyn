@@ -149,27 +149,12 @@ cargo test -- --nocapture
 
 ### Benchmarks
 
-The project uses [CodSpeed](https://codspeed.io/) for continuous benchmarking. Install the CLI tool first:
-
-```bash
-# Install cargo-codspeed (first time only)
-cargo install cargo-codspeed
-```
+The project uses [CodSpeed](https://codspeed.io/) for continuous benchmarking.
 
 Then run benchmarks:
 
 ```bash
-# Build benchmarks
-cargo codspeed build
-
-# Run all benchmarks
-cargo codspeed run
-
-# Run specific benchmark
-cargo codspeed run parse_sequential
-
-# Run with specific arguments
-cargo codspeed run -- --bench 100
+cargo bench
 ```
 
 Benchmarks are in `benches/` and use the `codspeed-divan-compat` framework (CodSpeed-instrumented divan API). See [PERF.md](PERF.md) for detailed performance documentation.

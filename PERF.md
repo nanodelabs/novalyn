@@ -37,23 +37,10 @@ The project uses [CodSpeed](https://codspeed.io/) for continuous benchmarking vi
 
 ### Running Benchmarks Locally
 
-The project uses CodSpeed for benchmarking. To run benchmarks locally, you need the `cargo-codspeed` CLI:
+The project uses CodSpeed for benchmarking. To run benchmarks locally:
 
 ```bash
-# Install cargo-codspeed (first time only)
-cargo install cargo-codspeed
-
-# Build benchmarks
-cargo codspeed build
-
-# Run all benchmarks
-cargo codspeed run
-
-# Run specific benchmark
-cargo codspeed run parse_sequential
-
-# Run with specific arguments (sizes)
-cargo codspeed run -- --bench 100
+cargo bench
 ```
 
 **Note**: CodSpeed provides instrumentation-based measurements that are more accurate and consistent than wall-clock timing. Results are tracked over time in the CodSpeed dashboard when run in CI.
@@ -370,12 +357,7 @@ The custom parser reduced memory usage by:
 For detailed profiling:
 
 ```bash
-# Install cargo-codspeed if not already installed
-cargo install cargo-codspeed
-
-# Run benchmarks with CodSpeed instrumentation
-cargo codspeed build
-cargo codspeed run
+cargo bench
 
 # CPU profiling with flamegraph (alternative to CodSpeed)
 cargo install flamegraph

@@ -1,6 +1,6 @@
 # justfile for novalyn development
 
-tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-codspeed cargo-insta"
+tools := "cargo-nextest cargo-deny cargo-audit cargo-llvm-cov cargo-watch cargo-insta"
 
 # Commands
 
@@ -41,16 +41,15 @@ build-release:
 # Run tests with nextest
 test *FLAGS:
     {{ nextest }} {{ FLAGS }}
-    cargo test --doc --locked
+    cargo test --doc --locked --workspace
 
 # Run tests without doc tests
 test-fast:
     {{ nextest }}
 
-# Run benchmarks (uses CodSpeed)
+# Run benchmarks
 bench:
-    cargo codspeed build
-    cargo codspeed run
+    cargo bench
 
 # Generate documentation
 doc:
