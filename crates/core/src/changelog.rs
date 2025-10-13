@@ -15,6 +15,7 @@ use tokio::fs;
 /// * `Ok(true)` - File was modified with new content
 /// * `Ok(false)` - File unchanged (idempotent operation)
 /// * `Err` - I/O error occurred
+///
 /// Internal helper to determine if changelog update is needed and prepare new content.
 /// Returns None if no update is needed, Some(new_content) if update should occur.
 fn prepare_changelog_update(existing: &str, new_block: &EcoString) -> Option<String> {
