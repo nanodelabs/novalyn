@@ -196,17 +196,24 @@ fn commits_between_sequential(
     repo: &Repository,
     commit_ids: Vec<gix::ObjectId>,
 ) -> anyhow::Result<EcoVec<RawCommit>> {
-    let mut commits: EcoVec<RawCommit> = EcoVec::new();
-    for commit_id in commit_ids {
-        let commit = repo.find_commit(commit_id)?;
+    use crate::utils::process_indexed;
+    let commits = process_indexed(commit_ids.into_iter().enumerate(), |_, commit_id| {
+        let commit = match repo.find_commit(commit_id) {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::warn!("Skipping commit {}: {}", commit_id, e);
+                return None;
+            }
+        };
         match to_raw_commit(&commit) {
-            Ok(raw) => commits.push(raw),
+            Ok(raw) => Some(raw),
             Err(e) => {
                 tracing::warn!("Skipping commit {}: {}", commit.id(), e);
-                continue;
+                None
             }
         }
-    }
+    });
+    let mut commits = commits;
     commits.make_mut().reverse();
     Ok(commits)
 }
@@ -217,31 +224,31 @@ fn commits_between_parallel(
     commit_ids: Vec<gix::ObjectId>,
 ) -> anyhow::Result<EcoVec<RawCommit>> {
     use rayon::prelude::*;
-
-    // Convert to ThreadSafeRepository which is Sync
     let thread_safe_repo = repo.clone().into_sync();
-
-    // Process commits in parallel
-    let commits: Vec<RawCommit> = commit_ids
+    let indexed_ids: Vec<(usize, gix::ObjectId)> = commit_ids.into_iter().enumerate().collect();
+    let commits: Vec<RawCommit> = indexed_ids
         .par_iter()
-        .filter_map(|commit_id| {
-            // Convert back to regular Repository for this thread
+        .filter_map(|(_, commit_id)| {
             let repo = thread_safe_repo.to_thread_local();
-            let commit = repo.find_commit(*commit_id).ok()?;
+            let commit = match repo.find_commit(*commit_id) {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::warn!("Skipping commit {}: {}", commit_id, e);
+                    return None;
+                }
+            };
             match to_raw_commit(&commit) {
                 Ok(raw) => Some(raw),
                 Err(e) => {
-                    tracing::warn!("Skipping commit {}: {}", commit.id(), e);
+                    tracing::warn!("Skipping commit {:?}: {}", commit.id(), e);
                     None
                 }
             }
         })
         .collect();
-
-    // Reverse to get chronological order (oldest first)
-    let mut result: EcoVec<RawCommit> = commits.into();
-    result.make_mut().reverse();
-    Ok(result)
+    let mut commits: EcoVec<RawCommit> = commits.into();
+    commits.make_mut().reverse();
+    Ok(commits)
 }
 
 fn to_raw_commit(commit: &gix::Commit) -> anyhow::Result<RawCommit> {

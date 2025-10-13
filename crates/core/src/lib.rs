@@ -11,6 +11,7 @@ pub mod parse;
 pub mod pipeline;
 pub mod render;
 pub mod repository;
+pub mod utils;
 
 pub use ecow;
 pub use semver;

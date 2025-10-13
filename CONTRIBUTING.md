@@ -377,6 +377,12 @@ See task 80 (Section 12.5) in [tasks.md](tasks.md) for NAPI-RS integration statu
 1. **Update documentation**: Ensure README reflects new version capabilities
 1. **Announce**: Create announcement issue/discussion if significant changes
 
+### DRY Audit & Refactoring
+
+- **Status:** As of October 2025, the codebase has undergone a comprehensive DRY (Don't Repeat Yourself) audit and refactor. All significant code duplication has been eliminated across core, CLI, test, and bench modules.
+- **Guideline:** Contributors should avoid duplicating logic. When similar functionality is needed, refactor to use shared helpers or abstractions.
+- **Maintenance:** Periodic DRY audits are recommended as the codebase evolves. If duplication is found, abstract and delegate to common code, and verify with tests.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the same license as the project (MIT License).

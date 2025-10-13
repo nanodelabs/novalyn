@@ -87,17 +87,18 @@ fn parse_and_classify_sequential(
         mode = "sequential",
         "parsing_commits"
     );
-    let mut out = EcoVec::new();
-    for (idx, rc) in commits.into_iter().enumerate() {
+    use crate::utils::process_indexed;
+    process_indexed(commits.into_iter().enumerate(), |idx, rc| {
         let mut p = parse_one(&rc);
         p.index = idx;
         classify(&mut p, cfg);
         if should_keep(&p) {
             tracing::debug!(commit = %p.raw.short_id, r#type = %p.r#type, scope = ?p.scope, breaking = p.breaking, issues = ?p.issues, "classified");
-            out.push(p);
+            Some(p)
+        } else {
+            None
         }
-    }
-    out
+    })
 }
 
 /// Parse and classify commits in parallel using rayon.
@@ -110,10 +111,7 @@ fn parse_and_classify_parallel(
 ) -> EcoVec<ParsedCommit> {
     tracing::debug!(count = commits.len(), mode = "parallel", "parsing_commits");
 
-    // Create indexed commits to preserve original order
     let indexed_commits: Vec<(usize, RawCommit)> = commits.into_iter().enumerate().collect();
-
-    // Process in parallel while maintaining original index
     let mut parsed: EcoVec<ParsedCommit> = indexed_commits
         .par_iter()
         .map(|(idx, rc)| {
@@ -125,12 +123,6 @@ fn parse_and_classify_parallel(
         .filter(should_keep)
         .collect::<Vec<_>>()
         .into();
-
-    // Log the classified commits (in parallel processing, order may be different in logs)
-    for p in &parsed {
-        tracing::debug!(commit = %p.raw.short_id, r#type = %p.r#type, scope = ?p.scope, breaking = p.breaking, issues = ?p.issues, "classified");
-    }
-
     // Sort back to original chronological order
     parsed.make_mut().sort_by_key(|p| p.index);
     parsed

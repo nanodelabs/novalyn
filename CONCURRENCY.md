@@ -7,8 +7,8 @@ This document describes the async, concurrent, and parallel operations implement
 Novalyn uses a multi-layered approach to concurrency:
 
 1. **Async I/O** - Non-blocking file operations using tokio
-2. **Concurrent Operations** - Multiple async operations running simultaneously
-3. **Parallel Processing** - CPU-bound work distributed across threads using rayon
+1. **Concurrent Operations** - Multiple async operations running simultaneously
+1. **Parallel Processing** - CPU-bound work distributed across threads using rayon
 
 ## Async Operations
 
@@ -22,6 +22,7 @@ let cfg = config::load_config_async(LoadOptions { ... }).await?;
 ```
 
 **Benefits:**
+
 - Reduces I/O wait time by up to 50% when both config files exist
 - Non-blocking operations allow other work to proceed
 - Automatically falls back to single file if only one exists
@@ -35,6 +36,7 @@ let outcome = novalyn_core::pipeline::run_release_async(opts).await?;
 ```
 
 **Key async operations:**
+
 - Configuration loading
 - Changelog file writing
 - GitHub API calls for author handle resolution
@@ -48,6 +50,7 @@ changelog::write_or_update_changelog_async(&path, &block).await?;
 ```
 
 **Benefits:**
+
 - Non-blocking file I/O
 - Efficient for large changelog files
 - Idempotent operations with atomic checks
@@ -64,6 +67,7 @@ authors.resolve_github_handles(token).await?;
 ```
 
 **Implementation:**
+
 ```rust
 use futures::future::join_all;
 
@@ -76,6 +80,7 @@ let results = join_all(futures).await;
 ```
 
 **Benefits:**
+
 - Dramatically reduces total API call time (O(1) instead of O(n))
 - Respects API rate limits through proper token usage
 - Gracefully handles failures (continues with remaining resolutions)
@@ -91,6 +96,7 @@ let parsed = parse::parse_and_classify(commits, &cfg);
 ```
 
 **Implementation:**
+
 ```rust
 use rayon::prelude::*;
 
@@ -108,11 +114,13 @@ let mut parsed: EcoVec<ParsedCommit> = indexed_commits
 ```
 
 **Benefits:**
+
 - Utilizes all available CPU cores
 - Linear speedup with core count for large commit histories
 - Maintains deterministic ordering via index tracking
 
 **Threshold Control:**
+
 ```bash
 # Set minimum commits to trigger parallel processing (default: 50)
 export NOVALYN_PARALLEL_THRESHOLD=100
@@ -127,6 +135,7 @@ let commits = git::commits_between(&repo, from, to)?;
 ```
 
 **Implementation:**
+
 ```rust
 use rayon::prelude::*;
 
@@ -145,11 +154,13 @@ let commits: Vec<RawCommit> = commit_ids
 ```
 
 **Benefits:**
+
 - Parallel git object access using thread-local repositories
 - Significant speedup for repositories with many commits
 - Uses gix's `ThreadSafeRepository` for safe concurrent access
 
 **Threshold Control:**
+
 ```bash
 # Set minimum commits to trigger parallel git processing (default: 100)
 export NOVALYN_GIT_PARALLEL_THRESHOLD=50
@@ -164,6 +175,7 @@ let block = render_release_block(&ctx);
 ```
 
 **Implementation:**
+
 ```rust
 let sections: Vec<(usize, String)> = ctx
     .cfg
@@ -179,6 +191,7 @@ let sections: Vec<(usize, String)> = ctx
 ```
 
 **Benefits:**
+
 - Faster rendering for repositories with many commit types
 - CPU-bound work distributed efficiently
 - Deterministic output via index-based sorting
@@ -232,11 +245,13 @@ export NOVALYN_GIT_PARALLEL_THRESHOLD=50
 ### When to Use Async
 
 ✅ **Use async (`run_release_async`) when:**
+
 - Already in an async context (tokio runtime available)
 - Building async applications or services
 - Need fine-grained control over concurrency
 
 ❌ **Use sync (`run_release`) when:**
+
 - In a simple CLI application
 - Quick scripts and one-off commands
 - Backward compatibility required
@@ -244,18 +259,21 @@ export NOVALYN_GIT_PARALLEL_THRESHOLD=50
 ### Performance Tuning
 
 1. **Large repositories (1000+ commits):**
+
    ```bash
    # Lower threshold for more aggressive parallelism
    export NOVALYN_PARALLEL_THRESHOLD=25
    ```
 
-2. **Small repositories (<50 commits):**
+1. **Small repositories (\<50 commits):**
+
    ```bash
    # Higher threshold to avoid parallel overhead
    export NOVALYN_PARALLEL_THRESHOLD=100
    ```
 
-3. **Memory-constrained environments:**
+1. **Memory-constrained environments:**
+
    - Use sync API to avoid multiple runtime allocations
    - Process commits in batches if needed
 
@@ -286,10 +304,11 @@ novalyn generate
 All concurrent operations are tested for:
 
 1. **Correctness:** Deterministic output regardless of execution order
-2. **Performance:** Benchmarks validate speedup claims
-3. **Safety:** No data races or deadlocks (verified by miri)
+1. **Performance:** Benchmarks validate speedup claims
+1. **Safety:** No data races or deadlocks (verified by miri)
 
 Run parallel-specific tests:
+
 ```bash
 cargo test parallel
 cargo test concurrent
@@ -300,6 +319,7 @@ cargo test concurrent
 ### Git Operations Now Parallel
 
 Using gix's `ThreadSafeRepository::into_sync()` and `to_thread_local()`, we can safely parallelize git operations:
+
 - Convert `Repository` to `ThreadSafeRepository` (which is `Sync`)
 - Use rayon to process commits in parallel
 - Each thread gets its own thread-local repository via `to_thread_local()`
@@ -314,6 +334,7 @@ Using gix's `ThreadSafeRepository::into_sync()` and `to_thread_local()`, we can 
 ### Data Structures
 
 We use `ecow::EcoVec` and `ecow::EcoString` for:
+
 - Copy-on-write semantics (cheap cloning)
 - Memory efficiency in parallel contexts
 - Predictable performance characteristics

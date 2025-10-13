@@ -15,31 +15,24 @@ use tokio::fs;
 /// * `Ok(true)` - File was modified with new content
 /// * `Ok(false)` - File unchanged (idempotent operation)
 /// * `Err` - I/O error occurred
-pub async fn write_or_update_changelog_async(
-    path: &Path,
-    new_block: &EcoString,
-) -> std::io::Result<bool> {
-    let file_path = path.join("CHANGELOG.md");
-    let existing = fs::read_to_string(&file_path)
-        .await
-        .unwrap_or_else(|_| "# Changelog\n".into());
+/// Internal helper to determine if changelog update is needed and prepare new content.
+/// Returns None if no update is needed, Some(new_content) if update should occur.
+fn prepare_changelog_update(existing: &str, new_block: &EcoString) -> Option<String> {
     let mut normalized_new = new_block.trim_end().to_string();
     normalized_new.push('\n');
 
     // Extract current first block (skip optional title line beginning with '# ' but not '## ')
-    let top_block = extract_top_block(&existing);
+    let top_block = extract_top_block(existing);
     if let Some(tb) = top_block {
         if tb.trim_end() == normalized_new.trim_end() {
-            return Ok(false);
+            return None;
         }
     }
 
     // Direct quick check: if existing (after possible title) already begins with normalized_new
-    let existing_after_title = existing
-        .strip_prefix("# Changelog\n")
-        .unwrap_or(existing.as_str());
+    let existing_after_title = existing.strip_prefix("# Changelog\n").unwrap_or(existing);
     if existing_after_title.starts_with(&normalized_new) {
-        return Ok(false);
+        return None;
     }
 
     // Prepend new block before existing content (keeping single newline separation)
@@ -49,9 +42,24 @@ pub async fn write_or_update_changelog_async(
         // unlikely
         out.push('\n');
     }
-    out.push_str(&existing);
-    fs::write(&file_path, out).await?;
-    Ok(true)
+    out.push_str(existing);
+    Some(out)
+}
+
+pub async fn write_or_update_changelog_async(
+    path: &Path,
+    new_block: &EcoString,
+) -> std::io::Result<bool> {
+    let file_path = path.join("CHANGELOG.md");
+    let existing = fs::read_to_string(&file_path)
+        .await
+        .unwrap_or_else(|_| "# Changelog\n".into());
+    if let Some(new_content) = prepare_changelog_update(&existing, new_block) {
+        fs::write(&file_path, new_content).await?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }
 
 /// Synchronous version for backward compatibility.
@@ -61,32 +69,12 @@ pub async fn write_or_update_changelog_async(
 pub fn write_or_update_changelog(path: &Path, new_block: &EcoString) -> std::io::Result<bool> {
     let file_path = path.join("CHANGELOG.md");
     let existing = std::fs::read_to_string(&file_path).unwrap_or_else(|_| "# Changelog\n".into());
-    let mut normalized_new = new_block.trim_end().to_string();
-    normalized_new.push('\n');
-    // Extract current first block (skip optional title line beginning with '# ' but not '## ')
-    let top_block = extract_top_block(&existing);
-    if let Some(tb) = top_block {
-        if tb.trim_end() == normalized_new.trim_end() {
-            return Ok(false);
-        }
+    if let Some(new_content) = prepare_changelog_update(&existing, new_block) {
+        std::fs::write(&file_path, new_content)?;
+        Ok(true)
+    } else {
+        Ok(false)
     }
-    // Direct quick check: if existing (after possible title) already begins with normalized_new
-    let existing_after_title = existing
-        .strip_prefix("# Changelog\n")
-        .unwrap_or(existing.as_str());
-    if existing_after_title.starts_with(&normalized_new) {
-        return Ok(false);
-    }
-    // Prepend new block before existing content (keeping single newline separation)
-    let mut out = String::new();
-    out.push_str(&normalized_new);
-    if !existing.starts_with('#') {
-        // unlikely
-        out.push('\n');
-    }
-    out.push_str(&existing);
-    std::fs::write(&file_path, out)?;
-    Ok(true)
 }
 
 /// Extract the top release block from a changelog file.
