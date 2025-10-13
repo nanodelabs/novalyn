@@ -4,7 +4,7 @@ use crate::{
     parse::ParsedCommit,
     repository::{Repository, format_compare_changes},
 };
-use ecow::{EcoString, EcoVec};
+use ecow::EcoString;
 
 /// Context for rendering a changelog release block.
 ///
@@ -22,7 +22,7 @@ pub struct RenderContext<'a> {
     pub current_ref: &'a str,
 }
 
-/// Render a changelog release block in markdown format.
+/// Render a changelog release block in markdown format with parallel section rendering.
 ///
 /// Generates a formatted release section with:
 /// - Version header with compare link
@@ -37,6 +37,8 @@ pub struct RenderContext<'a> {
 /// # Returns
 /// Formatted markdown release block as a string
 pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
+    use rayon::prelude::*;
+
     let mut out = String::new();
     // Header
     out.push_str(&format!("## v{}", ctx.version));
@@ -51,49 +53,64 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
             out.push('\n');
         }
     }
-    // Group commits by type order
-    for tc in &ctx.cfg.types {
-        if !tc.enabled {
-            continue;
-        }
-        let mut section_lines: EcoVec<EcoString> = EcoVec::new();
-        let mut candidates: EcoVec<&ParsedCommit> =
-            ctx.commits.iter().filter(|c| c.r#type == tc.key).collect();
-        // Already chronological by pipeline; ensure stable tie-break by original index (defensive)
-        candidates.make_mut().sort_by_key(|c| c.index);
-        for c in candidates {
-            let mut line = String::new();
-            if let Some(scope) = &c.scope {
-                line.push_str(&format!("* {}({}): {}", tc.emoji, scope, c.description));
-            } else {
-                line.push_str(&format!("* {}: {}", tc.emoji, c.description));
+
+    // Render sections in parallel for better performance
+    let sections: Vec<(usize, String)> = ctx
+        .cfg
+        .types
+        .par_iter()
+        .enumerate()
+        .filter(|(_, tc)| tc.enabled)
+        .filter_map(|(idx, tc)| {
+            let mut candidates: Vec<&ParsedCommit> =
+                ctx.commits.iter().filter(|c| c.r#type == tc.key).collect();
+
+            if candidates.is_empty() {
+                return None;
             }
-            if c.breaking {
-                line.push_str(" (BREAKING)");
-            }
-            if !c.issues.is_empty() {
-                let refs: EcoVec<EcoString> = if let Some(repo) = ctx.repo {
-                    c.issues
-                        .iter()
-                        .map(|n| format!("[#{}]({})", n, repo.issue_url(*n)).into())
-                        .collect()
+
+            // Already chronological by pipeline; ensure stable tie-break by original index
+            candidates.sort_by_key(|c| c.index);
+
+            let mut section = String::new();
+            section.push('\n');
+            section.push_str(&format!("### {} {}", tc.emoji, tc.title));
+            section.push('\n');
+
+            for c in candidates {
+                let mut line = String::new();
+                if let Some(scope) = &c.scope {
+                    line.push_str(&format!("* {}({}): {}", tc.emoji, scope, c.description));
                 } else {
-                    c.issues.iter().map(|n| format!("#{}", n).into()).collect()
-                };
-                line.push_str(&format!(" ({})", refs.join(", ")));
+                    line.push_str(&format!("* {}: {}", tc.emoji, c.description));
+                }
+                if c.breaking {
+                    line.push_str(" (BREAKING)");
+                }
+                if !c.issues.is_empty() {
+                    let refs: Vec<String> = if let Some(repo) = ctx.repo {
+                        c.issues
+                            .iter()
+                            .map(|n| format!("[#{}]({})", n, repo.issue_url(*n)))
+                            .collect()
+                    } else {
+                        c.issues.iter().map(|n| format!("#{}", n)).collect()
+                    };
+                    line.push_str(&format!(" ({})", refs.join(", ")));
+                }
+                section.push_str(&line);
+                section.push('\n');
             }
-            section_lines.push(line.into());
-        }
-        if !section_lines.is_empty() {
-            out.push('\n');
-            out.push_str(&format!("### {} {}", tc.emoji, tc.title));
-            out.push('\n');
-            for l in section_lines {
-                out.push_str(&l);
-                out.push('\n');
-            }
-        }
+
+            Some((idx, section))
+        })
+        .collect();
+
+    // Append sections in original order to maintain deterministic output
+    for (_, section) in sections {
+        out.push_str(&section);
     }
+
     // Contributors
     if let Some(auths) = ctx.authors {
         if !auths.suppressed && !auths.list.is_empty() {

@@ -5,13 +5,13 @@ use clap_complete;
 use novalyn_core::{
     ecow::EcoVec,
     github,
-    pipeline::{ExitCode, ReleaseOptions, run_release},
+    pipeline::{ExitCode, ReleaseOptions},
     semver, tokio,
 };
 
 pub use crate::cli_def::{Cli, Commands, Completions};
 
-pub fn run() -> Result<ExitCode> {
+pub async fn run() -> Result<ExitCode> {
     let cli = Cli::parse();
     logging::init(cli.verbose as usize);
     let cwd = cli
@@ -36,7 +36,7 @@ pub fn run() -> Result<ExitCode> {
             new_version,
         } => {
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
-            let outcome = run_release(ReleaseOptions {
+            let outcome = novalyn_core::pipeline::run_release_async(ReleaseOptions {
                 cwd,
                 from: from.map(|s| s.into()),
                 to: to.map(|s| s.into()),
@@ -50,7 +50,8 @@ pub fn run() -> Result<ExitCode> {
                 yes: true, // Show command doesn't need confirmation
                 github_alias: false,
                 github_token: None,
-            })?;
+            })
+            .await?;
             println!("{}", outcome.version);
             ExitCode::Success
         }
@@ -77,7 +78,7 @@ pub fn run() -> Result<ExitCode> {
             });
 
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
-            let outcome = run_release(ReleaseOptions {
+            let outcome = novalyn_core::pipeline::run_release_async(ReleaseOptions {
                 cwd: cwd.clone(),
                 from: from.map(|s| s.into()),
                 to: to.map(|s| s.into()),
@@ -91,7 +92,8 @@ pub fn run() -> Result<ExitCode> {
                 yes,
                 github_alias: !no_github_alias,
                 github_token: github_token.map(|s| s.into()),
-            })?;
+            })
+            .await?;
             if let Some(path) = output {
                 std::fs::write(&path, outcome.version.to_string())?;
             }
@@ -137,7 +139,7 @@ pub fn run() -> Result<ExitCode> {
             });
 
             let parsed_new = new_version.and_then(|s| semver::Version::parse(&s).ok());
-            let outcome = run_release(ReleaseOptions {
+            let outcome = novalyn_core::pipeline::run_release_async(ReleaseOptions {
                 cwd: cwd.clone(),
                 from: from.map(|s| s.into()),
                 to: to.map(|s| s.into()),
@@ -151,7 +153,8 @@ pub fn run() -> Result<ExitCode> {
                 yes,
                 github_alias: !no_github_alias,
                 github_token: github_token.map(|s| s.into()),
-            })?;
+            })
+            .await?;
             if outcome.wrote {
                 println!("Released v{}", outcome.version);
                 ExitCode::Success

@@ -138,6 +138,7 @@ pub fn current_ref(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
 ///
 /// Performs a git log operation from `from` (exclusive) to `to` (inclusive).
 /// If `from` is None, collects all commits up to `to`.
+/// Automatically chooses between sequential and parallel processing based on commit count.
 ///
 /// # Arguments
 /// * `repo` - Git repository
@@ -152,7 +153,13 @@ pub fn commits_between(
     from: Option<&str>,
     to: &str,
 ) -> anyhow::Result<EcoVec<RawCommit>> {
-    let mut commits: EcoVec<RawCommit> = EcoVec::new();
+    // Use environment variable to control parallelism threshold
+    let threshold = std::env::var("NOVALYN_GIT_PARALLEL_THRESHOLD")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(100);
+
+    // First, collect all commit IDs
     let to_obj = repo.rev_parse_single(to).map_err(anyhow::Error::from)?;
     let to_id = to_obj.object()?.peel_to_kind(gix::object::Kind::Commit)?.id;
     let mut walk = repo.rev_walk([to_id]);
@@ -166,8 +173,31 @@ pub fn commits_between(
             .id;
         walk = walk.with_hidden([from_id]);
     }
-    for commit_info in walk.all()? {
-        let commit_id = commit_info?.id;
+
+    let commit_ids: Vec<_> = walk
+        .all()?
+        .filter_map(|info| info.ok().map(|i| i.id))
+        .collect();
+
+    let count = commit_ids.len();
+
+    // Choose strategy based on count
+    if count >= threshold {
+        tracing::debug!(count, threshold, "using parallel git commit processing");
+        commits_between_parallel(repo, commit_ids)
+    } else {
+        tracing::debug!(count, threshold, "using sequential git commit processing");
+        commits_between_sequential(repo, commit_ids)
+    }
+}
+
+/// Process commits sequentially.
+fn commits_between_sequential(
+    repo: &Repository,
+    commit_ids: Vec<gix::ObjectId>,
+) -> anyhow::Result<EcoVec<RawCommit>> {
+    let mut commits: EcoVec<RawCommit> = EcoVec::new();
+    for commit_id in commit_ids {
         let commit = repo.find_commit(commit_id)?;
         match to_raw_commit(&commit) {
             Ok(raw) => commits.push(raw),
@@ -179,6 +209,39 @@ pub fn commits_between(
     }
     commits.make_mut().reverse();
     Ok(commits)
+}
+
+/// Process commits in parallel using ThreadSafeRepository.
+fn commits_between_parallel(
+    repo: &Repository,
+    commit_ids: Vec<gix::ObjectId>,
+) -> anyhow::Result<EcoVec<RawCommit>> {
+    use rayon::prelude::*;
+
+    // Convert to ThreadSafeRepository which is Sync
+    let thread_safe_repo = repo.clone().into_sync();
+
+    // Process commits in parallel
+    let commits: Vec<RawCommit> = commit_ids
+        .par_iter()
+        .filter_map(|commit_id| {
+            // Convert back to regular Repository for this thread
+            let repo = thread_safe_repo.to_thread_local();
+            let commit = repo.find_commit(*commit_id).ok()?;
+            match to_raw_commit(&commit) {
+                Ok(raw) => Some(raw),
+                Err(e) => {
+                    tracing::warn!("Skipping commit {}: {}", commit.id(), e);
+                    None
+                }
+            }
+        })
+        .collect();
+
+    // Reverse to get chronological order (oldest first)
+    let mut result: EcoVec<RawCommit> = commits.into();
+    result.make_mut().reverse();
+    Ok(result)
 }
 
 fn to_raw_commit(commit: &gix::Commit) -> anyhow::Result<RawCommit> {

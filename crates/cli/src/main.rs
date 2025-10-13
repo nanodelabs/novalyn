@@ -10,7 +10,7 @@ pub use novalyn as lib;
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
     novalyn_core::init_crypto_provider();
-    match lib::cli::run() {
+    match lib::cli::run().await {
         Ok(exit_code) => std::process::exit(exit_code as i32),
         Err(e) => {
             if let Some(err) = e.downcast_ref::<novalyn_core::error::NovalynError>() {

@@ -90,7 +90,7 @@ pub struct ReleaseOutcome {
     pub exit: ExitCode,
 }
 
-/// Execute the complete release pipeline.
+/// Execute the complete release pipeline asynchronously.
 ///
 /// Orchestrates all steps of changelog generation:
 /// 1. Load configuration
@@ -113,12 +113,13 @@ pub struct ReleaseOutcome {
 /// # Errors
 /// Returns error if configuration loading, git operations, or file writes fail
 #[instrument(skip_all, fields(cwd = %opts.cwd.display()))]
-pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
+pub async fn run_release_async(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     // 1. Load config (inject CLI overrides for new_version & author flags in future)
-    let cfg = config::load_config(LoadOptions {
+    let cfg = config::load_config_async(LoadOptions {
         cwd: &opts.cwd,
         cli_overrides: None,
-    })?;
+    })
+    .await?;
     debug!(types = cfg.types.len(), "config_loaded");
 
     // 2. Detect git repo & current ref
@@ -182,10 +183,8 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
         // If GitHub aliasing is enabled and we have a token, resolve handles
         if opts.github_alias {
             if let Some(ref token) = opts.github_token {
-                // This is async, need to make run_release async or use blocking
-                // For now, spawn a runtime
-                let rt = tokio::runtime::Runtime::new().unwrap();
-                if let Err(e) = rt.block_on(authors.resolve_github_handles(token)) {
+                // Now we're already in async context, so we can just await
+                if let Err(e) = authors.resolve_github_handles(token).await {
                     warn!("failed to resolve GitHub handles: {}", e);
                 }
             } else {
@@ -223,7 +222,7 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
 
         if should_write {
             let _span = tracing::span!(tracing::Level::DEBUG, "write_changelog").entered();
-            changelog::write_or_update_changelog(&opts.cwd, &block)?
+            changelog::write_or_update_changelog_async(&opts.cwd, &block).await?
         } else {
             false
         }
@@ -256,4 +255,22 @@ pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
         commit_count: rc.commits.len(),
         exit,
     })
+}
+
+/// Execute the complete release pipeline synchronously (for backward compatibility).
+///
+/// This is a wrapper around `run_release_async` that blocks on the async runtime.
+/// Consider using `run_release_async` directly if you're already in an async context.
+///
+/// # Arguments
+/// * `opts` - Release configuration options
+///
+/// # Returns
+/// * `Ok(ReleaseOutcome)` - Successful release with details
+/// * `Err` - Pipeline error occurred
+#[instrument(skip_all, fields(cwd = %opts.cwd.display()))]
+pub fn run_release(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
+    // Create a runtime and block on the async version
+    let rt = tokio::runtime::Runtime::new()?;
+    rt.block_on(run_release_async(opts))
 }
