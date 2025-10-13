@@ -36,6 +36,7 @@ semver = "patch"
     assert_eq!(feat_type.semver, SemverImpact::Minor);
 }
 
+/// Test loading configuration from Cargo.toml metadata.
 #[test]
 fn test_load_config_with_cargo_metadata() {
     let dir = TempDir::new().unwrap();
@@ -67,6 +68,7 @@ emoji = "🎉"
     assert_eq!(cfg.new_version.unwrap().to_string(), "1.0.0");
 }
 
+/// Test disabling a commit type in configuration.
 #[test]
 fn test_load_config_disable_type() {
     let dir = TempDir::new().unwrap();
@@ -147,6 +149,7 @@ fn test_default_types_complete() {
     assert_eq!(docs.semver, SemverImpact::None);
 }
 
+/// Test that configuration warnings are reported for invalid keys and values.
 #[test]
 fn test_load_config_warnings() {
     let dir = TempDir::new().unwrap();
@@ -174,6 +177,7 @@ unknown_key = "value"
     assert!(warnings_str.contains("unknown_key"));
 }
 
+/// Test configuration precedence: CLI overrides should take priority over file config.
 #[test]
 fn test_config_precedence() {
     let dir = TempDir::new().unwrap();

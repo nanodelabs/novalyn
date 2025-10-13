@@ -7,6 +7,9 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 pub use novalyn as lib;
 
+/// CLI entry point for novalyn.
+///
+/// Initializes the crypto provider and runs the CLI command dispatcher.
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
     novalyn_core::init_crypto_provider();

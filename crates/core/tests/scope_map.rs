@@ -2,6 +2,7 @@ use novalyn_core::config::{LoadOptions, RawConfig};
 use novalyn_core::git::RawCommit;
 use novalyn_core::parse::parse_and_classify;
 
+/// Create a RawCommit with the given summary for scope mapping tests.
 fn mk(summary: &str) -> RawCommit {
     RawCommit {
         id: "x".into(),
@@ -14,6 +15,7 @@ fn mk(summary: &str) -> RawCommit {
     }
 }
 
+/// Test scope mapping replacement and removal via CLI overrides.
 #[test]
 fn scope_mapping_replacement_and_removal() {
     let td = tempfile::tempdir().unwrap();

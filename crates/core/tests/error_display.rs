@@ -1,17 +1,20 @@
 use novalyn_core::error::NovalynError;
 
+/// Test that NovalynError::Config displays the correct error message.
 #[test]
 fn test_config_error_display() {
     let err = NovalynError::Config("Invalid configuration".to_string());
     assert!(err.to_string().contains("Invalid configuration"));
 }
 
+/// Test that NovalynError::Git displays the correct error message.
 #[test]
 fn test_git_error_display() {
     let err = NovalynError::Git("Repository not found".to_string());
     assert!(err.to_string().contains("Repository not found"));
 }
 
+/// Test that NovalynError::Io displays the correct error message.
 #[test]
 fn test_io_error_display() {
     let err = NovalynError::Io("File not found".to_string());
@@ -46,6 +49,7 @@ fn test_error_from_io_error() {
     assert!(matches!(novalyn_error, NovalynError::Io(_)));
 }
 
+/// Test conversion from anyhow::Error to NovalynError.
 #[test]
 fn test_error_from_anyhow() {
     let anyhow_error = anyhow::anyhow!("some error");

@@ -9,6 +9,7 @@ use tempfile::TempDir;
 #[global_allocator]
 static GLOBAL: AllocProfiler<MiMalloc> = AllocProfiler::new(MiMalloc);
 
+/// Generate a vector of synthetic RawCommit objects for benchmarking purposes.
 fn generate_synthetic_commits(count: usize) -> Vec<RawCommit> {
     let commit_types = ["feat", "fix", "docs", "style", "refactor", "test", "chore"];
     let scopes = ["api", "ui", "core", "auth", "db"];
@@ -132,6 +133,7 @@ fn render_block(bencher: Bencher, size: usize) {
         .bench_values(|rc| novalyn_core::render::render_release_block(&rc));
 }
 
+/// Entry point for running all benchmarks in this file.
 fn main() {
     divan::main();
 }

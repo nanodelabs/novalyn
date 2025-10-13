@@ -4,6 +4,7 @@ use novalyn_core::git::RawCommit;
 use novalyn_core::parse::{BumpKind, infer_version, parse_and_classify};
 use semver::Version;
 
+/// Create a RawCommit with the given summary for version inference tests.
 fn mk(summary: &str) -> RawCommit {
     RawCommit {
         id: "x".into(),
@@ -48,6 +49,7 @@ fn bump_rules_breaking_pre_1() {
     assert_eq!(kind, BumpKind::Major);
 }
 
+/// Test version bump rules for normal (>=1.0.0) versions.
 #[test]
 fn bump_rules_normal() {
     let td = TempDir::new().unwrap();

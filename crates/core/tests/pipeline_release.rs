@@ -2,12 +2,14 @@ use novalyn_core::git::add_and_commit;
 use novalyn_core::pipeline::{ExitCode, ReleaseOptions, run_release};
 use tempfile::TempDir;
 
+/// Initialize a temporary git repository for testing purposes.
 fn init_repo() -> (TempDir, gix::Repository) {
     let td = TempDir::new().unwrap();
     let repo = novalyn_core::git::init_repo(td.path()).unwrap();
     (td, repo)
 }
 
+/// Test that a dry run does not modify the changelog file.
 #[test]
 fn dry_run_leaves_changelog_untouched() {
     let (td, mut repo) = init_repo();
@@ -33,6 +35,7 @@ fn dry_run_leaves_changelog_untouched() {
     assert!(!outcome.changelog_path.exists());
 }
 
+/// Test that the exit code is correct when no new changes are present.
 #[test]
 fn exit_code_no_change() {
     let (td, mut repo) = init_repo();

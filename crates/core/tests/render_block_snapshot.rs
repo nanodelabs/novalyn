@@ -5,6 +5,7 @@ use novalyn_core::{
     render::{RenderContext, render_release_block},
 };
 
+/// Create a default ResolvedConfig for render block snapshot tests.
 fn cfg() -> ResolvedConfig {
     ResolvedConfig {
         scope_map: Default::default(),
@@ -18,6 +19,7 @@ fn cfg() -> ResolvedConfig {
     }
 }
 
+/// Create a ParsedCommit for render block snapshot tests.
 fn mk(idx: usize, t: &str, desc: &str) -> ParsedCommit {
     ParsedCommit {
         raw: RawCommit {
@@ -42,6 +44,7 @@ fn mk(idx: usize, t: &str, desc: &str) -> ParsedCommit {
     }
 }
 
+/// Test that render_release_block produces the expected snapshot output.
 #[test]
 fn render_block_snapshot() {
     let cfg = cfg();

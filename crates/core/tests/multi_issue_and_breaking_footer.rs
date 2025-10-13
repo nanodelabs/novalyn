@@ -2,6 +2,7 @@ use novalyn_core::config::LoadOptions;
 use novalyn_core::git::RawCommit;
 use novalyn_core::parse::parse_and_classify;
 
+/// Create a RawCommit with the given summary and body for multi-issue and breaking footer tests.
 fn mk(summary: &str, body: &str) -> RawCommit {
     RawCommit {
         id: "x".into(),
@@ -14,6 +15,7 @@ fn mk(summary: &str, body: &str) -> RawCommit {
     }
 }
 
+/// Test extraction of multiple issues and breaking change footers from commit messages.
 #[test]
 fn extracts_multiple_issues_grouped_and_body() {
     let td = tempfile::tempdir().unwrap();

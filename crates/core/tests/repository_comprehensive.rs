@@ -2,6 +2,7 @@ use novalyn_core::repository::{
     Provider, ReferenceKind, Repository, format_compare_changes, format_reference,
 };
 
+/// Create a Repository instance for the given provider, host, owner, and name.
 fn make_repo(provider: Provider, host: &str, owner: &str, name: &str) -> Repository {
     Repository {
         provider,

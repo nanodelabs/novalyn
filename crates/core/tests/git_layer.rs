@@ -2,6 +2,7 @@ use novalyn_core::git::*;
 use std::fs;
 use tempfile::TempDir;
 
+/// Initialize a temporary git repository for testing git operations.
 fn init_repo() -> (TempDir, gix::Repository) {
     let td = TempDir::new().unwrap();
     let repo = novalyn_core::git::init_repo(td.path()).unwrap();
@@ -51,6 +52,7 @@ fn commits_between_works() {
     assert_eq!(commits[0].body.trim(), "body line");
 }
 
+/// Test dirty detection with untracked files in the repository.
 #[test]
 fn dirty_detection_with_untracked() {
     let (td, mut repo) = init_repo();

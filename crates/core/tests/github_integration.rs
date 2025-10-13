@@ -8,6 +8,7 @@ mod wiremock_helpers {
     use std::sync::Once;
     static INIT: Once = Once::new();
 
+    /// Initialize the crypto provider for wiremock tests (runs once).
     pub fn setup() {
         INIT.call_once(|| {
             novalyn_core::init_crypto_provider();
@@ -40,6 +41,7 @@ async fn test_get_username_from_email_success() {
     assert_eq!(result, Some("@testuser".into()));
 }
 
+/// Test that no username is returned when email is not found on GitHub.
 #[tokio::test]
 async fn test_get_username_from_email_not_found() {
     wiremock_helpers::setup();
@@ -133,6 +135,7 @@ async fn test_sync_release_create_new() {
     assert!(!result.skipped);
 }
 
+/// Test updating an existing GitHub release via sync_release using wiremock.
 #[tokio::test]
 async fn test_sync_release_update_existing() {
     wiremock_helpers::setup();

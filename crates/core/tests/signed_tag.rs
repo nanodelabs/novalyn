@@ -1,12 +1,14 @@
 use novalyn_core::git::{add_and_commit, create_tag};
 use tempfile::TempDir;
 
+/// Initialize a temporary git repository for testing tag creation.
 fn init_repo() -> (TempDir, gix::Repository) {
     let td = TempDir::new().unwrap();
     let repo = novalyn_core::git::init_repo(td.path()).unwrap();
     (td, repo)
 }
 
+/// Test that annotated git tags are created successfully.
 #[test]
 fn annotated_tag_creation() {
     let (td, mut repo) = init_repo();

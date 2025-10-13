@@ -5,6 +5,7 @@ use novalyn_core::parse::parse_and_classify;
 use novalyn_core::pipeline::{ReleaseOptions, run_release};
 use novalyn_core::render::render_release_block;
 
+/// Create a set of synthetic RawCommit objects for determinism tests.
 fn create_test_commits() -> Vec<RawCommit> {
     vec![
         RawCommit {
@@ -73,6 +74,7 @@ fn repeated_parse_identical() {
     }
 }
 
+/// Test that repeated rendering of release blocks produces identical output.
 #[test]
 fn repeated_render_identical() {
     let td = TempDir::new().unwrap();
