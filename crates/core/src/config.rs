@@ -142,7 +142,7 @@ pub struct LoadOptions<'a> {
     pub cli_overrides: Option<RawConfig>,
 }
 
-/// Load and merge configuration from multiple sources.
+/// Load and merge configuration from multiple sources asynchronously.
 ///
 /// Configuration precedence (highest to lowest):
 /// 1. CLI overrides
@@ -156,32 +156,57 @@ pub struct LoadOptions<'a> {
 /// # Returns
 /// * `Ok(ResolvedConfig)` - Fully merged configuration
 /// * `Err` - Critical configuration error (warnings stored in config)
-pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
+pub async fn load_config_async(opts: LoadOptions<'_>) -> Result<ResolvedConfig> {
     let mut warnings = EcoVec::new();
     let mut source_file = None;
     let mut raw_stack: Vec<RawConfig> = Vec::new();
 
-    // defaults placeholder (empty RawConfig means rely on default types below)
+    // Load config files concurrently using join! for parallel I/O
+    let novalyn_toml_path = find_file(opts.cwd, "novalyn.toml");
+    let cargo_toml_path = find_file(opts.cwd, "Cargo.toml");
+
+    // Load both files concurrently if they exist
+    let (novalyn_result, cargo_result) = tokio::join!(
+        async {
+            if let Some(path) = &novalyn_toml_path {
+                Some(load_file_async(path).await)
+            } else {
+                None
+            }
+        },
+        async {
+            if let Some(path) = &cargo_toml_path {
+                Some(tokio::fs::read_to_string(path).await)
+            } else {
+                None
+            }
+        }
+    );
+
     // 1. novalyn.toml
-    if let Some(path) = find_file(opts.cwd, "novalyn.toml") {
-        match load_file(&path) {
+    if let Some(result) = novalyn_result {
+        match result {
             Ok(rc) => {
-                source_file = Some(path.clone());
+                source_file = Some(novalyn_toml_path.unwrap());
                 raw_stack.push(rc);
             }
-            Err(e) => warnings.push(format!("Failed to load novalyn.toml: {e}").into()),
+            Err(e) => {
+                warnings.push(format!("Failed loading novalyn.toml: {e}").into());
+            }
         }
     }
 
     // 2. Cargo.toml [package.metadata.novalyn]
-    if let Some(cargo_path) = find_file(opts.cwd, "Cargo.toml") {
-        match fs::read_to_string(&cargo_path) {
+    if let Some(result) = cargo_result {
+        match result {
             Ok(s) => {
                 if let Some(rc) = extract_metadata_block(&s, &mut warnings) {
                     raw_stack.push(rc);
                 }
             }
-            Err(e) => warnings.push(format!("Failed to read Cargo.toml: {e}").into()),
+            Err(e) => {
+                warnings.push(format!("Failed loading Cargo.toml: {e}").into());
+            }
         }
     }
 
@@ -190,6 +215,19 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
         raw_stack.push(cli);
     }
 
+    // Call common merge logic
+    merge_and_resolve_config(opts.cwd, raw_stack, warnings, source_file)
+}
+
+/// Merge and resolve configuration from raw config stack.
+///
+/// This is the common logic used by both sync and async config loaders.
+fn merge_and_resolve_config(
+    cwd: &Path,
+    raw_stack: Vec<RawConfig>,
+    mut warnings: EcoVec<EcoString>,
+    source_file: Option<PathBuf>,
+) -> Result<ResolvedConfig> {
     // Merge stack in order added (file(s) then CLI). Defaults applied separately.
     let mut types = default_types();
 
@@ -270,7 +308,7 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
     }
 
     // Attempt repository detection (non-fatal)
-    let repo = detect_repository(opts.cwd, &mut warnings);
+    let repo = detect_repository(cwd, &mut warnings);
 
     // Merge scope_map layering later entries override earlier
     let mut scope_map: BTreeMap<EcoString, EcoString> = BTreeMap::new();
@@ -287,14 +325,82 @@ pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
         new_version,
         warnings,
         github_token,
-        cwd: opts.cwd.to_path_buf(),
+        cwd: cwd.to_path_buf(),
         source_file,
         repo,
         scope_map,
     })
 }
 
-/// Load a TOML configuration file.
+/// Load and merge configuration from multiple sources synchronously.
+///
+/// Configuration precedence (highest to lowest):
+/// 1. CLI overrides
+/// 2. Cargo.toml [package.metadata.novalyn]
+/// 3. novalyn.toml
+/// 4. Built-in defaults
+///
+/// # Arguments
+/// * `opts` - Load options specifying paths and overrides
+///
+/// # Returns
+/// * `Ok(ResolvedConfig)` - Fully merged configuration
+/// * `Err` - Critical configuration error (warnings stored in config)
+pub fn load_config(opts: LoadOptions) -> Result<ResolvedConfig> {
+    let mut warnings = EcoVec::new();
+    let mut source_file = None;
+    let mut raw_stack: Vec<RawConfig> = Vec::new();
+
+    // defaults placeholder (empty RawConfig means rely on default types below)
+    // 1. novalyn.toml
+    if let Some(path) = find_file(opts.cwd, "novalyn.toml") {
+        match load_file(&path) {
+            Ok(rc) => {
+                source_file = Some(path.clone());
+                raw_stack.push(rc);
+            }
+            Err(e) => warnings.push(format!("Failed to load novalyn.toml: {e}").into()),
+        }
+    }
+
+    // 2. Cargo.toml [package.metadata.novalyn]
+    if let Some(cargo_path) = find_file(opts.cwd, "Cargo.toml") {
+        match fs::read_to_string(&cargo_path) {
+            Ok(s) => {
+                if let Some(rc) = extract_metadata_block(&s, &mut warnings) {
+                    raw_stack.push(rc);
+                }
+            }
+            Err(e) => warnings.push(format!("Failed to read Cargo.toml: {e}").into()),
+        }
+    }
+
+    // 3. CLI overrides last
+    if let Some(cli) = opts.cli_overrides {
+        raw_stack.push(cli);
+    }
+
+    // Call common merge logic
+    merge_and_resolve_config(opts.cwd, raw_stack, warnings, source_file)
+}
+
+/// Load a TOML configuration file asynchronously.
+///
+/// # Arguments
+/// * `path` - Path to TOML file
+///
+/// # Returns
+/// Parsed configuration or error with context
+async fn load_file_async(path: &Path) -> Result<RawConfig> {
+    let txt = tokio::fs::read_to_string(path)
+        .await
+        .with_context(|| format!("Reading {path:?}"))?;
+    let rc: RawConfig =
+        toml_edit::de::from_str(&txt).with_context(|| format!("Parsing TOML {path:?}"))?;
+    Ok(rc)
+}
+
+/// Load a TOML configuration file synchronously (for backward compatibility).
 ///
 /// # Arguments
 /// * `path` - Path to TOML file
