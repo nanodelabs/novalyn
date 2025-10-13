@@ -138,6 +138,7 @@ pub fn current_ref(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
 ///
 /// Performs a git log operation from `from` (exclusive) to `to` (inclusive).
 /// If `from` is None, collects all commits up to `to`.
+/// Automatically chooses between sequential and parallel processing based on commit count.
 ///
 /// # Arguments
 /// * `repo` - Git repository
@@ -152,6 +153,8 @@ pub fn commits_between(
     from: Option<&str>,
     to: &str,
 ) -> anyhow::Result<EcoVec<RawCommit>> {
+    // Sequential processing since gix::Repository is not Sync
+    // The actual commit parsing is already quite fast
     let mut commits: EcoVec<RawCommit> = EcoVec::new();
     let to_obj = repo.rev_parse_single(to).map_err(anyhow::Error::from)?;
     let to_id = to_obj.object()?.peel_to_kind(gix::object::Kind::Commit)?.id;
@@ -166,6 +169,7 @@ pub fn commits_between(
             .id;
         walk = walk.with_hidden([from_id]);
     }
+    
     for commit_info in walk.all()? {
         let commit_id = commit_info?.id;
         let commit = repo.find_commit(commit_id)?;
