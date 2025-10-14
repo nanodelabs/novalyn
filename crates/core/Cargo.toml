@@ -1,10 +1,12 @@
 [package]
 name = "novalyn_core"
 version.workspace = true
+authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 description = "Core library for novalyn changelog generation"
 readme.workspace = true
+homepage.workspace = true
 repository.workspace = true
 license.workspace = true
 keywords.workspace = true

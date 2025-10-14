@@ -5,9 +5,11 @@ default-members = ["crates/cli"]
 
 [workspace.package]
 version = "0.0.0"
+authors = ["Muntasir Mahmud <muntasir.joypurhat@gmail.com>"]
 edition = "2024"
 rust-version = "1.85"
 readme = "README.md"
+homepage = "https://github.com/nanodelabs/novalyn"
 repository = "https://github.com/nanodelabs/novalyn"
 license = "MIT"
 keywords = [
@@ -87,3 +89,8 @@ opt-level = 3
 strip = "debuginfo"
 lto = "fat"
 codegen-units = 1
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
