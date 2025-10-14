@@ -30,7 +30,7 @@ clap_complete = "4.5.58"
 clap_complete_nushell = "4.5.8"
 clap_mangen = "0.2.29"
 demand = "1.7"
-divan = { package = "codspeed-divan-compat", version = "*" }
+divan = { package = "codspeed-divan-compat", version = "4" }
 ecow = { version = "0.2", features = ["serde"] }
 foldhash = "0.2"
 futures = "0.3"
