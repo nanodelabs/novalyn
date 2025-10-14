@@ -18,7 +18,6 @@ keywords = [
   "conventional-commit",
   "generator",
   "git",
-  "markdown",
 ]
 categories = ["command-line-utilities", "development-tools"]
 
