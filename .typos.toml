@@ -1,2 +1,5 @@
 [default.extend-words]
 rela = "rela"
+
+[files]
+extend-exclude = ["CHANGELOG.md"]
