@@ -12,12 +12,6 @@ license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
-[package.metadata.wix]
-upgrade-guid = "E71412B2-B395-4566-9FB6-53EBCC3526DF"
-path-guid = "5A0D56D6-30D8-41CE-B5F6-A07E3BB98D6A"
-license = false
-eula = false
-
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
