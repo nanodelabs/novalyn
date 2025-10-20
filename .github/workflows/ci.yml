@@ -93,9 +93,9 @@ jobs:
           bins: just,cargo-nextest,cargo-llvm-cov
       - name: Generate coverage
         run: |
-          cargo llvm-cov --all-features --no-report nextest
-          cargo llvm-cov --all-features --no-report --doc
-          cargo llvm-cov report --doctests --lcov --output-path lcov.info
+          cargo +nightly llvm-cov --all-features --no-report nextest
+          cargo +nightly llvm-cov --all-features --no-report --doc
+          cargo +nightly llvm-cov report --doctests --lcov --output-path lcov.info
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1.1.1
