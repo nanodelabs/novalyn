@@ -29,7 +29,7 @@ npm-scope = "@nanodelabs"
 # Path that installers should place binaries in
 install-path = "CARGO_HOME"
 # Publish jobs to run in CI
-publish-jobs = ["homebrew"]
+publish-jobs = ["npm", "homebrew"]
 # Whether to install an updater program
 install-updater = false
 
@@ -40,3 +40,4 @@ global = "ubuntu-latest"
 "actions/checkout" = "08c6903cd8c0fde910a37f88322edcfb5dd907a8"
 "actions/upload-artifact" = "ea165f8d65b6e75b540449e92b4886f43607fa02"
 "actions/download-artifact" = "634f93cb2916e3fdff6788551b99b062d0335ce0"
+"actions/setup-node" = "2028fbc5c25fe9cf00d9f06a71cc4710d4507903"
