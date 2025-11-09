@@ -68,7 +68,7 @@ pub enum SemverImpact {
 }
 
 impl SemverImpact {
-    fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s {
             "major" => Some(Self::Major),
             "minor" => Some(Self::Minor),
@@ -258,7 +258,7 @@ fn merge_and_resolve_config(
                         let semver = part
                             .semver
                             .as_deref()
-                            .and_then(SemverImpact::from_str)
+                            .and_then(SemverImpact::parse)
                             .unwrap_or_else(|| {
                                 idx.map(|i| types[i].semver).unwrap_or(SemverImpact::None)
                             });
