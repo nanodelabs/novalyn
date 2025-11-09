@@ -163,8 +163,7 @@ pub async fn run_release_async(opts: ReleaseOptions) -> Result<ReleaseOutcome> {
     } else {
         use ecow::{EcoString, EcoVec};
 
-        let aliases =
-            std::collections::HashMap::with_hasher(foldhash::quality::RandomState::default());
+        let aliases = scc::HashMap::with_hasher(foldhash::quality::RandomState::default());
 
         let exclude: EcoVec<EcoString> = opts.exclude_authors.clone();
 

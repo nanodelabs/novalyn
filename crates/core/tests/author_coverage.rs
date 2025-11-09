@@ -201,9 +201,10 @@ fn test_author_aliasing() {
     ];
     let parsed = parse_and_classify(commits.into(), &cfg);
 
-    let mut opts = AuthorOptions::default();
-    opts.aliases
-        .insert(EcoString::from("Alice Smith"), EcoString::from("Alice"));
+    let opts = AuthorOptions::default();
+    let _ = opts
+        .aliases
+        .insert_sync(EcoString::from("Alice Smith"), EcoString::from("Alice"));
     let authors = Authors::collect(&parsed, &opts);
 
     // Both should resolve to "Alice" due to aliasing

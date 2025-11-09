@@ -3,8 +3,8 @@ use ecow::{EcoString, EcoVec};
 use once_cell::sync::Lazy;
 use unicode_normalization::UnicodeNormalization;
 
-type FastHashMap<K, V> = std::collections::HashMap<K, V, foldhash::quality::RandomState>;
-type FastHashSet<T> = std::collections::HashSet<T, foldhash::quality::RandomState>;
+type FastHashMap<K, V> = scc::HashMap<K, V, foldhash::quality::RandomState>;
+type FastHashSet<T> = scc::HashSet<T, foldhash::quality::RandomState>;
 
 // Reusable hash builder to avoid allocation overhead
 static HASH_BUILDER: Lazy<foldhash::quality::RandomState> =
@@ -169,12 +169,12 @@ fn push_author<'a>(
     };
 
     // Apply aliases
-    if let Some(alias) = opts.aliases.get(&name_n) {
-        name_n = alias.clone();
+    if let Some(alias_guard) = opts.aliases.get_sync(&name_n) {
+        name_n = alias_guard.get().clone();
     }
     if let Some(ref e) = email_n {
-        if let Some(alias) = opts.aliases.get(e) {
-            email_n = Some(alias.clone());
+        if let Some(alias_guard) = opts.aliases.get_sync(e) {
+            email_n = Some(alias_guard.get().clone());
         }
     }
 
@@ -182,9 +182,11 @@ fn push_author<'a>(
         return;
     }
     let key = (name_n.clone(), email_n.clone());
-    if !seen.insert(key) {
+    // scc::HashSet::insert_sync returns Result<(), K>, check if already exists first
+    if seen.contains_sync(&key) {
         return;
     }
+    let _ = seen.insert_sync(key);
     let email_final = if opts.hide_author_email {
         None
     } else {
@@ -292,12 +294,12 @@ mod tests {
 
     #[test]
     fn author_aliasing() {
-        let mut aliases = FastHashMap::with_hasher(foldhash::quality::RandomState::default());
-        aliases.insert(
+        let aliases = FastHashMap::with_hasher(foldhash::quality::RandomState::default());
+        let _ = aliases.insert_sync(
             EcoString::from("old@example.com"),
             EcoString::from("new@example.com"),
         );
-        aliases.insert(EcoString::from("OldName"), EcoString::from("NewName"));
+        let _ = aliases.insert_sync(EcoString::from("OldName"), EcoString::from("NewName"));
 
         let commits = vec![
             mk_commit("OldName", "old@example.com", &[]),
