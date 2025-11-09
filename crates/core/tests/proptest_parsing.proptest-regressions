@@ -6,3 +6,4 @@
 # everyone who runs the test benefits from these saved cases.
 cc 6c4a09a03970b221888fd1d1118b1f9513006e2832c9f28e74441fd3c021eba5 # shrinks to prefix = "#", issue_num = 1
 cc 059e04f2923404dafc3c43bd8459ef9e9ddb85939797ef6beb25cd186b3b8229 # shrinks to r#type = "aa", scope = None, desc = "\u{b}", breaking = false
+cc b390b86f18cf19cff831514235864e666c8c7312d91713590b49391b4ef82b6d # shrinks to r#type = "aa", scope = None, desc = "\u{b}A", breaking = false

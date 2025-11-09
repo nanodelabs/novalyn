@@ -16,9 +16,9 @@ fn valid_scope() -> impl Strategy<Value = String> {
     prop::string::string_regex("[a-z0-9-]{1,20}").unwrap()
 }
 
-// Strategy for generating descriptions (non-empty after trimming)
+// Strategy for generating descriptions (arbitrary text including whitespace-only)
 fn description() -> impl Strategy<Value = String> {
-    prop::string::string_regex("[a-zA-Z0-9][a-zA-Z0-9 ]{0,99}").unwrap()
+    prop::string::string_regex(".{0,100}").unwrap()
 }
 
 // Strategy for generating issue numbers
@@ -75,8 +75,9 @@ proptest! {
         // Verify breaking flag matches
         assert_eq!(parsed.breaking, breaking);
 
-        // Verify description is extracted
-        assert!(!parsed.description.is_empty());
+        // Verify description is extracted (may be empty after trimming whitespace-only input)
+        // The description should match the trimmed version of what we put in
+        assert_eq!(parsed.description.as_str(), desc.trim());
     }
 
     /// Test that type extraction handles edge cases
