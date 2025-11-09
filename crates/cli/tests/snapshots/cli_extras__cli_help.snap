@@ -11,7 +11,7 @@ Commands:
   show         Show the next inferred version based on commit history and semver rules
   generate     Generate a changelog release block for the specified commit range
   release      Run a full release: bump version, generate changelog, create git tag, and optionally 
-                sign/tag
+               sign/tag
   github       Synchronize GitHub releases with local changelog data
   help         Print this message or the help of the given subcommand(s)
 
