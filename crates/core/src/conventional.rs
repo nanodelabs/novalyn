@@ -67,11 +67,12 @@ pub fn parse_commit_fast(rc: &RawCommit) -> ParsedFields {
     }
 
     // Skip whitespace after ':'
-    while pos < bytes.len() && (bytes[pos] == b' ' || bytes[pos] == b'\t') {
+    while pos < bytes.len() && bytes[pos].is_ascii_whitespace() {
         pos += 1;
     }
 
-    let description: EcoString = rc.summary[pos..].trim_end().into();
+    // Trim all whitespace from both ends (handles edge cases like vertical tabs)
+    let description: EcoString = rc.summary[pos..].trim().into();
 
     // Fast path: no body means no footers
     if rc.body.is_empty() {

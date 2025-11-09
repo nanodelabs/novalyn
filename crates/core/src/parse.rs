@@ -37,7 +37,7 @@ pub enum BumpKind {
 }
 
 impl BumpKind {
-    fn escalate(self, other: BumpKind) -> BumpKind {
+    pub fn escalate(self, other: BumpKind) -> BumpKind {
         use BumpKind::*;
         match (self, other) {
             (Major, _) | (_, Major) => Major,
