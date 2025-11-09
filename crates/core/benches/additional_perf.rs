@@ -7,7 +7,6 @@ use novalyn_core::config::{LoadOptions, load_config};
 use novalyn_core::conventional::parse_commit_fast;
 use novalyn_core::git::RawCommit;
 use novalyn_core::parse::parse_and_classify;
-use std::collections::HashMap;
 use tempfile::TempDir;
 
 #[global_allocator]
@@ -82,7 +81,7 @@ fn authors_collection(bencher: Bencher, size: usize) {
             exclude: vec![].into(),
             hide_author_email: false,
             no_authors: false,
-            aliases: HashMap::with_hasher(foldhash::quality::RandomState::default()),
+            aliases: scc::HashMap::with_hasher(foldhash::quality::RandomState::default()),
             github_token: None,
             enable_github_aliasing: false,
         };
