@@ -152,7 +152,7 @@ proptest! {
         let footer_keys = ["BREAKING-CHANGE", "BREAKING CHANGE", "Closes", "Fixes", "Resolves", "Co-authored-by"];
         if footer_keys.iter().any(|&k| key == k) {
             // Should have parsed the footer or detected breaking change
-            assert!(parsed.footers.len() > 0 || parsed.breaking || parsed.issues.len() > 0 || parsed.co_authors.len() > 0);
+            assert!(!parsed.footers.is_empty() || parsed.breaking || !parsed.issues.is_empty() || !parsed.co_authors.is_empty());
         }
     }
 

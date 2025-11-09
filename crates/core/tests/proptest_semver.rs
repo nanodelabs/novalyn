@@ -52,9 +52,9 @@ proptest! {
         let result = bumps.iter().fold(BumpKind::None, |acc, &b| acc.escalate(b));
 
         // Result should be highest bump in the sequence
-        let has_major = bumps.iter().any(|&b| b == BumpKind::Major);
-        let has_minor = bumps.iter().any(|&b| b == BumpKind::Minor);
-        let has_patch = bumps.iter().any(|&b| b == BumpKind::Patch);
+        let has_major = bumps.contains(&BumpKind::Major);
+        let has_minor = bumps.contains(&BumpKind::Minor);
+        let has_patch = bumps.contains(&BumpKind::Patch);
 
         if has_major {
             prop_assert_eq!(result, BumpKind::Major);
@@ -92,7 +92,7 @@ mod specific_scenarios {
     #[test]
     fn test_typical_release_progression() {
         // Typical progression: patches accumulate, then minor, then major
-        let sequence = vec![
+        let sequence = [
             BumpKind::Patch,
             BumpKind::Patch,
             BumpKind::Minor,
@@ -108,7 +108,7 @@ mod specific_scenarios {
     #[test]
     fn test_breaking_change_override() {
         // Even with many patches and minors, a major bump wins
-        let sequence = vec![
+        let sequence = [
             BumpKind::Patch,
             BumpKind::Minor,
             BumpKind::Patch,
@@ -125,7 +125,7 @@ mod specific_scenarios {
     #[test]
     fn test_no_changes() {
         // All None should result in None
-        let sequence = vec![BumpKind::None; 10];
+        let sequence = [BumpKind::None; 10];
         let result = sequence
             .iter()
             .fold(BumpKind::None, |acc, &b| acc.escalate(b));
