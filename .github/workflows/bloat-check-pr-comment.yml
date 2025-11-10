@@ -38,7 +38,7 @@ jobs:
         with:
           script: |
             const fs = require('node:fs');
-            const marker = '<!-- prek-bloat-check -->';
+            const marker = '<!-- novalyn-bloat-check -->';
             const comparison = await fs.promises.readFile('/tmp/bloat-check/bloat-comparison.txt', 'utf8');
             const body = `${marker}\n${comparison}`;
 
