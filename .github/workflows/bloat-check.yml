@@ -1,46 +1,37 @@
 name: Bloat check
-
 on:
   pull_request:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
-
 permissions: {}
-
 jobs:
   bloat-check:
     runs-on: ubuntu-latest
     name: "cargo | bloat check"
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e # v6-beta
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: rui314/setup-mold@725a8794d15fc7563f59595bd9556495c0564878 # v1
-      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
-      - uses: taiki-e/install-action@81ee1d48d9194cdcab880cbdc7d36e87d39874cb # v2.62.45
+      - name: Setup Rust and install cargo-bloat
+        uses: moonrepo/setup-rust@ede6de059f8046a5e236c94046823e2af11ca670 # v1.2.2
         with:
-          tool: cargo-bloat
-
+          bins: cargo-bloat
       - name: Build head branch
         id: bloat_head
         run: |
           # Build head branch
           cargo bloat --release | tee bloat_head.txt >&1
-
       - name: Checkout base
         run: |
           git checkout ${{ github.event.pull_request.base.sha }}
-
       - name: Build base branch
         id: bloat_base
         run: |
           # Build base branch
           cargo bloat --release | tee bloat_base.txt >&1
-
       - name: Compare bloat results
         shell: python
         run: |
@@ -84,13 +75,11 @@ jobs:
           """
 
           Path("bloat-comparison.txt").write_text(comparison)
-
       - name: Save bloat check results
         run: |
           mkdir -p /tmp/bloat-check
           echo ${{ github.event.pull_request.number }} > /tmp/bloat-check/pr-number.txt
           mv bloat-comparison.txt /tmp/bloat-check/bloat-comparison.txt
-
       - name: Upload bloat results
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
