@@ -112,14 +112,13 @@ pub fn current_ref(repo: &Repository) -> anyhow::Result<Option<EcoString>> {
                     Err(_) => continue,
                 };
                 let name_bstr = tag_ref.name().as_bstr();
-                if name_bstr.starts_with(b"refs/tags/") {
-                    if let Some(tag_oid) = tag_ref.target().try_id() {
-                        if *tag_oid == *target_id {
-                            let tag_name_bstr = &name_bstr[b"refs/tags/".len()..];
-                            let tag_name = String::from_utf8_lossy(tag_name_bstr).to_string();
-                            return Ok(Some(tag_name.into()));
-                        }
-                    }
+                if name_bstr.starts_with(b"refs/tags/")
+                    && let Some(tag_oid) = tag_ref.target().try_id()
+                    && *tag_oid == *target_id
+                {
+                    let tag_name_bstr = &name_bstr[b"refs/tags/".len()..];
+                    let tag_name = String::from_utf8_lossy(tag_name_bstr).to_string();
+                    return Ok(Some(tag_name.into()));
                 }
             }
             return Ok(Some(format!("DETACHED@{:?}", target_id).into()));

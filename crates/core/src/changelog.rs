@@ -24,10 +24,10 @@ fn prepare_changelog_update(existing: &str, new_block: &EcoString) -> Option<Str
 
     // Extract current first block (skip optional title line beginning with '# ' but not '## ')
     let top_block = extract_top_block(existing);
-    if let Some(tb) = top_block {
-        if tb.trim_end() == normalized_new.trim_end() {
-            return None;
-        }
+    if let Some(tb) = top_block
+        && tb.trim_end() == normalized_new.trim_end()
+    {
+        return None;
     }
 
     // Direct quick check: if existing (after possible title) already begins with normalized_new
@@ -91,10 +91,10 @@ pub fn write_or_update_changelog(path: &Path, new_block: &EcoString) -> std::io:
 fn extract_top_block(existing: &str) -> Option<EcoString> {
     let mut lines = existing.lines().peekable();
     // Skip single title line if present
-    if let Some(first) = lines.peek() {
-        if first.starts_with("# ") && !first.starts_with("## ") {
-            lines.next();
-        }
+    if let Some(first) = lines.peek()
+        && first.starts_with("# ") && !first.starts_with("## ")
+    {
+        lines.next();
     }
     let mut collected: Vec<EcoString> = Vec::new();
     let mut in_block = false;

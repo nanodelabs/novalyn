@@ -521,21 +521,20 @@ fn detect_repository(cwd: &Path, warnings: &mut EcoVec<EcoString>) -> Option<rep
     let remotes = repo.remote_names();
     let mut chosen: Option<String> = None;
     // Look for "origin" remote first
-    if remotes.iter().any(|name| name.as_ref() == b"origin") {
-        if let Ok(remote) = repo.find_remote("origin") {
-            if let Some(url) = remote.url(gix::remote::Direction::Fetch) {
-                chosen = Some(url.to_string());
-            }
-        }
+    if remotes.iter().any(|name| name.as_ref() == b"origin")
+        && let Ok(remote) = repo.find_remote("origin")
+        && let Some(url) = remote.url(gix::remote::Direction::Fetch)
+    {
+        chosen = Some(url.to_string());
     }
     // Fallback: use first available remote
     if chosen.is_none() {
         for name in remotes.iter() {
-            if let Ok(remote) = repo.find_remote(name.as_ref()) {
-                if let Some(url) = remote.url(gix::remote::Direction::Fetch) {
-                    chosen = Some(url.to_string());
-                    break;
-                }
+            if let Ok(remote) = repo.find_remote(name.as_ref())
+                && let Some(url) = remote.url(gix::remote::Direction::Fetch)
+            {
+                chosen = Some(url.to_string());
+                break;
             }
         }
     }
