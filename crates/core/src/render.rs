@@ -111,7 +111,8 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
 
     // Contributors
     if let Some(auths) = ctx.authors
-        && !auths.suppressed && !auths.list.is_empty()
+        && !auths.suppressed
+        && !auths.list.is_empty()
     {
         out.push('\n');
         out.push_str("### Contributors\n");

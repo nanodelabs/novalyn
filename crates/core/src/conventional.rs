@@ -146,7 +146,8 @@ pub fn parse_commit_fast(rc: &RawCommit) -> ParsedFields {
     if footer_start_idx.is_none() && !lines.is_empty() {
         let first_trimmed = lines[0].trim();
         if let Some(colon_pos) = memchr::memchr(b':', first_trimmed.as_bytes())
-            && colon_pos > 0 && is_valid_footer_token(&first_trimmed[..colon_pos])
+            && colon_pos > 0
+            && is_valid_footer_token(&first_trimmed[..colon_pos])
         {
             footer_start_idx = Some(0);
         }

@@ -92,7 +92,8 @@ fn extract_top_block(existing: &str) -> Option<EcoString> {
     let mut lines = existing.lines().peekable();
     // Skip single title line if present
     if let Some(first) = lines.peek()
-        && first.starts_with("# ") && !first.starts_with("## ")
+        && first.starts_with("# ")
+        && !first.starts_with("## ")
     {
         lines.next();
     }
