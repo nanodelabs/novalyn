@@ -145,10 +145,10 @@ pub fn parse_commit_fast(rc: &RawCommit) -> ParsedFields {
     // Check if entire body is footers
     if footer_start_idx.is_none() && !lines.is_empty() {
         let first_trimmed = lines[0].trim();
-        if let Some(colon_pos) = memchr::memchr(b':', first_trimmed.as_bytes()) {
-            if colon_pos > 0 && is_valid_footer_token(&first_trimmed[..colon_pos]) {
-                footer_start_idx = Some(0);
-            }
+        if let Some(colon_pos) = memchr::memchr(b':', first_trimmed.as_bytes())
+            && colon_pos > 0 && is_valid_footer_token(&first_trimmed[..colon_pos])
+        {
+            footer_start_idx = Some(0);
         }
     }
 
@@ -210,35 +210,35 @@ pub fn parse_commit_fast(rc: &RawCommit) -> ParsedFields {
         }
 
         // Check if this is a new footer using memchr
-        if let Some(colon_pos) = memchr::memchr(b':', trimmed.as_bytes()) {
-            if colon_pos > 0 {
-                let token = &trimmed[..colon_pos];
+        if let Some(colon_pos) = memchr::memchr(b':', trimmed.as_bytes())
+            && colon_pos > 0
+        {
+            let token = &trimmed[..colon_pos];
 
-                if is_valid_footer_token(token) {
-                    // Save previous footer
-                    if let Some(tok) = current_token.take() {
-                        // Check for breaking change
-                        if !breaking
-                            && (tok.eq_ignore_ascii_case("BREAKING CHANGE")
-                                || tok.eq_ignore_ascii_case("BREAKING-CHANGE")
-                                || tok.eq_ignore_ascii_case("BREAKING CHANGES"))
-                        {
-                            breaking = true;
-                        }
-
-                        // Check for co-author
-                        if tok.eq_ignore_ascii_case("Co-authored-by") {
-                            co_authors.push(current_value.clone());
-                        }
-
-                        footers.push((tok, std::mem::take(&mut current_value)));
+            if is_valid_footer_token(token) {
+                // Save previous footer
+                if let Some(tok) = current_token.take() {
+                    // Check for breaking change
+                    if !breaking
+                        && (tok.eq_ignore_ascii_case("BREAKING CHANGE")
+                            || tok.eq_ignore_ascii_case("BREAKING-CHANGE")
+                            || tok.eq_ignore_ascii_case("BREAKING CHANGES"))
+                    {
+                        breaking = true;
                     }
 
-                    let value = trimmed[colon_pos + 1..].trim_start();
-                    current_token = Some(token.trim().into());
-                    current_value = value.into();
-                    continue;
+                    // Check for co-author
+                    if tok.eq_ignore_ascii_case("Co-authored-by") {
+                        co_authors.push(current_value.clone());
+                    }
+
+                    footers.push((tok, std::mem::take(&mut current_value)));
                 }
+
+                let value = trimmed[colon_pos + 1..].trim_start();
+                current_token = Some(token.trim().into());
+                current_value = value.into();
+                continue;
             }
         }
 

@@ -156,19 +156,19 @@ fn parse_one(rc: &RawCommit) -> ParsedCommit {
 /// Sets the `type_cfg` field if a matching type is found in the configuration.
 fn classify(pc: &mut ParsedCommit, cfg: &ResolvedConfig) {
     // Apply scope_map if provided (exact match)
-    if let Some(sc) = &mut pc.scope {
-        if let Some(mapped) = cfg.scope_map.get(sc) {
-            if mapped.is_empty() {
-                pc.scope = None;
-            } else {
-                *sc = mapped.clone();
-            }
+    if let Some(sc) = &mut pc.scope
+        && let Some(mapped) = cfg.scope_map.get(sc)
+    {
+        if mapped.is_empty() {
+            pc.scope = None;
+        } else {
+            *sc = mapped.clone();
         }
     }
-    if let Some(tc) = cfg.types.iter().find(|t| t.key == pc.r#type) {
-        if tc.enabled {
-            pc.type_cfg = Some(tc.clone());
-        }
+    if let Some(tc) = cfg.types.iter().find(|t| t.key == pc.r#type)
+        && tc.enabled
+    {
+        pc.type_cfg = Some(tc.clone());
     }
 }
 
@@ -176,10 +176,10 @@ fn classify(pc: &mut ParsedCommit, cfg: &ResolvedConfig) {
 ///
 /// Commits are kept if they have a valid type configuration.
 fn should_keep(pc: &ParsedCommit) -> bool {
-    if let Some(tc) = &pc.type_cfg {
-        if !tc.enabled {
-            return false;
-        }
+    if let Some(tc) = &pc.type_cfg
+        && !tc.enabled
+    {
+        return false;
     }
     if pc.r#type == "chore" && !pc.breaking {
         // Filter dependency update chores: chore(deps), chore(deps-dev), chore(deps-*) etc.
@@ -261,10 +261,10 @@ pub fn bump_cargo_version(
     use anyhow::Context;
     let txt = std::fs::read_to_string(path.join("Cargo.toml"))?;
     let mut doc: toml_edit::DocumentMut = txt.parse().context("parse Cargo.toml")?;
-    if let Some(pkg) = doc.get_mut("package") {
-        if let Some(ver) = pkg.get_mut("version") {
-            *ver = toml_edit::value(new_version.to_string());
-        }
+    if let Some(pkg) = doc.get_mut("package")
+        && let Some(ver) = pkg.get_mut("version")
+    {
+        *ver = toml_edit::value(new_version.to_string());
     }
     std::fs::write(path.join("Cargo.toml"), doc.to_string())?;
     Ok(())

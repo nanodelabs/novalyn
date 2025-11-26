@@ -146,10 +146,10 @@ fn excluded(opts: &AuthorOptions, name: &EcoString, email: Option<&EcoString>) -
     if opts.exclude.iter().any(|e| e == name) {
         return true;
     }
-    if let Some(e) = email {
-        if opts.exclude.iter().any(|x| x == e) {
-            return true;
-        }
+    if let Some(e) = email
+        && opts.exclude.iter().any(|x| x == e)
+    {
+        return true;
     }
     false
 }
@@ -172,10 +172,10 @@ fn push_author<'a>(
     if let Some(alias_guard) = opts.aliases.get_sync(&name_n) {
         name_n = alias_guard.get().clone();
     }
-    if let Some(ref e) = email_n {
-        if let Some(alias_guard) = opts.aliases.get_sync(e) {
-            email_n = Some(alias_guard.get().clone());
-        }
+    if let Some(ref e) = email_n
+        && let Some(alias_guard) = opts.aliases.get_sync(e)
+    {
+        email_n = Some(alias_guard.get().clone());
     }
 
     if excluded(opts, &name_n, email_n.as_ref()) {

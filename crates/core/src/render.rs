@@ -45,13 +45,11 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
     out.push('\n');
     if let (Some(_prev), Some(repo), Some(prev_tag)) =
         (ctx.previous_version, ctx.repo, ctx.previous_tag)
-    {
-        if let Some(compare) =
+        && let Some(compare) =
             format_compare_changes(None, prev_tag, &format!("v{}", ctx.version), Some(repo))
-        {
-            out.push_str(&compare);
-            out.push('\n');
-        }
+    {
+        out.push_str(&compare);
+        out.push('\n');
     }
 
     // Render sections in parallel for better performance
@@ -112,16 +110,16 @@ pub fn render_release_block(ctx: &RenderContext<'_>) -> EcoString {
     }
 
     // Contributors
-    if let Some(auths) = ctx.authors {
-        if !auths.suppressed && !auths.list.is_empty() {
-            out.push('\n');
-            out.push_str("### Contributors\n");
-            for a in &auths.list {
-                if let Some(email) = &a.email {
-                    out.push_str(&format!("- {} <{}>\n", a.name, email));
-                } else {
-                    out.push_str(&format!("- {}\n", a.name));
-                }
+    if let Some(auths) = ctx.authors
+        && !auths.suppressed && !auths.list.is_empty()
+    {
+        out.push('\n');
+        out.push_str("### Contributors\n");
+        for a in &auths.list {
+            if let Some(email) = &a.email {
+                out.push_str(&format!("- {} <{}>\n", a.name, email));
+            } else {
+                out.push_str(&format!("- {}\n", a.name));
             }
         }
     }
