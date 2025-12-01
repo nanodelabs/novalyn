@@ -26,7 +26,7 @@ anyhow = "1"
 assert_cmd = "2"
 assert_fs = "1"
 clap = { version = "4", features = ["derive", "env", "unicode", "wrap_help"] }
-clap_complete = "4.5.60"
+clap_complete = "4.5.61"
 clap_complete_nushell = "4.5.10"
 clap_mangen = "0.2.31"
 demand = "1.7"
