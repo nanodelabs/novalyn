@@ -37,11 +37,7 @@ clap_mangen.workspace = true
 mimalloc-safe.workspace = true
 
 [target.'cfg(target_arch = "aarch64")'.dependencies]
-mimalloc-safe = { workspace = true, features = [
-  "no_opt_arch",
-] }
+mimalloc-safe = { workspace = true, features = ["no_opt_arch"] }
 
 [target.'cfg(target_env = "msvc")'.dependencies]
-mimalloc-safe = { workspace = true, features = [
-  "override",
-] }
+mimalloc-safe = { workspace = true, features = ["override"] }

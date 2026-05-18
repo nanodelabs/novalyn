@@ -7,18 +7,12 @@ default-members = ["crates/cli"]
 version = "0.1.1"
 authors = ["Muntasir Mahmud <muntasir.joypurhat@gmail.com>"]
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.95"
 readme = "README.md"
 homepage = "https://github.com/nanodelabs/novalyn"
 repository = "https://github.com/nanodelabs/novalyn"
 license = "MIT"
-keywords = [
-  "changelog",
-  "cli",
-  "conventional-commit",
-  "generator",
-  "git",
-]
+keywords = ["changelog", "cli", "conventional-commit", "generator", "git"]
 categories = ["command-line-utilities", "development-tools"]
 
 [workspace.dependencies]
@@ -28,18 +22,19 @@ assert_fs = "1"
 clap = { version = "4", features = ["derive", "env", "unicode", "wrap_help"] }
 clap_complete = "4.5.66"
 clap_complete_nushell = "4.5.10"
-clap_mangen = "0.2.31"
-demand = "1.8"
+clap_mangen = "0.3"
+demand = "2"
 divan = { package = "codspeed-divan-compat", version = "4" }
 ecow = { version = "0.2", features = ["serde"] }
 foldhash = "0.2"
 futures = "0.3"
-gix = { version = "0.75.0", default-features = false, features = [
+gix = { version = "0.83.0", default-features = false, features = [
   "max-control",
   "pack-cache-lru-dynamic",
   "pack-cache-lru-static",
   "parallel",
   "revision",
+  "sha1",
   "status",
   "tracing",
   "tree-editor",
@@ -54,16 +49,7 @@ once_cell = "1"
 predicates = "3"
 proptest = "1"
 rayon = "1"
-reqwest = { version = "0.12", default-features = false, features = [
-  "http2",
-  "json",
-  "rustls-tls-native-roots-no-provider",
-  "socks",
-  "system-proxy",
-] }
-rustls = { version = "0.23.36", default-features = false, features = [
-  "aws_lc_rs",
-] }
+reqwest = { version = "0.13", features = ["json", "socks"] }
 scc = "3.6.2"
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
@@ -76,7 +62,7 @@ tokio = { version = "1", features = [
   "process",
   "rt-multi-thread",
 ] }
-toml_edit = { version = "0.23", features = ["serde"] }
+toml_edit = { version = "0.25", features = ["serde"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 unicode-normalization = "0.1"
