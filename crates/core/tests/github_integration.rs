@@ -3,19 +3,6 @@ use novalyn_core::repository::{Provider, Repository};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-// Helper module for wiremock tests that require rustls initialization
-mod wiremock_helpers {
-    use std::sync::Once;
-    static INIT: Once = Once::new();
-
-    /// Initialize the crypto provider for wiremock tests (runs once).
-    pub fn setup() {
-        INIT.call_once(|| {
-            novalyn_core::init_crypto_provider();
-        });
-    }
-}
-
 #[tokio::test]
 async fn test_get_username_from_email_success() {
     wiremock_helpers::setup();

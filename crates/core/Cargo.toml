@@ -32,7 +32,6 @@ memchr.workspace = true
 once_cell.workspace = true
 rayon.workspace = true
 reqwest.workspace = true
-rustls.workspace = true
 scc.workspace = true
 semver.workspace = true
 serde.workspace = true
@@ -56,11 +55,7 @@ wiremock.workspace = true
 mimalloc-safe.workspace = true
 
 [target.'cfg(target_arch = "aarch64")'.dev-dependencies]
-mimalloc-safe = { workspace = true, features = [
-  "no_opt_arch",
-] }
+mimalloc-safe = { workspace = true, features = ["no_opt_arch"] }
 
 [target.'cfg(target_env = "msvc")'.dev-dependencies]
-mimalloc-safe = { workspace = true, features = [
-  "override",
-] }
+mimalloc-safe = { workspace = true, features = ["override"] }

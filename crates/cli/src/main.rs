@@ -12,7 +12,6 @@ pub use novalyn as lib;
 /// Initializes the crypto provider and runs the CLI command dispatcher.
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
-    novalyn_core::init_crypto_provider();
     match lib::cli::run().await {
         Ok(exit_code) => std::process::exit(exit_code as i32),
         Err(e) => {
