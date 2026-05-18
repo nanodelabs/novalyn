@@ -5,7 +5,6 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_get_username_from_email_success() {
-    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     // Mock the GitHub search endpoint - match just the path, let query params vary
@@ -31,7 +30,6 @@ async fn test_get_username_from_email_success() {
 /// Test that no username is returned when email is not found on GitHub.
 #[tokio::test]
 async fn test_get_username_from_email_not_found() {
-    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     Mock::given(method("GET"))
@@ -79,7 +77,6 @@ async fn test_sync_release_not_github() {
 
 #[tokio::test]
 async fn test_sync_release_create_new() {
-    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     // Mock GET to check if release exists (returns 404)
@@ -125,7 +122,6 @@ async fn test_sync_release_create_new() {
 /// Test updating an existing GitHub release via sync_release using wiremock.
 #[tokio::test]
 async fn test_sync_release_update_existing() {
-    wiremock_helpers::setup();
     let mock_server = MockServer::start().await;
 
     // Mock GET to check if release exists (returns existing release)
