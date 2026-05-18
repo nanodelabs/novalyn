@@ -440,8 +440,8 @@ pub fn init_repo(path: &std::path::Path) -> anyhow::Result<Repository> {
 
     // Set user configuration
     let mut config = repo.config_snapshot_mut();
-    config.set_raw_value(&gix::config::tree::User::NAME, "Tester")?;
-    config.set_raw_value(&gix::config::tree::User::EMAIL, "tester@example.com")?;
+    config.set_raw_value(gix::config::tree::User::NAME, "Tester")?;
+    config.set_raw_value(gix::config::tree::User::EMAIL, "tester@example.com")?;
     config.commit()?;
 
     Ok(repo)

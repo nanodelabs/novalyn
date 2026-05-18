@@ -40,6 +40,7 @@ gix = { version = "0.83.0", default-features = false, features = [
   "pack-cache-lru-static",
   "parallel",
   "revision",
+  "sha1",
   "status",
   "tracing",
   "tree-editor",
