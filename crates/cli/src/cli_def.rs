@@ -4,7 +4,8 @@ use clap::{ArgAction, Args, Parser, Subcommand};
 #[command(
     name = "novalyn",
     version,
-    about = "Generate changelogs from conventional commits."
+    about = "Generate changelogs from conventional commits.",
+    term_width = 100
 )]
 pub struct Cli {
     #[command(subcommand)]
